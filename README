@@ -1,0 +1,28 @@
+---------
+my1imgpro
+---------
+
+Written by Azman M. Yusof (azman@my1matrix.net)
+
+This is a simple image processing library (meant to support work on vision
+@ video) that was written for personal use since 2006 (started as kimgpro).
+
+This software consists of several small modules:
+  * my1imgpro  - basic image structure & pixel/image operations
+  * my1imgutil - basic region/mask/histogram structure & utility
+  * my1imgmath - math-related function(s), matrix structure & operations
+  * my1imgfpo  - floating-point grayscale structure & utility
+  * my1imgbmp  - bitmap file load/save functions
+  * my1imgtest - main test program for my1imgpro & friends (SDL for viewing!)
+  * my1imgvid  - video structure based on basic image structure
+  * my1visdev  - sample video processing (using libav and SDL)
+  * my1vistest - main test program for my1imgvid & my1visdev
+
+The test programs (and my1visdev) require SDL and libav libraries.
+
+Notice that this software is using BMP image format. The reason for that
+is simply that this software started its life on Win32 platform. Other format
+like Portable xxxMap (bit - *.pbm, gray - *.pgm, pix - *.ppm) or
+X PixMap (*.xpm) will be added (or simple replace BMP)... hopefully, soon!
+
+See LICENSE for licensing details. 
