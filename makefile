@@ -1,5 +1,5 @@
 # makefile for my1imgpro (basic image/vision processing library)
-# - using ffmpeg(libav) & SDL
+# - using libav & SDL for interfacing & display
 
 RM = rm -f
 
@@ -14,6 +14,7 @@ TESTIMG = my1imgtest
 OBJSIMG = my1imgpro.o my1imgutil.o my1imgmath.o my1imgfpo.o my1imgbmp.o my1imgtest.o 
 TESTVIS = my1vistest
 OBJSVIS = my1imgpro.o my1imgvid.o my1visdev.o my1vistest.o
+CONVERT = convert
 
 EXECUTE = $(TESTVIS)
 OBJECTS = $(OBJSVIS)
@@ -37,5 +38,14 @@ ${TESTVIS}: $(OBJSVIS)
 %.o: src/%.c
 	$(CC) $(CFLAG) -o $@ $<
 
+%.bmp: res/%.xpm
+	$(CONVERT) $< $@
+
+%.bmp: res/%.pgm
+	$(CONVERT) $< $@
+
+%.bmp: res/%.ppm
+	$(CONVERT) $< $@
+
 clean:
-	-$(RM) $(TESTIMG) $(OBJSIMG) $(TESTVIS) $(OBJSVIS) *.o
+	-$(RM) $(TESTIMG) $(OBJSIMG) $(TESTVIS) $(OBJSVIS) *.o *.bmp

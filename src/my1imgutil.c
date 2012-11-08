@@ -186,6 +186,20 @@ int histogram_maxindex(my1Hist *hist)
 	return index;
 }
 
+/* rgb conversion utility */
+
+int encode_rgb(char r, char g, char b)
+{
+	return (((int)r&0xff)<<16 | ((int)g&0xff)<<8 | ((int)b&0xff));
+}
+
+void decode_rgb(int data, char *r, char *g, char *b)
+{
+	*r = (data&0xff0000)>>16;
+	*g = (data&0xff00)>>8;
+	*b = (data&0xff);
+}
+
 /* color information - structure member 'mask' MUST BE assigned! */
 
 int extract_rgb(my1Image *image, char *rgb)
@@ -195,9 +209,9 @@ int extract_rgb(my1Image *image, char *rgb)
 	{
 		for(loop=0;loop<image->length;loop++)
 		{
-			rgb[index++] = (image->data[loop]&0xff0000)>>16;
-			rgb[index++] = (image->data[loop]&0xff00)>>8;
-			rgb[index++] = (image->data[loop]&0xff);
+			decode_rgb(image->data[loop],&rgb[index+0],
+				&rgb[index+1],&rgb[index+2]);
+			index += 3;
 		}
 		mask = image->mask;
 	}
@@ -222,10 +236,9 @@ int assign_rgb(my1Image *image, char *rgb)
 	{
 		for(loop=0;loop<image->length;loop++)
 		{
-			chkr = rgb[index++];
-			chkg = rgb[index++];
-			chkb = rgb[index++];
-			image->data[loop] = ((int)chkr)<<16 | ((int)chkg)<<8 | ((int)chkb);
+			image->data[loop] = encode_rgb(rgb[index+0],
+				rgb[index+1],rgb[index+2]);
+			index += 3;
 		}
 		mask = image->mask;
 	}

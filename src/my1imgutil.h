@@ -48,6 +48,9 @@ void filter_image(my1Image *src, my1Image *dst, my1Mask *mask);
 void histogram_image(my1Image *image, my1Hist *hist);
 void histogram_smooth(my1Image *image, my1Hist *hist); /* not much use? */
 int histogram_maxindex(my1Hist *hist);
+/* rgb conversion utility */
+int encode_rgb(char r, char g, char b);
+void decode_rgb(int data, char *r, char *g, char *b);
 /* color information - structure member 'mask' MUST BE assigned! */
 int extract_rgb(my1Image *image, char *rgb);
 int assign_rgb(my1Image *image, char *rgb);

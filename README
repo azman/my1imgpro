@@ -23,6 +23,6 @@ The test programs (and my1visdev) require SDL and libav libraries.
 Notice that this software is using BMP image format. The reason for that
 is simply that this software started its life on Win32 platform. Other format
 like Portable xxxMap (bit - *.pbm, gray - *.pgm, pix - *.ppm) or
-X PixMap (*.xpm) will be added (or simple replace BMP)... hopefully, soon!
+X PixMap (*.xpm) will be added (or simply replace BMP)... hopefully, soon!
 
 See LICENSE for licensing details. 

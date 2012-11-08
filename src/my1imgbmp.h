@@ -35,6 +35,35 @@ typedef struct
 }
 my1BMPInfo;
 
+/** NEED TO RESTRUCTURE AS SHOWN BELOW! */
+
+typedef struct
+{
+	unsigned short bmpID; /* 2 bytes */
+	unsigned int bmpSize; /* 4 bytes */
+	unsigned int bmpReserved; /* 4 bytes */
+	unsigned int bmpOffset; /* 4 bytes */
+}
+my1BMPHead;
+#define BMP_HEAD_SIZE 14
+
+typedef struct
+{
+	unsigned int bmpInfoSize; /* 4 bytes */
+	unsigned int bmpWidth; /* 4 bytes */
+	unsigned int bmpHeight; /* 4 bytes */
+	unsigned short bmpPlaneCount; /* 2 bytes */
+	unsigned short bmpBitsPerPixel; /* 2 bytes - 1, 4, 8, 24*/
+	unsigned int bmpCompression; /* 4 bytes */
+	unsigned int bmpDataSize; /* 4 bytes - rounded to next 4 bytesize */
+	unsigned int bmpHResolution; /* 4 bytes - pix per meter */
+	unsigned int bmpVResolution; /* 4 bytes - pix per meter */
+	unsigned int bmpColorCount; /* 4 bytes */
+	unsigned int bmpIColorCount; /* 4 bytes */
+}
+my1BMPInfo2;
+#define BMP_INFO_SIZE 40
+
 int loadBMPimage(char *filename, my1Image *image);
 int saveBMPimage(char *filename, my1Image *image);
 

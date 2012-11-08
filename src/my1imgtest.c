@@ -14,8 +14,9 @@ void print_image_info(my1Image* image)
 	printf("Current Image: ");
 	if(image->length)
 	{
-		printf(" loaded!\n");
-		printf("Image Size: %d x %d\n",image->width,image->height);
+		printf("Image loaded!\n");
+		printf("Size: %d x %d\n",image->width,image->height);
+		printf("Mask: %08X\n",image->mask);
 	}
 	else
 	{
@@ -32,8 +33,8 @@ void load_image(my1Image* image)
 	colorbmp = loadBMPimage(filename,image);
 	if(colorbmp<0)
 		printf("Cannot load input file '%s'! [%d]\n", filename, colorbmp);
-	else if(colorbmp>0)
-		printf("Image converted to grayscale.\n");
+	else
+		printf("Color: %d.\n", colorbmp);
 }
 
 void save_image(my1Image* image)
@@ -68,7 +69,6 @@ void view_image(my1Image* image)
 		return;
 	}
 
-	image->mask = MY1MASK_GRAY8;
 	char *pImage = malloc(image->height*image->width*3);
 	if(!extract_rgb(image,pImage))
 	{
@@ -121,6 +121,7 @@ void menu_image(my1Image* image)
 	copyimage(image,&tempimage);
 	do
 	{
+		printf("\n");
 		printf("---------------------\n");
 		printf("Image Processing Menu\n");
 		printf("---------------------\n");
@@ -168,11 +169,33 @@ int gauss_frame(my1IFrame *src, my1IFrame *dst, float sigma, float *over);
 
 int main(int argc, char* argv[])
 {
-	int not_done = 1, select;
+	int not_done = 1, select, loop;
+	char *pfilename = 0x0;
 	my1Image currimage;
 	initimage(&currimage);
+
+	/* check program arguments */
+	for(loop=1;loop<argc;loop++)
+	{
+		if(!pfilename)
+		{
+			pfilename = argv[loop];
+		}
+		else
+		{
+			printf("Unknown parameter %s!\n",argv[loop]);
+		}
+	}
+
+	/* try to open file if requested! */
+	select = loadBMPimage(pfilename,&currimage);
+	if(select<0)
+		printf("Cannot load input file '%s'! [%d]\n", pfilename, select);
+
+	/* main loop */
 	do
 	{
+		printf("\n");
 		printf("--------------------------\n");
 		printf("Test Program for my1imgpro\n");
 		printf("--------------------------\n");
