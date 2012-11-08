@@ -129,6 +129,9 @@ void menu_image(my1Image* image)
 		print_image_info(image);
 		printf("\n");
 		printf("1 - View Image\n");
+		printf("2 - Convert Grayscale\n");
+		printf("3 - Edge Filter(s)\n");
+		printf("4 - View Image\n");
 		printf("5 - Quit\n\n");
 		printf("Your choice: ");
 		scanf("%d",&select);

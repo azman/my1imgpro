@@ -7,22 +7,9 @@
 #include "my1imgutil.h"
 #include <stdio.h>
 
+/*
 #define MY1BMP_DEBUG
-
-int get2red(int color)
-{
-	return (color>>16)&0xff;
-}
-
-int get2green(int color)
-{
-	return (color>>8)&0xff;
-}
-
-int get2blue(int color)
-{
-	return color&0xff;
-}
+*/
 
 int loadBMPimage(char *filename, my1Image *image)
 {
@@ -116,20 +103,17 @@ int loadBMPimage(char *filename, my1Image *image)
 				fread(pChar, 1, 1, bmpfile);
 				if(info.bmpColorCount) /* get from pallete? */
 				{
-					r = get2red(palette[someChar]);
-					g = get2green(palette[someChar]);
-					b = get2blue(palette[someChar]);
+					decode_rgb(palette[someChar],(char*)&r,
+						(char*)&g, (char*)&b);
 				}
 				else
 				{
-					r = someChar;
-					g = someChar;
-					b = someChar;
+					r = someChar; g = someChar; b = someChar;
 				}
 				temp++;
 			}
 			/* 'encode' if necessary! */
-			if(image->mask) buff = encode_rgb(r,g,b);
+			if(iscolor) buff = encode_rgb(r,g,b);
 			else buff = r; /** just take ANY component */
 			setimagepixel(image,row,col,buff);
 		}
@@ -154,7 +138,7 @@ int saveBMPimage(char *filename, my1Image *image)
 	int row, col, temp, buff, length, bytepp = 1;
 	char bmpID[]="BM";
 	my1BMPInfo info;
-	unsigned char *pChar, someChar;
+	unsigned char *pChar, someChar, r, g, b;
 
 	/* check if color image - palette NOT possible! */
 	if(image->mask==MY1MASK_COLOR24) bytepp = 3;
@@ -219,11 +203,12 @@ int saveBMPimage(char *filename, my1Image *image)
 			buff = imagepixel(image,row,col);
 			if(image->mask==MY1MASK_COLOR24)
 			{
-				someChar = get2red(buff);
+				decode_rgb(buff,(char*)&r,(char*)&g, (char*)&b);
+				someChar = r;
 				fwrite(pChar,1,1,bmpfile);
-				someChar = get2green(buff);
+				someChar = g;
 				fwrite(pChar,1,1,bmpfile);
-				someChar = get2blue(buff);
+				someChar = b;
 				fwrite(pChar,1,1,bmpfile);
 				temp += 3;
 			}

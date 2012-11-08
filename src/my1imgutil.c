@@ -190,7 +190,7 @@ int histogram_maxindex(my1Hist *hist)
 
 int encode_rgb(char r, char g, char b)
 {
-	return (((int)r&0xff)<<16 | ((int)g&0xff)<<8 | ((int)b&0xff));
+	return (((int)r&0xff)<<16) | (((int)g&0xff)<<8) | ((int)b&0xff);
 }
 
 void decode_rgb(int data, char *r, char *g, char *b)
