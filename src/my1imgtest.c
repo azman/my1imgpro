@@ -222,13 +222,16 @@ int main(int argc, char* argv[])
 				save_image(&currimage);
 				break;
 			case 3:
-				view_image(&currimage);
+				if(currimage.length) view_image(&currimage);
+				else printf("No image?!\n");
 				break;
 			case 4:
-				menu_image(&currimage);
+				if(currimage.length) menu_image(&currimage);
+				else printf("No image?!\n");
 				break;
 			case 5:
-				menu_matrix(&currimage);
+				if(currimage.length) menu_matrix(&currimage);
+				else printf("No image?!\n");
 				break;
 			case 6:
 				not_done = 0;
