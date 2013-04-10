@@ -1,14 +1,14 @@
+/*----------------------------------------------------------------------------*/
 #include <stdio.h>
 #include <SDL/SDL.h>
 #include "my1imgbmp.h"
 #include "my1imgfpo.h"
 #include "my1imgutil.h"
 #include "my1imgmath.h"
-
 #include <math.h> /* for gaussian calc! */
-
+/*----------------------------------------------------------------------------*/
 #define PI 3.14159265
-
+/*----------------------------------------------------------------------------*/
 void print_image_info(my1Image* image)
 {
 	printf("Current Image: ");
@@ -23,7 +23,7 @@ void print_image_info(my1Image* image)
 		printf("No image loaded!\n");
 	}
 }
-
+/*----------------------------------------------------------------------------*/
 void load_image(my1Image* image)
 {
 	char filename[80];
@@ -36,7 +36,7 @@ void load_image(my1Image* image)
 	else
 		printf("Color: %d.\n", colorbmp);
 }
-
+/*----------------------------------------------------------------------------*/
 void save_image(my1Image* image)
 {
 	char filename[80];
@@ -49,7 +49,7 @@ void save_image(my1Image* image)
 	else
 		printf("Image written to '%s'.\n", filename);
 }
-
+/*----------------------------------------------------------------------------*/
 void view_image(my1Image* image)
 {
 	SDL_Surface *screen;
@@ -111,7 +111,7 @@ void view_image(my1Image* image)
 
 	SDL_Quit();
 }
-
+/*----------------------------------------------------------------------------*/
 void menu_image(my1Image* image)
 {
 	int not_done = 1, select;
@@ -128,19 +128,20 @@ void menu_image(my1Image* image)
 		printf("\n");
 		print_image_info(image);
 		printf("\n");
-		printf("1 - View Image\n");
-		printf("2 - Convert Grayscale\n");
-		printf("3 - Edge Filter(s)\n");
-		printf("4 - View Image\n");
+		printf("1 - View Original Image\n");
+		printf("2 - View Processed Image\n");
+		printf("3 - Convert Grayscale\n");
+		printf("4 - Edge Filter(s)\n");
 		printf("5 - Quit\n\n");
 		printf("Your choice: ");
 		scanf("%d",&select);
 		switch(select)
 		{
 			case 1:
-				view_image(&tempimage);
+				view_image(image);
 				break;
 			case 2:
+				view_image(&tempimage);
 				break;
 			case 3:
 				break;
@@ -156,12 +157,12 @@ void menu_image(my1Image* image)
 	while(not_done);
 	freeimage(&tempimage);
 }
-
+/*----------------------------------------------------------------------------*/
 void menu_matrix(my1Image* image)
 {
 	printf("Coming soon...\n\n");
 }
-
+/*----------------------------------------------------------------------------*/
 /* sample filters */
 int laplace_image(my1Image *src, my1Image *dst);
 int sobel_x_image(my1Image *src, my1Image *dst);
@@ -169,7 +170,7 @@ int sobel_y_image(my1Image *src, my1Image *dst);
 int sobel_image(my1Image *src, my1Image *dst_mag, my1Image *dst_ang);
 int laplace_frame(my1IFrame *src, my1IFrame *dst);
 int gauss_frame(my1IFrame *src, my1IFrame *dst, float sigma, float *over);
-
+/*----------------------------------------------------------------------------*/
 int main(int argc, char* argv[])
 {
 	int not_done = 1, select, loop;
@@ -244,9 +245,8 @@ int main(int argc, char* argv[])
 	freeimage(&currimage);
 	return 0;
 }
-
-/* sample filters */
-
+/*----------------------------------------------------------------------------*/
+/*----------------------------------------------------------------------------*/
 int laplace_image(my1Image *src, my1Image *dst)
 {
 	int coeff[] = { 0,-1,0, -1,4,-1, 0,-1,0 };
@@ -264,7 +264,7 @@ int laplace_image(my1Image *src, my1Image *dst)
 
 	return 0;
 }
-
+/*----------------------------------------------------------------------------*/
 int sobel_x_image(my1Image *src, my1Image *dst)
 {
 	int coeff[] = { -1,0,1, -2,0,2, -1,0,1 };
@@ -282,7 +282,7 @@ int sobel_x_image(my1Image *src, my1Image *dst)
 
 	return 0;
 }
-
+/*----------------------------------------------------------------------------*/
 int sobel_y_image(my1Image *src, my1Image *dst)
 {
 	int coeff[] = { -1,-2,-1, 0,0,0, 1,2,1 };
@@ -300,13 +300,13 @@ int sobel_y_image(my1Image *src, my1Image *dst)
 
 	return 0;
 }
-
+/*----------------------------------------------------------------------------*/
 int iabs(int value)
 {
 	if(value<0) value = -value;
 	return value;
 }
-
+/*----------------------------------------------------------------------------*/
 int sobel_image(my1Image *src, my1Image *dst_mag, my1Image *dst_ang)
 {
 	my1Image buff1, buff2;
@@ -409,9 +409,8 @@ int sobel_image(my1Image *src, my1Image *dst_mag, my1Image *dst_ang)
 
 	return 0;
 }
-
-/* sample filters */
-
+/*----------------------------------------------------------------------------*/
+/*----------------------------------------------------------------------------*/
 int laplace_frame(my1IFrame *src, my1IFrame *dst)
 {
 	float coeff[] = { 0.0,-1.0,0.0, -1.0,4.0,-1.0, 0.0,-1.0,0.0 };
@@ -429,17 +428,17 @@ int laplace_frame(my1IFrame *src, my1IFrame *dst)
 
 	return 0;
 }
-
+/*----------------------------------------------------------------------------*/
 #define THRES2 0.0039 /* 1/256 - max division possible for grayscale */
 #define THRES1 0.0156 /* 1/64 - leave 2 significant bits */
 #define THRESH 0.0625 /* 1/16 - leave 4 significant bits */
-
+/*----------------------------------------------------------------------------*/
 float fgaussian2d(float x, float y, float sigma)
 {
 	/* isotropic (circularly symmetric) mean at (0,0) */
 	return pow(2.71828,-(((x*x)+(y*y))/(2*sigma*sigma)))/(sigma*sigma*2*PI);
 }
-
+/*----------------------------------------------------------------------------*/
 int gauss_frame(my1IFrame *src, my1IFrame *dst, float sigma, float *over)
 {
 	my1Kernel kernel;
@@ -489,3 +488,5 @@ int gauss_frame(my1IFrame *src, my1IFrame *dst, float sigma, float *over)
 
 	return 0;
 }
+/*----------------------------------------------------------------------------*/
+/*----------------------------------------------------------------------------*/

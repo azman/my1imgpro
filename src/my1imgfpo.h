@@ -1,13 +1,9 @@
-/*
-	my1imgfpo => floating-point grayscale image library for my1imgpro
-	Author: azman@my1matrix.net
-*/
-
+/*----------------------------------------------------------------------------*/
 #ifndef __MY1IMGFPOH__
 #define __MY1IMGFPOH__
-
+/*----------------------------------------------------------------------------*/
 #include "my1imgpro.h"
-
+/*----------------------------------------------------------------------------*/
 struct _iframe
 {
 	int width,height;
@@ -15,7 +11,7 @@ struct _iframe
 	float *data; /* 1-d vector for 2-d image */
 };
 typedef struct _iframe my1IFrame;
-
+/*----------------------------------------------------------------------------*/
 struct _kernel
 {
 	int size; /* square mask - should be odd number */
@@ -24,7 +20,7 @@ struct _kernel
 	float *factor;
 };
 typedef struct _kernel my1Kernel;
-
+/*----------------------------------------------------------------------------*/
 /* management functions - image/frame copier/converter */
 void image2frame(my1Image *image, my1IFrame *frame, int align);
 void frame2image(my1IFrame *frame, my1Image *image, int align);
@@ -44,5 +40,6 @@ void limitrange_frame(my1IFrame *frame);
 void absolute_frame(my1IFrame *frame);
 /* other operators */
 void correlate_frame(my1IFrame *src, my1IFrame *dst, my1Kernel *kernel);
-
+/*----------------------------------------------------------------------------*/
 #endif
+/*----------------------------------------------------------------------------*/

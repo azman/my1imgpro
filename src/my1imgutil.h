@@ -1,23 +1,16 @@
-/*
-	my1imgutil => basic utility library for my1imgpro
-	Author: Azman M. Yusof (azman@my1matrix.net)
-*/
-
+/*----------------------------------------------------------------------------*/
 #ifndef __MY1IMGUTILH__
 #define __MY1IMGUTILH__
-
+/*----------------------------------------------------------------------------*/
 #include "my1imgpro.h"
-
-#define MY1MASK_COLOR24 0xFFFFFF
-#define MY1MASK_GRAY8 0xFF
-
+/*----------------------------------------------------------------------------*/
 struct _region
 {
 	int xset, yset;
 	int width, height;
 };
 typedef struct _region my1Region;
-
+/*----------------------------------------------------------------------------*/
 struct _mask
 {
 	int size; /* square mask - should be odd number */
@@ -26,14 +19,14 @@ struct _mask
 	int *factor;
 };
 typedef struct _mask my1Mask;
-
+/*----------------------------------------------------------------------------*/
 struct _hist
 {
 	int maxindex;
 	int count[GRAYLEVEL]; /* grayscale level count */
 };
 typedef struct _hist my1Hist;
-
+/*----------------------------------------------------------------------------*/
 /* sub-image management functions */
 void image2sub(my1Image *image, my1Image *subimage, my1Region *region);
 void sub2image(my1Image *subimage, my1Image *image, my1Region *region);
@@ -54,5 +47,6 @@ void decode_rgb(int data, char *r, char *g, char *b);
 /* color information - structure member 'mask' MUST BE assigned! */
 int extract_rgb(my1Image *image, char *rgb);
 int assign_rgb(my1Image *image, char *rgb);
-
+/*----------------------------------------------------------------------------*/
 #endif
+/*----------------------------------------------------------------------------*/

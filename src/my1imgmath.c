@@ -1,13 +1,8 @@
-/*
-	my1imgmath => math/matrix utility for my1imgpro
-	Author: Azman M. Yusof (azman@my1matrix.net)
-*/
-
+/*----------------------------------------------------------------------------*/
 #include "my1imgmath.h"
 #include <math.h> /* trig functions */
-
-/* image operations - requires math lib! */
-
+/*----------------------------------------------------------------------------*/
+/*----------------------------------------------------------------------------*/
 void image_rotate(my1Image *image, my1Image *result, int radian, int vin)
 {
 	int iloop, jloop;
@@ -41,9 +36,8 @@ void image_rotate(my1Image *image, my1Image *result, int radian, int vin)
 		}
 	}
 }
-
-/* matrix operations */
-
+/*----------------------------------------------------------------------------*/
+/*----------------------------------------------------------------------------*/
 void identitymatrix(my1Matrix *matrix)
 {
 	int iloop;
@@ -57,7 +51,7 @@ void identitymatrix(my1Matrix *matrix)
 	for(iloop=0;iloop<matrix->height;iloop++)
 		getrow(matrix,iloop)[iloop] = 1;
 }
-
+/*----------------------------------------------------------------------------*/
 void transposematrix(my1Matrix *matrix1, my1Matrix *matrix2)
 {
 	int iloop, jloop;
@@ -71,7 +65,7 @@ void transposematrix(my1Matrix *matrix1, my1Matrix *matrix2)
 		}
 	}
 }
-
+/*----------------------------------------------------------------------------*/
 void matrix_add(my1Matrix *matrix1, my1Matrix *matrix2, my1Matrix *result)
 {
 	int iloop, ilength = matrix1->length;
@@ -81,7 +75,7 @@ void matrix_add(my1Matrix *matrix1, my1Matrix *matrix2, my1Matrix *result)
 			matrix1->data[iloop] + matrix2->data[iloop];
 	}
 }
-
+/*----------------------------------------------------------------------------*/
 void matrix_sub(my1Matrix *matrix1, my1Matrix *matrix2, my1Matrix *result)
 {
 	int iloop, ilength = matrix1->length;
@@ -91,7 +85,7 @@ void matrix_sub(my1Matrix *matrix1, my1Matrix *matrix2, my1Matrix *result)
 			matrix1->data[iloop] - matrix2->data[iloop];
 	}
 }
-
+/*----------------------------------------------------------------------------*/
 void matrix_mul(my1Matrix *matrix1, my1Matrix *matrix2, my1Matrix *result)
 {
 	int iloop, jloop, kloop;
@@ -111,3 +105,5 @@ void matrix_mul(my1Matrix *matrix1, my1Matrix *matrix2, my1Matrix *result)
 		}
 	}
 }
+/*----------------------------------------------------------------------------*/
+/*----------------------------------------------------------------------------*/

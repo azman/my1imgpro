@@ -1,13 +1,8 @@
-/*
-	my1imgfpo => floating-point grayscale image library for my1imgpro
-	Author: azman@my1matrix.net
-*/
-
+/*----------------------------------------------------------------------------*/
 #include "my1imgfpo.h"
 #include <stdlib.h> /* for malloc & free */
-
-/* management functions - image/frame copier/converter */
-
+/*----------------------------------------------------------------------------*/
+/*----------------------------------------------------------------------------*/
 void image2frame(my1Image *image, my1IFrame *frame, int align)
 {
 	int iloop,length;
@@ -19,7 +14,7 @@ void image2frame(my1Image *image, my1IFrame *frame, int align)
 		frame->data[iloop] = (float) image->data[iloop]/WHITE;
 	}
 }
-
+/*----------------------------------------------------------------------------*/
 void frame2image(my1IFrame *frame, my1Image *image, int align)
 {
 	int iloop,length;
@@ -31,9 +26,8 @@ void frame2image(my1IFrame *frame, my1Image *image, int align)
 		image->data[iloop] = (int) (frame->data[iloop]*WHITE);
 	}
 }
-
-/* management functions - decimal (floating-point) framework */
-
+/*----------------------------------------------------------------------------*/
+/*----------------------------------------------------------------------------*/
 float* createframe(my1IFrame *image, int height, int width)
 {
 	int length = height*width;
@@ -47,13 +41,13 @@ float* createframe(my1IFrame *image, int height, int width)
 	}
 	return temp;
 }
-
+/*----------------------------------------------------------------------------*/
 void freeframe(my1IFrame *image)
 {
 	free(image->data);
 	image->data = 0x0;
 }
-
+/*----------------------------------------------------------------------------*/
 void copyframe(my1IFrame *src, my1IFrame *dst)
 {
 	int iloop;
@@ -62,17 +56,17 @@ void copyframe(my1IFrame *src, my1IFrame *dst)
 		dst->data[iloop] = src->data[iloop];
 	}
 }
-
+/*----------------------------------------------------------------------------*/
 float framepixel(my1IFrame *image, int row, int col) /* col(x),row(y) */
 {
 	return image->data[row*image->width+col];
 }
-
+/*----------------------------------------------------------------------------*/
 void setframepixel(my1IFrame *image, int row, int col,float pixel)
 {
 	image->data[row*image->width+col] = pixel;
 }
-
+/*----------------------------------------------------------------------------*/
 float* createkernel(my1Kernel *kernel, int size)
 {
 	int length = size*size;
@@ -87,13 +81,13 @@ float* createkernel(my1Kernel *kernel, int size)
 	}
 	return temp;
 }
-
+/*----------------------------------------------------------------------------*/
 void freekernel(my1Kernel *kernel)
 {
 	free(kernel->factor);
 	kernel->factor = 0x0;
 }
-
+/*----------------------------------------------------------------------------*/
 void setkernel(my1Kernel *kernel, float *farray)
 {
 	int index=0;
@@ -102,9 +96,8 @@ void setkernel(my1Kernel *kernel, float *farray)
 		kernel->factor[index] = farray[index];
 	}
 }
-
-/* frame operator */
-
+/*----------------------------------------------------------------------------*/
+/*----------------------------------------------------------------------------*/
 void getminmax_frame(my1IFrame *frame, float* min, float* max)
 {
 	int iloop;
@@ -119,7 +112,7 @@ void getminmax_frame(my1IFrame *frame, float* min, float* max)
 	}
 	*max = lmax; *min = lmin;
 }
-
+/*----------------------------------------------------------------------------*/
 void normalize_frame(my1IFrame *frame)
 {
 	int iloop;
@@ -131,7 +124,7 @@ void normalize_frame(my1IFrame *frame)
 		frame->data[iloop] = (frame->data[iloop]-min)/scale;
 	}
 }
-
+/*----------------------------------------------------------------------------*/
 void limitrange_frame(my1IFrame *frame)
 {
 	int iloop;
@@ -141,7 +134,7 @@ void limitrange_frame(my1IFrame *frame)
 		else if(frame->data[iloop]<0.0) frame->data[iloop] = 0.0;
 	}
 }
-
+/*----------------------------------------------------------------------------*/
 void absolute_frame(my1IFrame *frame)
 {
 	int iloop;
@@ -151,9 +144,8 @@ void absolute_frame(my1IFrame *frame)
 			frame->data[iloop] = -frame->data[iloop];
 	}
 }
-
-/* other operators */
-
+/*----------------------------------------------------------------------------*/
+/*----------------------------------------------------------------------------*/
 void correlate_frame(my1IFrame *src, my1IFrame *dst, my1Kernel *kernel)
 {
 	int irow, icol, srow, scol, trow, tcol, mrow, mcol, index;
@@ -185,3 +177,5 @@ void correlate_frame(my1IFrame *src, my1IFrame *dst, my1Kernel *kernel)
 		}
 	}
 }
+/*----------------------------------------------------------------------------*/
+/*----------------------------------------------------------------------------*/

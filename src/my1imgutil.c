@@ -1,13 +1,8 @@
-/*
-	my1imgutil => basic utility library for my1imgpro
-	Author: Azman M. Yusof (azman@my1matrix.net)
-*/
-
+/*----------------------------------------------------------------------------*/
 #include "my1imgutil.h"
 #include <stdlib.h> /* for malloc and free? */
-
-/* sub-image management functions */
-
+/*----------------------------------------------------------------------------*/
+/*----------------------------------------------------------------------------*/
 void image2sub(my1Image *image, my1Image *subimage, my1Region *region)
 {
 	int iloop, jloop, xoff = 0, yoff = 0;
@@ -29,7 +24,7 @@ void image2sub(my1Image *image, my1Image *subimage, my1Region *region)
 		}
 	}
 }
-
+/*----------------------------------------------------------------------------*/
 void sub2image(my1Image *subimage, my1Image *image, my1Region *region)
 {
 	int iloop, jloop, xoff = 0, yoff = 0;
@@ -51,7 +46,7 @@ void sub2image(my1Image *subimage, my1Image *image, my1Region *region)
 		}
 	}
 }
-
+/*----------------------------------------------------------------------------*/
 void fillregion(my1Image *image, int value, my1Region *region)
 {
 	int iloop, jloop, xoff = 0, yoff = 0;
@@ -72,9 +67,8 @@ void fillregion(my1Image *image, int value, my1Region *region)
 		}
 	}
 }
-
-/* mask management functions */
-
+/*----------------------------------------------------------------------------*/
+/*----------------------------------------------------------------------------*/
 int* createmask(my1Mask *mask, int size)
 {
 	int length = size*size;
@@ -89,13 +83,13 @@ int* createmask(my1Mask *mask, int size)
 	}
 	return temp;
 }
-
+/*----------------------------------------------------------------------------*/
 void freemask(my1Mask *mask)
 {
 	free(mask->factor);
 	mask->factor = 0x0;
 }
-
+/*----------------------------------------------------------------------------*/
 void setmask(my1Mask *mask, int *parray)
 {
 	int index;
@@ -104,9 +98,8 @@ void setmask(my1Mask *mask, int *parray)
 		mask->factor[index] = parray[index];
 	}
 }
-
-/* generic filter/convolution */
-
+/*----------------------------------------------------------------------------*/
+/*----------------------------------------------------------------------------*/
 void filter_image(my1Image *src, my1Image *dst, my1Mask *mask)
 {
 	int irow, icol, srow, scol, trow, tcol, mrow, mcol, index;
@@ -138,9 +131,8 @@ void filter_image(my1Image *src, my1Image *dst, my1Mask *mask)
 		}
 	}
 }
-
-/* grayscale histogram utility */
-
+/*----------------------------------------------------------------------------*/
+/*----------------------------------------------------------------------------*/
 void histogram_image(my1Image *image, my1Hist *hist)
 {
 	int iloop,length;
@@ -155,7 +147,7 @@ void histogram_image(my1Image *image, my1Hist *hist)
 		hist->count[temp]++;
 	}
 }
-
+/*----------------------------------------------------------------------------*/
 void histogram_smooth(my1Image *image, my1Hist *hist)
 {
 	int iloop,length;
@@ -169,7 +161,7 @@ void histogram_smooth(my1Image *image, my1Hist *hist)
 		image->data[iloop] = (int) buff;
 	}
 }
-
+/*----------------------------------------------------------------------------*/
 int histogram_maxindex(my1Hist *hist)
 {
 	int iloop, temp, max, index = 0;
@@ -185,27 +177,25 @@ int histogram_maxindex(my1Hist *hist)
 	}
 	return index;
 }
-
-/* rgb conversion utility */
-
+/*----------------------------------------------------------------------------*/
+/*----------------------------------------------------------------------------*/
 int encode_rgb(char r, char g, char b)
 {
 	return (((int)r&0xff)<<16) | (((int)g&0xff)<<8) | ((int)b&0xff);
 }
-
+/*----------------------------------------------------------------------------*/
 void decode_rgb(int data, char *r, char *g, char *b)
 {
 	*r = (data&0xff0000)>>16;
 	*g = (data&0xff00)>>8;
 	*b = (data&0xff);
 }
-
-/* color information - structure member 'mask' MUST BE assigned! */
-
+/*----------------------------------------------------------------------------*/
+/*----------------------------------------------------------------------------*/
 int extract_rgb(my1Image *image, char *rgb)
 {
 	int mask = 0x0, loop, index = 0;
-	if(image->mask==MY1MASK_COLOR24)
+	if(image->mask==IMASK_COLOR24)
 	{
 		for(loop=0;loop<image->length;loop++)
 		{
@@ -215,7 +205,7 @@ int extract_rgb(my1Image *image, char *rgb)
 		}
 		mask = image->mask;
 	}
-	else if(image->mask==MY1MASK_GRAY8)
+	else if(image->mask==IMASK_GRAY8)
 	{
 		for(loop=0;loop<image->length;loop++)
 		{
@@ -227,12 +217,12 @@ int extract_rgb(my1Image *image, char *rgb)
 	}
 	return mask;
 }
-
+/*----------------------------------------------------------------------------*/
 int assign_rgb(my1Image *image, char *rgb)
 {
 	int mask = 0x0, loop, index = 0;
 	char chkr, chkg, chkb;
-	if(image->mask==MY1MASK_COLOR24)
+	if(image->mask==IMASK_COLOR24)
 	{
 		for(loop=0;loop<image->length;loop++)
 		{
@@ -242,7 +232,7 @@ int assign_rgb(my1Image *image, char *rgb)
 		}
 		mask = image->mask;
 	}
-	else if(image->mask==MY1MASK_GRAY8)
+	else if(image->mask==IMASK_GRAY8)
 	{
 		for(loop=0;loop<image->length;loop++)
 		{
@@ -255,3 +245,5 @@ int assign_rgb(my1Image *image, char *rgb)
 	}
 	return mask;
 }
+/*----------------------------------------------------------------------------*/
+/*----------------------------------------------------------------------------*/

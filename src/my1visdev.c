@@ -1,14 +1,10 @@
-/*
-	my1visdev => video capture/display device interface for my1imgvid
-	Author: azman@my1matrix.net
-*/
-
+/*----------------------------------------------------------------------------*/
 #include "my1visdev.h"
 //#include <stdlib.h>
 #include <libswscale/swscale.h>
-
+/*----------------------------------------------------------------------------*/
 #define MY1DEBUG
-
+/*----------------------------------------------------------------------------*/
 void av2img(AVFrame* frame, my1Image* image)
 {
 	int index, count;
@@ -22,7 +18,7 @@ void av2img(AVFrame* frame, my1Image* image)
 		image->data[index] = encode_vrgb(temp);
 	}
 }
-
+/*----------------------------------------------------------------------------*/
 void img2av(my1Image* image, AVFrame* frame)
 {
 	int index,count;
@@ -35,7 +31,7 @@ void img2av(my1Image* image, AVFrame* frame)
 		frame->data[0][count++] = temp.b;
 	}
 }
-
+/*----------------------------------------------------------------------------*/
 void initcapture(my1Capture *object)
 {
 	avcodec_register_all();
@@ -51,7 +47,7 @@ void initcapture(my1Capture *object)
 	object->video = 0x0;
 	object->lindex = -1;
 }
-
+/*----------------------------------------------------------------------------*/
 void cleancapture(my1Capture *object)
 {
 	if(object->frame) av_free(object->frame);
@@ -62,7 +58,7 @@ void cleancapture(my1Capture *object)
 	if(object->fcontext) avformat_close_input(&object->fcontext);
 	object->fcontext = 0x0;
 }
-
+/*----------------------------------------------------------------------------*/
 void* grabframe(my1Capture *object)
 {
 	AVFormatContext *pFormatCtx = object->fcontext;
@@ -87,7 +83,7 @@ void* grabframe(my1Capture *object)
 	}
 	return frame;
 }
-
+/*----------------------------------------------------------------------------*/
 void resetframe(my1Capture *object)
 {
 	AVFormatContext *pFormatCtx = object->fcontext;
@@ -102,7 +98,7 @@ void resetframe(my1Capture *object)
 	}
 	avcodec_flush_buffers(object->ccontext);
 }
-
+/*----------------------------------------------------------------------------*/
 void formframe(my1Capture *object)
 {
 	/* convert to RGB! resize here as well? */
@@ -111,7 +107,7 @@ void formframe(my1Capture *object)
 		0, object->video->height,
 		object->buffer->data, object->buffer->linesize);
 }
-
+/*----------------------------------------------------------------------------*/
 void filecapture(my1Capture *object, char *filename)
 {
 	int loop, size;
@@ -223,7 +219,7 @@ void filecapture(my1Capture *object, char *filename)
 	object->video->update = 0x1;
 	object->video->stepit = 0x1;
 }
-
+/*----------------------------------------------------------------------------*/
 void livecapture(my1Capture *object, int camindex)
 {
 	// NOT IMPLEMENTED YET! TODO!
@@ -251,7 +247,7 @@ void livecapture(my1Capture *object, int camindex)
 	object->video->update = 0x1;
 	object->video->stepit = 0x0;
 }
-
+/*----------------------------------------------------------------------------*/
 void grabcapture(my1Capture *object)
 {
 	if(!object->fcontext) return;
@@ -289,7 +285,7 @@ void grabcapture(my1Capture *object)
 	}
 	if(object->video->stepit) object->video->update = 0x0;
 }
-
+/*----------------------------------------------------------------------------*/
 void stopcapture(my1Capture *object)
 {
 	if(!object->fcontext) return;
@@ -306,7 +302,7 @@ void stopcapture(my1Capture *object)
 	avformat_close_input(&object->fcontext);
 	object->fcontext = 0x0;
 }
-
+/*----------------------------------------------------------------------------*/
 void initdisplay(my1Display *object)
 {
 	/* initialize SDL - audio not needed, actually! */
@@ -321,7 +317,7 @@ void initdisplay(my1Display *object)
 	object->pixbuf = 0x0;
 	object->buffer = 0x0;
 }
-
+/*----------------------------------------------------------------------------*/
 void cleandisplay(my1Display *object)
 {
 	if(object->yuv12fmt) sws_freeContext(object->yuv12fmt);
@@ -329,7 +325,7 @@ void cleandisplay(my1Display *object)
 	if(object->buffer) av_free(object->buffer);
 	SDL_Quit();
 }
-
+/*----------------------------------------------------------------------------*/
 void setupdisplay(my1Display *object)
 {
 	int size;
@@ -381,7 +377,7 @@ void setupdisplay(my1Display *object)
 	object->pict.linesize[1] = object->overlay->pitches[2];
 	object->pict.linesize[2] = object->overlay->pitches[1];
 }
-
+/*----------------------------------------------------------------------------*/
 void buffdisplay(my1Display *object)
 {
 	if(!object->overlay) return;
@@ -394,15 +390,16 @@ void buffdisplay(my1Display *object)
 		object->pict.data, object->pict.linesize);
 	SDL_UnlockYUVOverlay(object->overlay);
 }
-
+/*----------------------------------------------------------------------------*/
 void showdisplay(my1Display *object)
 {
 	if(!object->video) return;
 	SDL_DisplayYUVOverlay(object->overlay, &object->view); /* blit op? */
 }
-
+/*----------------------------------------------------------------------------*/
 void titledisplay(my1Display *object, const char *title, const char *icon)
 {
 	if(!object->video) return;
 	SDL_WM_SetCaption(title,icon);
 }
+/*----------------------------------------------------------------------------*/

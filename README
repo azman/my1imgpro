@@ -20,6 +20,10 @@ This software consists of several small modules:
 
 The test programs (and my1visdev) require SDL and libav libraries.
 
+Regarding the image structure, although my1imgpro library is meant for 8-bit
+grayscale processing, my1Image structure can support color image using
+RGB-encoded integer (assuming int is at least 32-bit).
+
 Notice that this software is using BMP image format. The reason for that
 is simply that this software started its life on Win32 platform. Other format
 like Portable xxxMap (bit - *.pbm, gray - *.pgm, pix - *.ppm) or
