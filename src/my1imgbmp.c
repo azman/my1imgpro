@@ -14,8 +14,8 @@ int loadBMPimage(char *filename, my1Image *image)
 	my1BMPHead head;
 	my1BMPInfo info;
 #ifdef MY1DEBUG
-	printf("Sizeof my1BMPHead: %d (%d)\n",sizeof(my1BMPHead),BMP_HEAD_SIZE);
-	printf("Sizeof my1BMPInfo: %d (%d)\n",sizeof(my1BMPInfo),BMP_INFO_SIZE);
+	printf("Sizeof my1BMPHead: %lu (%d)\n",sizeof(my1BMPHead),BMP_HEAD_SIZE);
+	printf("Sizeof my1BMPInfo: %lu (%d)\n",sizeof(my1BMPInfo),BMP_INFO_SIZE);
 #endif
 	/* open file for read */
 	bmpfile = fopen(filename, "rb");
@@ -34,10 +34,10 @@ int loadBMPimage(char *filename, my1Image *image)
 	printf("BMP DEBUG INFO\n");
 	printf("--------------\n");
 	printf("Width: %d Height: %d\n", info.bmpWidth, info.bmpHeight);
-	printf("File size: %u bytes\n", info.bmpSize);
+	printf("File size: %u bytes\n", head.bmpSize);
 	printf("Info size: %u bytes\n", info.bmpInfoSize);
 	printf("Data size: %u bytes\n", info.bmpDataSize);
-	printf("Data offset: %u bytes\n", info.bmpOffset);
+	printf("Data offset: %u bytes\n", head.bmpOffset);
 	printf("Bits per pixel: %d, Colors: %d\n",
 		info.bmpBitsPerPixel, info.bmpColorCount);
 #endif
@@ -117,7 +117,7 @@ int loadBMPimage(char *filename, my1Image *image)
 	fclose(bmpfile);
 	/* put on mask?? */
 	image->mask = iscolor;
-	return iscolor;
+	return 0;
 }
 /*----------------------------------------------------------------------------*/
 int saveBMPimage(char *filename, my1Image *image)
@@ -130,8 +130,8 @@ int saveBMPimage(char *filename, my1Image *image)
 	my1BMPHead head;
 	my1BMPInfo info;
 #ifdef MY1DEBUG
-	printf("Sizeof my1BMPHead: %d (%d)\n",sizeof(my1BMPHead),BMP_HEAD_SIZE);
-	printf("Sizeof my1BMPInfo: %d (%d)\n",sizeof(my1BMPInfo),BMP_INFO_SIZE);
+	printf("Sizeof my1BMPHead: %lu (%d)\n",sizeof(my1BMPHead),BMP_HEAD_SIZE);
+	printf("Sizeof my1BMPInfo: %lu (%d)\n",sizeof(my1BMPInfo),BMP_INFO_SIZE);
 #endif
 	/* check if color image - palette NOT possible! */
 	if(image->mask==IMASK_COLOR24) bytepp = 3;
@@ -165,10 +165,10 @@ int saveBMPimage(char *filename, my1Image *image)
 	printf("BMP DEBUG INFO (CREATED!)\n");
 	printf("-------------------------\n");
 	printf("Width: %d Height: %d\n", info.bmpWidth, info.bmpHeight);
-	printf("File size: %u bytes\n", info.bmpSize);
+	printf("File size: %u bytes\n", head.bmpSize);
 	printf("Info size: %u bytes\n", info.bmpInfoSize);
 	printf("Data size: %u bytes\n", info.bmpDataSize);
-	printf("Data offset: %u bytes\n", info.bmpOffset);
+	printf("Data offset: %u bytes\n", head.bmpOffset);
 	printf("Bits per pixel: %d, Colors: %d\n",
 		info.bmpBitsPerPixel, info.bmpColorCount);
 #endif

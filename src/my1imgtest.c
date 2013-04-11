@@ -1,13 +1,23 @@
 /*----------------------------------------------------------------------------*/
 #include <stdio.h>
+#include <string.h>
 #include <SDL/SDL.h>
 #include "my1imgbmp.h"
+#include "my1imgpnm.h"
 #include "my1imgfpo.h"
 #include "my1imgutil.h"
 #include "my1imgmath.h"
 #include <math.h> /* for gaussian calc! */
 /*----------------------------------------------------------------------------*/
 #define PI 3.14159265
+/*----------------------------------------------------------------------------*/
+/* sample filters */
+int laplace_image(my1Image *src, my1Image *dst);
+int sobel_x_image(my1Image *src, my1Image *dst);
+int sobel_y_image(my1Image *src, my1Image *dst);
+int sobel_image(my1Image *src, my1Image *dst_mag, my1Image *dst_ang);
+int laplace_frame(my1IFrame *src, my1IFrame *dst);
+int gauss_frame(my1IFrame *src, my1IFrame *dst, float sigma, float *over);
 /*----------------------------------------------------------------------------*/
 void print_image_info(my1Image* image)
 {
@@ -24,30 +34,56 @@ void print_image_info(my1Image* image)
 	}
 }
 /*----------------------------------------------------------------------------*/
-void load_image(my1Image* image)
+void load_image(my1Image* image, char *pfilename)
 {
 	char filename[80];
-	int colorbmp;
-	printf("Enter BMP filename: ");
-	scanf("%s",filename);
-	colorbmp = loadBMPimage(filename,image);
-	if(colorbmp<0)
-		printf("Cannot load input file '%s'! [%d]\n", filename, colorbmp);
-	else
-		printf("Color: %d.\n", colorbmp);
+	int bmp = 0, pnm = 0;
+	/** request filename if not given */
+	if(!pfilename)
+	{
+		pfilename = filename;
+		printf("Enter image filename: ");
+		scanf("%s",filename);
+	}
+	/** try to open multiple type - maybe check extension? */
+	do
+	{
+		if(!(bmp=loadBMPimage(pfilename,image))) break;
+		if(!(pnm=loadPNMimage(pfilename,image))) break;
+		printf("Cannot load input file '%s'! [%d][%d]\n",
+			pfilename,bmp,pnm);
+	}
+	while(0);
 }
 /*----------------------------------------------------------------------------*/
-void save_image(my1Image* image)
+void save_image(my1Image* image, char *pfilename)
 {
 	char filename[80];
-	int errorlog;
-	printf("Enter BMP filename: ");
-	scanf("%s",filename);
-	errorlog = saveBMPimage(filename,image);
-	if(errorlog<0)
-		printf("Cannot write to file '%s'! [%d]\n", filename, errorlog);
-	else
-		printf("Image written to '%s'.\n", filename);
+	int bmp = 0, pnm = 0, size;
+	/** request filename if not given */
+	if(!pfilename)
+	{
+		pfilename = filename;
+		printf("Enter image filename: ");
+		scanf("%s",filename);
+	}
+	/** check extension for format? */
+	{
+		char *ptest;
+		size = strlen(pfilename);
+		ptest = &pfilename[size-4];
+		if(strcmp(ptest,".bmp")==0)
+		{
+			bmp = saveBMPimage(pfilename,image);
+			printf("Cannot write BMP file '%s'! [%d]\n", pfilename, bmp);
+		}
+		else /* default is pnm! */
+		{
+			pnm = savePNMimage(pfilename,image);
+			printf("Cannot write PNM file '%s'! [%d]\n", pfilename, pnm);
+		}
+		if(!bmp&&!pnm) printf("Image written to '%s'.\n", pfilename);
+	}
 }
 /*----------------------------------------------------------------------------*/
 void view_image(my1Image* image)
@@ -163,14 +199,6 @@ void menu_matrix(my1Image* image)
 	printf("Coming soon...\n\n");
 }
 /*----------------------------------------------------------------------------*/
-/* sample filters */
-int laplace_image(my1Image *src, my1Image *dst);
-int sobel_x_image(my1Image *src, my1Image *dst);
-int sobel_y_image(my1Image *src, my1Image *dst);
-int sobel_image(my1Image *src, my1Image *dst_mag, my1Image *dst_ang);
-int laplace_frame(my1IFrame *src, my1IFrame *dst);
-int gauss_frame(my1IFrame *src, my1IFrame *dst, float sigma, float *over);
-/*----------------------------------------------------------------------------*/
 int main(int argc, char* argv[])
 {
 	int not_done = 1, select, loop;
@@ -192,9 +220,7 @@ int main(int argc, char* argv[])
 	}
 
 	/* try to open file if requested! */
-	select = loadBMPimage(pfilename,&currimage);
-	if(select<0)
-		printf("Cannot load input file '%s'! [%d]\n", pfilename, select);
+	if(pfilename) load_image(&currimage,pfilename);
 
 	/* main loop */
 	do
@@ -217,10 +243,10 @@ int main(int argc, char* argv[])
 		switch(select)
 		{
 			case 1:
-				load_image(&currimage);
+				load_image(&currimage,0x0);
 				break;
 			case 2:
-				save_image(&currimage);
+				save_image(&currimage,0x0);
 				break;
 			case 3:
 				if(currimage.length) view_image(&currimage);

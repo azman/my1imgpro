@@ -3,8 +3,6 @@
 //#include <stdlib.h>
 #include <libswscale/swscale.h>
 /*----------------------------------------------------------------------------*/
-#define MY1DEBUG
-/*----------------------------------------------------------------------------*/
 void av2img(AVFrame* frame, my1Image* image)
 {
 	int index, count;
