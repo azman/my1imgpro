@@ -15,6 +15,10 @@ OBJSIMG = my1imgpro.o my1imgutil.o my1imgmath.o my1imgfpo.o my1imgbmp.o my1imgpn
 TESTVIS = my1vistest
 OBJSVIS = my1imgpro.o my1imgvid.o my1visdev.o my1vistest.o
 
+ifeq ($(DO_DEBUG),YES)
+	CFLAG += -g -DMY1DEBUG
+endif
+
 EXECUTE = $(TESTVIS)
 OBJECTS = $(OBJSVIS)
 debug: CFLAG += -g -DMY1DEBUG

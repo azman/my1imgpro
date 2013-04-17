@@ -41,8 +41,8 @@ int loadPNMimage(char *filename, my1Image *image)
 	/** get the pixels */
 	count = width*height;
 #ifdef MY1DEBUG
-	printf("Image width: %d, height: %d, Length: %d, levels: %d!\n",
-		width,height,count,levels);
+	printf("Version: %d, levels: %d!\n",version,levels);
+	printf("Image width: %d, height: %d\n",width,height);
 #endif
 	/** try to create storage */
 	if(createimage(image,height,width)==0x0)
@@ -60,7 +60,17 @@ int loadPNMimage(char *filename, my1Image *image)
 				error = PNM_ERROR_FILESIZE;
 				break;
 			}
+			if(r>levels) r = levels;
+			if(g>levels) g = levels;
+			if(b>levels) b = levels;
 			buff = encode_rgb(r,g,b);
+#ifdef MY1DEBUG
+			if(!loop)
+			{
+				printf("First pixel: {%d,%d,%d} => ",r,g,b);
+				printf("{%02X,%02X,%02X} => {%08X}\n",r,g,b,buff);
+			}
+#endif
 		}
 		else
 		{
@@ -69,6 +79,7 @@ int loadPNMimage(char *filename, my1Image *image)
 				error = PNM_ERROR_FILESIZE;
 				break;
 			}
+			if(buff>levels) buff = levels;
 			/* adjust for binary pixel */
 			if(version==1)
 			{
@@ -78,7 +89,7 @@ int loadPNMimage(char *filename, my1Image *image)
 		image->data[loop] = buff;
 	}
 	fclose(pnmfile);
-	image->mask = version==3? IMASK_COLOR24 : IMASK_GRAY8;
+	image->mask = (version==3) ? IMASK_COLOR24 : IMASK_GRAY8;
 	return 0;
 }
 /*----------------------------------------------------------------------------*/
@@ -86,7 +97,8 @@ int savePNMimage(char *filename, my1Image *image)
 {
 	FILE *pnmfile;
 	char buffer[PNM_MAGIC_SIZE];
-	int loop, buff, r, g, b, version = 2;
+	unsigned char r, g, b;
+	int loop, buff, version = 2;
 	/* check if color image */
 	if(image->mask==IMASK_COLOR24) version = 3;
 	/* try to open file for write! */
@@ -101,13 +113,24 @@ int savePNMimage(char *filename, my1Image *image)
 	fprintf(pnmfile,"%d %d\n",image->width,image->height);
 	/* write level - ALWAYS 8-bit {gray,color}levels */
 	fprintf(pnmfile,"255\n");
+#ifdef MY1DEBUG
+	printf("Version: %d, ",version);
+	printf("Image width: %d, height: %d\n",image->width,image->height);
+#endif
 	/* write data! */
 	for(loop=0;loop<image->length;loop++)
 	{
 		buff = image->data[loop];
 		if(image->mask==IMASK_COLOR24)
 		{
-			decode_rgb(buff,(char*)&r,(char*)&g, (char*)&b);
+			decode_rgb(buff,(char*)&r,(char*)&g,(char*)&b);
+#ifdef MY1DEBUG
+			if(!loop)
+			{
+				printf("First pixel: {%d,%d,%d} => ",r,g,b);
+				printf("{%02X,%02X,%02X} => {%08X}\n",r,g,b,buff);
+			}
+#endif
 			fprintf(pnmfile,"%d %d %d\n",r,g,b);
 		}
 		else

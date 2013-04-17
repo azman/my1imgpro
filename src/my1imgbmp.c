@@ -8,23 +8,23 @@ int loadBMPimage(char *filename, my1Image *image)
 	FILE *bmpfile;
 	unsigned int tellSize;
 	unsigned char *pChar, someChar;
+	unsigned char bmpID[2];
 	int row, col, r, g, b, temp, buff;
 	int iscolor = IMASK_COLOR24; /* assumes 24-bit rgb by default */
 	int palette[256]; /* 8-bit palette */
 	my1BMPHead head;
 	my1BMPInfo info;
-#ifdef MY1DEBUG
-	printf("Sizeof my1BMPHead: %lu (%d)\n",sizeof(my1BMPHead),BMP_HEAD_SIZE);
-	printf("Sizeof my1BMPInfo: %lu (%d)\n",sizeof(my1BMPInfo),BMP_INFO_SIZE);
-#endif
 	/* open file for read */
 	bmpfile = fopen(filename, "rb");
 	if(!bmpfile) return BMP_ERROR_FILEOPEN; /* cannot open file */
-	/* get header and check bitmap id */
+	/* get/check bitmap id */
+	pChar = (unsigned char*) bmpID;
+	fread(pChar, sizeof(bmpID), 1, bmpfile);
+	if(bmpID[0]!='B'||bmpID[1]!='M')
+		return BMP_ERROR_VALIDBMP; /* not a bmp format */
+	/* get header */
 	pChar = (unsigned char*) &head;
 	fread(pChar, BMP_HEAD_SIZE, 1, bmpfile);
-	if(head.bmpID[0]!='B'||head.bmpID[1]!='M')
-		return BMP_ERROR_VALIDBMP; /* not a bmp format */
 	/* get info */
 	pChar = (unsigned char*) &info;
 	fread(pChar, BMP_INFO_SIZE, 1, bmpfile);
@@ -33,6 +33,8 @@ int loadBMPimage(char *filename, my1Image *image)
 	printf("--------------\n");
 	printf("BMP DEBUG INFO\n");
 	printf("--------------\n");
+	printf("Sizeof my1BMPHead: %lu (%d)\n",sizeof(my1BMPHead),BMP_HEAD_SIZE);
+	printf("Sizeof my1BMPInfo: %lu (%d)\n",sizeof(my1BMPInfo),BMP_INFO_SIZE);
 	printf("Width: %d Height: %d\n", info.bmpWidth, info.bmpHeight);
 	printf("File size: %u bytes\n", head.bmpSize);
 	printf("Info size: %u bytes\n", info.bmpInfoSize);
@@ -81,11 +83,11 @@ int loadBMPimage(char *filename, my1Image *image)
 			if(info.bmpBitsPerPixel==24)
 			{
 				fread(pChar, 1, 1, bmpfile);
-				r = (int) someChar & 0xFF;
+				b = (int) someChar & 0xFF;
 				fread(pChar, 1, 1, bmpfile);
 				g = (int) someChar & 0xFF;
 				fread(pChar, 1, 1, bmpfile);
-				b = (int) someChar & 0xFF;
+				r = (int) someChar & 0xFF;
 				temp += 3;
 			}
 			else
@@ -105,6 +107,13 @@ int loadBMPimage(char *filename, my1Image *image)
 			/* 'encode' if necessary! */
 			if(iscolor) buff = encode_rgb(r,g,b);
 			else buff = r; /** just take ANY component */
+#ifdef MY1DEBUG
+			if(col==0&&row==0)
+			{
+				printf("First pixel: {%d,%d,%d} => ",r,g,b);
+				printf("{%02X,%02X,%02X} => {%08X}\n",r,g,b,buff);
+			}
+#endif
 			setimagepixel(image,row,col,buff);
 		}
 		while(temp%4)
@@ -127,12 +136,9 @@ int saveBMPimage(char *filename, my1Image *image)
 	unsigned int vectorSize;
 	int row, col, temp, buff, length, bytepp = 1;
 	unsigned char *pChar, someChar, r, g, b;
+	unsigned char bmpID[2];
 	my1BMPHead head;
 	my1BMPInfo info;
-#ifdef MY1DEBUG
-	printf("Sizeof my1BMPHead: %lu (%d)\n",sizeof(my1BMPHead),BMP_HEAD_SIZE);
-	printf("Sizeof my1BMPInfo: %lu (%d)\n",sizeof(my1BMPInfo),BMP_INFO_SIZE);
-#endif
 	/* check if color image - palette NOT possible! */
 	if(image->mask==IMASK_COLOR24) bytepp = 3;
 	/* calculate filesize */
@@ -142,8 +148,8 @@ int saveBMPimage(char *filename, my1Image *image)
 	headSize = BMP_HEAD_SIZE+BMP_INFO_SIZE; /* already includes 2-byte id! */
 	fileSize = headSize + vectorSize;
 	/* populate BMP header */
-	head.bmpID[0] = 'B';
-	head.bmpID[1] = 'M';
+	bmpID[0] = 'B';
+	bmpID[1] = 'M';
 	head.bmpSize = fileSize;
 	head.bmpReserved = 0;
 	head.bmpOffset = headSize;
@@ -164,6 +170,8 @@ int saveBMPimage(char *filename, my1Image *image)
 	printf("-------------------------\n");
 	printf("BMP DEBUG INFO (CREATED!)\n");
 	printf("-------------------------\n");
+	printf("Sizeof my1BMPHead: %lu (%d)\n",sizeof(my1BMPHead),BMP_HEAD_SIZE);
+	printf("Sizeof my1BMPInfo: %lu (%d)\n",sizeof(my1BMPInfo),BMP_INFO_SIZE);
 	printf("Width: %d Height: %d\n", info.bmpWidth, info.bmpHeight);
 	printf("File size: %u bytes\n", head.bmpSize);
 	printf("Info size: %u bytes\n", info.bmpInfoSize);
@@ -175,6 +183,9 @@ int saveBMPimage(char *filename, my1Image *image)
 	/* try to open file for write! */
 	bmpfile = fopen(filename,"wb");
 	if(!bmpfile) return BMP_ERROR_FILEOPEN; /* cannot open file */
+	/* write bitmap id */
+	pChar = (unsigned char*) bmpID;
+	fwrite(pChar, sizeof(bmpID), 1, bmpfile);
 	/* write bitmap head */
 	pChar = (unsigned char*) &head;
 	fwrite(pChar,BMP_HEAD_SIZE,1,bmpfile);
@@ -193,11 +204,11 @@ int saveBMPimage(char *filename, my1Image *image)
 			if(image->mask==IMASK_COLOR24)
 			{
 				decode_rgb(buff,(char*)&r,(char*)&g, (char*)&b);
-				someChar = r;
+				someChar = b;
 				fwrite(pChar,1,1,bmpfile);
 				someChar = g;
 				fwrite(pChar,1,1,bmpfile);
-				someChar = b;
+				someChar = r;
 				fwrite(pChar,1,1,bmpfile);
 				temp += 3;
 			}

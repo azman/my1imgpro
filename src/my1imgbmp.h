@@ -12,13 +12,13 @@
 /*----------------------------------------------------------------------------*/
 typedef struct
 {
-	unsigned char bmpID[2]; /* 2 bytes */
+	/* unsigned char bmpID[2]; / * excluded! 2 bytes */
 	unsigned int bmpSize; /* 4 bytes */
 	unsigned int bmpReserved; /* 4 bytes */
 	unsigned int bmpOffset; /* 4 bytes */
 }
 my1BMPHead;
-#define BMP_HEAD_SIZE 14
+#define BMP_HEAD_SIZE 12
 /*----------------------------------------------------------------------------*/
 typedef struct
 {

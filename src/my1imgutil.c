@@ -199,8 +199,8 @@ int extract_rgb(my1Image *image, char *rgb)
 	{
 		for(loop=0;loop<image->length;loop++)
 		{
-			decode_rgb(image->data[loop],&rgb[index+0],
-				&rgb[index+1],&rgb[index+2]);
+			decode_rgb(image->data[loop],&rgb[index+2],
+				&rgb[index+1],&rgb[index+0]);
 			index += 3;
 		}
 		mask = image->mask;
@@ -226,8 +226,8 @@ int assign_rgb(my1Image *image, char *rgb)
 	{
 		for(loop=0;loop<image->length;loop++)
 		{
-			image->data[loop] = encode_rgb(rgb[index+0],
-				rgb[index+1],rgb[index+2]);
+			image->data[loop] = encode_rgb(rgb[index+2],
+				rgb[index+1],rgb[index+0]);
 			index += 3;
 		}
 		mask = image->mask;
