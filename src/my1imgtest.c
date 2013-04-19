@@ -16,7 +16,7 @@
 #define MY1APP_PROGVERS "build"
 #endif
 #ifndef MY1APP_PROGINFO
-#define MY1APP_PROGINFO "Basic Image Tool  Library"
+#define MY1APP_PROGINFO "Basic Image Tool Library"
 #endif
 /*----------------------------------------------------------------------------*/
 #define ERROR_GENERAL -1 
@@ -334,6 +334,37 @@ int save_image(my1Image* image, char *pfilename)
 	return pnm;
 }
 /*----------------------------------------------------------------------------*/
+int cdata_image(my1Image* image, char *pfilename)
+{
+	char filename[80];
+	int loop;
+	/** request filename if not given */
+	if(!pfilename)
+	{
+		pfilename = filename;
+		printf("Enter C data filename: ");
+		scanf("%s",filename);
+	}
+	/** write it? */
+	{
+		FILE *cfile = fopen(pfilename,"wt");
+		if(!cfile) return -1; /* cannot open file */
+		fprintf(cfile,"unsigned char image[%d] = {",image->length);
+		/* write data! */
+		for(loop=0;loop<image->length;loop++)
+		{
+			if(loop%16==0)
+				fprintf(cfile,"\n");
+			fprintf(cfile,"0x%02X",image->data[loop]);
+			if(loop<image->length-1)
+				fprintf(cfile,",");
+		}
+		fprintf(cfile,"};");
+		fclose(cfile);
+	}
+	return 0;
+}
+/*----------------------------------------------------------------------------*/
 void view_image(my1Image* image)
 {
 	SDL_Surface *screen;
@@ -353,6 +384,7 @@ void view_image(my1Image* image)
 		return;
 	}
 
+	if(!image->mask) image-> mask = IMASK_GRAY8;
 	char *pImage = malloc(image->height*image->width*3);
 	if(!extract_rgb(image,pImage))
 	{
@@ -374,6 +406,8 @@ void view_image(my1Image* image)
 	SDL_Flip(screen);
 	SDL_FreeSurface(temp);
 	free(pImage);
+
+	printf("Showing image... Press 'q' to quit.\n");
 
 	while(1)
 	{
@@ -398,9 +432,10 @@ void view_image(my1Image* image)
 /*----------------------------------------------------------------------------*/
 int main(int argc, char* argv[])
 {
-	int loop, test = 0, error = 0, command = 0;
-	char *psave = 0x0, *pname = 0x0;
-	my1Image currimage, tempimage;
+	int loop, test = 0, view = 1, error = 0, command = COMMAND_NONE;
+	char *psave = 0x0, *pname = 0x0, *pdata = 0x0;
+	my1Image currimage, tempimage, *pimage;
+	my1IFrame currframe, tempframe;
 
 	/* print tool info */
 	printf("\n%s - %s (%s)\n",MY1APP_PROGNAME,MY1APP_PROGINFO,MY1APP_PROGVERS);
@@ -419,10 +454,24 @@ int main(int argc, char* argv[])
 					if(loop<argc)
 					{
 						psave = argv[loop];
+						view = 0;
 					}
 					else
 					{
 						printf("Cannot get save file name - NOT saving!\n");
+					}
+				}
+				else if(!strcmp(argv[loop],"--cdata"))
+				{
+					loop++;
+					if(loop<argc)
+					{
+						pdata = argv[loop];
+						view = 0;
+					}
+					else
+					{
+						printf("Cannot get C data file name - NOT writing!\n");
 					}
 				}
 				else
@@ -440,17 +489,17 @@ int main(int argc, char* argv[])
 				}
 				/* then check for command! */
 				if(!strcmp(argv[loop],"laplace1"))
-					test = COMMAND_LAPLACE1;
+					command = COMMAND_LAPLACE1;
 				else if(!strcmp(argv[loop],"sobelx"))
-					test = COMMAND_SOBELX;
+					command = COMMAND_SOBELX;
 				else if(!strcmp(argv[loop],"sobely"))
-					test = COMMAND_SOBELY;
+					command = COMMAND_SOBELY;
 				else if(!strcmp(argv[loop],"sobelall"))
-					test = COMMAND_SOBELALL;
+					command = COMMAND_SOBELALL;
 				else if(!strcmp(argv[loop],"laplace2"))
-					test = COMMAND_LAPLACE2;
+					command = COMMAND_LAPLACE2;
 				else if(!strcmp(argv[loop],"gauss"))
-					test = COMMAND_GAUSS;
+					command = COMMAND_GAUSS;
 				else
 				{
 					printf("Unknown parameter %s!\n",argv[loop]);
@@ -460,9 +509,9 @@ int main(int argc, char* argv[])
 				if(command)
 				{
 					printf("Warning! Command '%s' overrides '%s'!\n",
-						argv[loop],argv[command]);
+						argv[loop],argv[test]);
 				}
-				command = loop;
+				test = loop;
 			}
 		}
 	}
@@ -474,9 +523,11 @@ int main(int argc, char* argv[])
 		return ERROR_GENERAL;
 	}
 
-	/* initialize image */
+	/* initialize image & frame*/
 	initimage(&currimage);
 	initimage(&tempimage);
+	initframe(&currframe);
+	initframe(&tempframe);
 
 	/* try to open file */
 	if((error=load_image(&currimage,pname))<0)
@@ -488,50 +539,87 @@ int main(int argc, char* argv[])
 	printf("Input image: %s\n",pname);
 	print_image_info(&currimage);
 
-	/** create processing buffer & duplicate image */
-	createimage(&tempimage,currimage.height,currimage.width);
-	copyimage(&currimage,&tempimage);
-	tempimage.mask = currimage.mask;
-
 	/* process command */
 	switch(command)
 	{
 		case COMMAND_LAPLACE1:
 		{
+			grayscale_image(&currimage);
+			createimage(&tempimage,currimage.height,currimage.width);
+			laplace_image(&currimage,&tempimage);
 			break;
 		}
 		case COMMAND_SOBELX:
 		{
+			grayscale_image(&currimage);
+			createimage(&tempimage,currimage.height,currimage.width);
+			sobel_x_image(&currimage,&tempimage);
 			break;
 		}
 		case COMMAND_SOBELY:
 		{
+			grayscale_image(&currimage);
+			createimage(&tempimage,currimage.height,currimage.width);
+			sobel_y_image(&currimage,&tempimage);
 			break;
 		}
 		case COMMAND_SOBELALL:
 		{
+			grayscale_image(&currimage);
+			createimage(&tempimage,currimage.height,currimage.width);
+			sobel_image(&currimage,&tempimage,0x0);
 			break;
 		}
 		case COMMAND_LAPLACE2:
 		{
+			grayscale_image(&currimage);
+			createimage(&tempimage,currimage.height,currimage.width);
+			createframe(&currframe,currimage.height,currimage.width);
+			createframe(&tempframe,currimage.height,currimage.width);
+			image2frame(&currimage,&currframe,0);
+			laplace_frame(&currframe,&tempframe);
+			frame2image(&tempframe,&tempimage,1);
 			break;
 		}
 		case COMMAND_GAUSS:
 		{
+			grayscale_image(&currimage);
+			createimage(&tempimage,currimage.height,currimage.width);
+			createframe(&currframe,currimage.height,currimage.width);
+			createframe(&tempframe,currimage.height,currimage.width);
+			image2frame(&currimage,&currframe,0);
+			gauss_frame(&currframe,&tempframe,1.0,0x0);
+			frame2image(&tempframe,&tempimage,1);
 			break;
 		}
 	}
 
-	/* will always at least view image */
-	view_image(&tempimage);
+	if(!tempimage.length)
+		pimage = &currimage;
+	else
+		pimage = &tempimage;
+	printf("Check image:\n");
+	print_image_info(pimage);
+
+	/* view image if not saving to file! */
+	if(view) view_image(pimage);
 
 	/** save results if requested */
 	if(psave)
 	{
-		error=save_image(&tempimage,psave);
+		printf("Saving image data to %s...\n",psave);
+		error=save_image(pimage,psave);
+	}
+
+	if(pdata)
+	{
+		printf("Saving C data to %s...\n",pdata);
+		error=cdata_image(pimage,pdata);
 	}
 
 	/* cleanup */
+	freeframe(&currframe);
+	freeframe(&tempframe);
 	freeimage(&currimage);
 	freeimage(&tempimage);
 

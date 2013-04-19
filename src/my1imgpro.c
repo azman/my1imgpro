@@ -28,8 +28,9 @@ int* createimage(my1Image *image, int height, int width)
 /*----------------------------------------------------------------------------*/
 void freeimage(my1Image *image)
 {
-	free(image->data);
+	if(image->length) free(image->data);
 	image->data = 0x0;
+	image->length = 0;
 }
 /*----------------------------------------------------------------------------*/
 void copyimage(my1Image *src, my1Image *dst)

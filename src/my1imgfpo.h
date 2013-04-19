@@ -22,6 +22,7 @@ struct _kernel
 typedef struct _kernel my1Kernel;
 /*----------------------------------------------------------------------------*/
 /* management functions - image/frame copier/converter */
+void initframe(my1IFrame *frame);
 void image2frame(my1Image *image, my1IFrame *frame, int align);
 void frame2image(my1IFrame *frame, my1Image *image, int align);
 /* management functions - decimal (floating-point) framework */

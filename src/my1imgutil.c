@@ -179,6 +179,25 @@ int histogram_maxindex(my1Hist *hist)
 }
 /*----------------------------------------------------------------------------*/
 /*----------------------------------------------------------------------------*/
+void grayscale_image(my1Image *image)
+{
+	int loop;
+	char r, g, b;
+	if(image->mask==IMASK_COLOR24)
+	{
+		for(loop=0;loop<image->length;loop++)
+		{
+			decode_rgb(image->data[loop],&r,&g,&b);
+			image->data[loop] = ((int)r+g+b)/3;
+		}
+		image->mask = 0;
+	}
+	else if(image->mask==IMASK_GRAY8)
+	{
+		image->mask = 0; /* just remove formality? */
+	}
+}
+/*----------------------------------------------------------------------------*/
 int encode_rgb(char r, char g, char b)
 {
 	return (((int)r&0xff)<<16) | (((int)g&0xff)<<8) | ((int)b&0xff);

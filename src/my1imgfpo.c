@@ -3,11 +3,18 @@
 #include <stdlib.h> /* for malloc & free */
 /*----------------------------------------------------------------------------*/
 /*----------------------------------------------------------------------------*/
+void initframe(my1IFrame *frame)
+{
+	frame->width = 0;
+	frame->height = 0;
+	frame->length = 0;
+	frame->data = 0x0;
+}
+/*----------------------------------------------------------------------------*/
 void image2frame(my1Image *image, my1IFrame *frame, int align)
 {
 	int iloop,length;
-	if(align==1)
-		limit_pixel(image); /* 0 - 255 => 0.0 - 1.0 */
+	if(align==1) limit_pixel(image); /* 0 - 255 => 0.0 - 1.0 */
 	length = image->height*image->width;
 	for(iloop=0;iloop<length;iloop++)
 	{
@@ -18,8 +25,7 @@ void image2frame(my1Image *image, my1IFrame *frame, int align)
 void frame2image(my1IFrame *frame, my1Image *image, int align)
 {
 	int iloop,length;
-	if(align==1)
-		limitrange_frame(frame); /* 0 - 255 => 0.0 - 1.0 */
+	if(align==1) limitrange_frame(frame); /* 0 - 255 => 0.0 - 1.0 */
 	length = frame->height*frame->width;
 	for(iloop=0;iloop<length;iloop++)
 	{
@@ -28,24 +34,25 @@ void frame2image(my1IFrame *frame, my1Image *image, int align)
 }
 /*----------------------------------------------------------------------------*/
 /*----------------------------------------------------------------------------*/
-float* createframe(my1IFrame *image, int height, int width)
+float* createframe(my1IFrame *frame, int height, int width)
 {
 	int length = height*width;
 	float *temp = (float*) malloc(length*sizeof(float));
 	if(temp)
 	{
-		image->data = temp;
-		image->height = height;
-		image->width = width;
-		image->length = length;
+		frame->data = temp;
+		frame->height = height;
+		frame->width = width;
+		frame->length = length;
 	}
 	return temp;
 }
 /*----------------------------------------------------------------------------*/
-void freeframe(my1IFrame *image)
+void freeframe(my1IFrame *frame)
 {
-	free(image->data);
-	image->data = 0x0;
+	if(frame->length) free(frame->data);
+	frame->data = 0x0;
+	frame->length = 0;
 }
 /*----------------------------------------------------------------------------*/
 void copyframe(my1IFrame *src, my1IFrame *dst)
@@ -57,14 +64,14 @@ void copyframe(my1IFrame *src, my1IFrame *dst)
 	}
 }
 /*----------------------------------------------------------------------------*/
-float framepixel(my1IFrame *image, int row, int col) /* col(x),row(y) */
+float framepixel(my1IFrame *frame, int row, int col) /* col(x),row(y) */
 {
-	return image->data[row*image->width+col];
+	return frame->data[row*frame->width+col];
 }
 /*----------------------------------------------------------------------------*/
-void setframepixel(my1IFrame *image, int row, int col,float pixel)
+void setframepixel(my1IFrame *frame, int row, int col,float pixel)
 {
-	image->data[row*image->width+col] = pixel;
+	frame->data[row*frame->width+col] = pixel;
 }
 /*----------------------------------------------------------------------------*/
 float* createkernel(my1Kernel *kernel, int size)
