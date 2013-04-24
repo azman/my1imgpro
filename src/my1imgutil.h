@@ -27,6 +27,8 @@ struct _hist
 };
 typedef struct _hist my1Hist;
 /*----------------------------------------------------------------------------*/
+typedef unsigned char cbyte; /** color byte */
+/*----------------------------------------------------------------------------*/
 /* sub-image management functions */
 void image2sub(my1Image *image, my1Image *subimage, my1Region *region);
 void sub2image(my1Image *subimage, my1Image *image, my1Region *region);
@@ -44,11 +46,11 @@ int histogram_maxindex(my1Hist *hist);
 /* enforce grayscale image */
 void grayscale_image(my1Image *image);
 /* rgb conversion utility */
-int encode_rgb(char r, char g, char b);
-void decode_rgb(int data, char *r, char *g, char *b);
+int encode_rgb(cbyte r, cbyte g, cbyte b);
+void decode_rgb(int data, cbyte *r, cbyte *g, cbyte *b);
 /* color information - structure member 'mask' MUST BE assigned! */
-int extract_rgb(my1Image *image, char *rgb);
-int assign_rgb(my1Image *image, char *rgb);
+int extract_rgb(my1Image *image, cbyte *rgb);
+int assign_rgb(my1Image *image, cbyte *rgb);
 /*----------------------------------------------------------------------------*/
 #endif
 /*----------------------------------------------------------------------------*/

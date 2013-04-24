@@ -370,6 +370,7 @@ void view_image(my1Image* image)
 	SDL_Surface *screen;
 	SDL_Surface *temp;
 	SDL_Event event;
+	unsigned char *pImage;
 
 	if(SDL_Init(SDL_INIT_VIDEO) != 0)
 	{
@@ -385,7 +386,7 @@ void view_image(my1Image* image)
 	}
 
 	if(!image->mask) image-> mask = IMASK_GRAY8;
-	char *pImage = malloc(image->height*image->width*3);
+	pImage = malloc(image->height*image->width*3);
 	if(!extract_rgb(image,pImage))
 	{
 		free(pImage);
@@ -432,7 +433,8 @@ void view_image(my1Image* image)
 /*----------------------------------------------------------------------------*/
 int main(int argc, char* argv[])
 {
-	int loop, test = 0, view = 1, error = 0, command = COMMAND_NONE;
+	int loop, test = 0, error = 0, command = COMMAND_NONE;
+	int gray = 0, view = 1;
 	char *psave = 0x0, *pname = 0x0, *pdata = 0x0;
 	my1Image currimage, tempimage, *pimage;
 	my1IFrame currframe, tempframe;
@@ -452,27 +454,25 @@ int main(int argc, char* argv[])
 				{
 					loop++;
 					if(loop<argc)
-					{
 						psave = argv[loop];
-						view = 0;
-					}
 					else
-					{
 						printf("Cannot get save file name - NOT saving!\n");
-					}
 				}
 				else if(!strcmp(argv[loop],"--cdata"))
 				{
 					loop++;
 					if(loop<argc)
-					{
 						pdata = argv[loop];
-						view = 0;
-					}
 					else
-					{
 						printf("Cannot get C data file name - NOT writing!\n");
-					}
+				}
+				else if(!strcmp(argv[loop],"--gray"))
+				{
+					gray = 1;
+				}
+				else if(!strcmp(argv[loop],"--hide"))
+				{
+					view = 0;
 				}
 				else
 				{
@@ -489,17 +489,35 @@ int main(int argc, char* argv[])
 				}
 				/* then check for command! */
 				if(!strcmp(argv[loop],"laplace1"))
+				{
 					command = COMMAND_LAPLACE1;
+					gray = 1;
+				}
 				else if(!strcmp(argv[loop],"sobelx"))
+				{
 					command = COMMAND_SOBELX;
+					gray = 1;
+				}
 				else if(!strcmp(argv[loop],"sobely"))
+				{
 					command = COMMAND_SOBELY;
+					gray = 1;
+				}
 				else if(!strcmp(argv[loop],"sobelall"))
+				{
 					command = COMMAND_SOBELALL;
+					gray = 1;
+				}
 				else if(!strcmp(argv[loop],"laplace2"))
+				{
 					command = COMMAND_LAPLACE2;
+					gray = 1;
+				}
 				else if(!strcmp(argv[loop],"gauss"))
+				{
 					command = COMMAND_GAUSS;
+					gray = 1;
+				}
 				else
 				{
 					printf("Unknown parameter %s!\n",argv[loop]);
@@ -539,40 +557,38 @@ int main(int argc, char* argv[])
 	printf("Input image: %s\n",pname);
 	print_image_info(&currimage);
 
+	/* convert grayscale if requested/required */
+	if(gray) grayscale_image(&currimage);
+
 	/* process command */
 	switch(command)
 	{
 		case COMMAND_LAPLACE1:
 		{
-			grayscale_image(&currimage);
 			createimage(&tempimage,currimage.height,currimage.width);
 			laplace_image(&currimage,&tempimage);
 			break;
 		}
 		case COMMAND_SOBELX:
 		{
-			grayscale_image(&currimage);
 			createimage(&tempimage,currimage.height,currimage.width);
 			sobel_x_image(&currimage,&tempimage);
 			break;
 		}
 		case COMMAND_SOBELY:
 		{
-			grayscale_image(&currimage);
 			createimage(&tempimage,currimage.height,currimage.width);
 			sobel_y_image(&currimage,&tempimage);
 			break;
 		}
 		case COMMAND_SOBELALL:
 		{
-			grayscale_image(&currimage);
 			createimage(&tempimage,currimage.height,currimage.width);
 			sobel_image(&currimage,&tempimage,0x0);
 			break;
 		}
 		case COMMAND_LAPLACE2:
 		{
-			grayscale_image(&currimage);
 			createimage(&tempimage,currimage.height,currimage.width);
 			createframe(&currframe,currimage.height,currimage.width);
 			createframe(&tempframe,currimage.height,currimage.width);
@@ -583,7 +599,6 @@ int main(int argc, char* argv[])
 		}
 		case COMMAND_GAUSS:
 		{
-			grayscale_image(&currimage);
 			createimage(&tempimage,currimage.height,currimage.width);
 			createframe(&currframe,currimage.height,currimage.width);
 			createframe(&tempframe,currimage.height,currimage.width);
@@ -601,14 +616,12 @@ int main(int argc, char* argv[])
 	printf("Check image:\n");
 	print_image_info(pimage);
 
-	/* view image if not saving to file! */
-	if(view) view_image(pimage);
-
 	/** save results if requested */
 	if(psave)
 	{
 		printf("Saving image data to %s...\n",psave);
 		error=save_image(pimage,psave);
+		view = 0;
 	}
 
 	if(pdata)
@@ -616,6 +629,9 @@ int main(int argc, char* argv[])
 		printf("Saving C data to %s...\n",pdata);
 		error=cdata_image(pimage,pdata);
 	}
+
+	/* view image if no request to hide! .. and NOT saving! */
+	if(view) view_image(pimage);
 
 	/* cleanup */
 	freeframe(&currframe);

@@ -6,10 +6,11 @@
 int loadBMPimage(char *filename, my1Image *image)
 {
 	FILE *bmpfile;
-	unsigned int tellSize;
+	unsigned int tellSize, fileSize;
 	unsigned char *pChar, someChar;
 	unsigned char bmpID[2];
-	int row, col, r, g, b, temp, buff;
+	int row, col, temp, buff;
+	unsigned char r, g, b;
 	int iscolor = IMASK_COLOR24; /* assumes 24-bit rgb by default */
 	int palette[256]; /* 8-bit palette */
 	my1BMPHead head;
@@ -28,6 +29,11 @@ int loadBMPimage(char *filename, my1Image *image)
 	/* get info */
 	pChar = (unsigned char*) &info;
 	fread(pChar, BMP_INFO_SIZE, 1, bmpfile);
+	/* calculate fileSize */
+	fileSize = head.bmpSize; /** include 2 id bytes */
+	/* get actual file size */
+	fseek(bmpfile, 0, SEEK_END);
+	tellSize = ftell(bmpfile);
 #ifdef MY1DEBUG
 	printf("\n");
 	printf("--------------\n");
@@ -42,16 +48,14 @@ int loadBMPimage(char *filename, my1Image *image)
 	printf("Data offset: %u bytes\n", head.bmpOffset);
 	printf("Bits per pixel: %d, Colors: %d\n",
 		info.bmpBitsPerPixel, info.bmpColorCount);
+	printf("File: %u bytes, Tell: %u bytes\n", fileSize, tellSize);
 #endif
-	/* get actual file size */
-	fseek(bmpfile, 0, SEEK_END);
-	tellSize = ftell(bmpfile);
-	if(tellSize!=head.bmpSize)
+	/* sanity checks */
+	if(tellSize!=fileSize)
 		return BMP_ERROR_FILESIZE; /* mismatched filesize! */
-	/* sanity check */
 	if(info.bmpBitsPerPixel!=8&&info.bmpBitsPerPixel!=24)
 		return BMP_ERROR_RGBNGRAY; /* only 24-bit RGB and 8-bit image */
-	else if(createimage(image,info.bmpHeight,info.bmpWidth)==0x0)
+	if(createimage(image,info.bmpHeight,info.bmpWidth)==0x0)
 		return BMP_ERROR_MEMALLOC; /* cannot allocate memory */
 	/* check if palette is available */
 	if(info.bmpColorCount==256) /* should be this for 8-bit per pixel */
@@ -95,8 +99,7 @@ int loadBMPimage(char *filename, my1Image *image)
 				fread(pChar, 1, 1, bmpfile);
 				if(info.bmpColorCount) /* get from pallete? */
 				{
-					decode_rgb(palette[someChar],(char*)&r,
-						(char*)&g, (char*)&b);
+					decode_rgb(palette[someChar],&r,&g,&b);
 				}
 				else
 				{
@@ -107,13 +110,6 @@ int loadBMPimage(char *filename, my1Image *image)
 			/* 'encode' if necessary! */
 			if(iscolor) buff = encode_rgb(r,g,b);
 			else buff = r; /** just take ANY component */
-#ifdef MY1DEBUG
-			if(col==0&&row==0)
-			{
-				printf("First pixel: {%d,%d,%d} => ",r,g,b);
-				printf("{%02X,%02X,%02X} => {%08X}\n",r,g,b,buff);
-			}
-#endif
 			setimagepixel(image,row,col,buff);
 		}
 		while(temp%4)
@@ -145,7 +141,7 @@ int saveBMPimage(char *filename, my1Image *image)
 	length = image->width*bytepp;
 	while(length%4) length++;
 	vectorSize = length*image->height;
-	headSize = BMP_HEAD_SIZE+BMP_INFO_SIZE; /* already includes 2-byte id! */
+	headSize = 2+BMP_HEAD_SIZE+BMP_INFO_SIZE;
 	fileSize = headSize + vectorSize;
 	/* populate BMP header */
 	bmpID[0] = 'B';
@@ -203,7 +199,7 @@ int saveBMPimage(char *filename, my1Image *image)
 			buff = imagepixel(image,row,col);
 			if(image->mask==IMASK_COLOR24)
 			{
-				decode_rgb(buff,(char*)&r,(char*)&g, (char*)&b);
+				decode_rgb(buff,&r,&g,&b);
 				someChar = b;
 				fwrite(pChar,1,1,bmpfile);
 				someChar = g;

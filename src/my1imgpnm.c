@@ -11,7 +11,7 @@ int loadPNMimage(char *filename, my1Image *image)
 	FILE *pnmfile;
 	char buffer[PNM_MAGIC_SIZE];
 	int r, g, b, buff, loop;
-	int width, height, levels = 1, count, error = 0, version = 0;
+	int width, height, levels = 1, error = 0, version = 0;
 	/* open file for read */
 	pnmfile = fopen(filename, "rt");
 	if(!pnmfile) return PNM_ERROR_FILEOPEN; /* cannot open file */
@@ -38,8 +38,6 @@ int loadPNMimage(char *filename, my1Image *image)
 	fscanf(pnmfile,"%d %d",&width,&height);
 	/** levels for version 2/3 only! */
 	if(version>1) fscanf(pnmfile,"%d",&levels);
-	/** get the pixels */
-	count = width*height;
 #ifdef MY1DEBUG
 	printf("Version: %d, levels: %d!\n",version,levels);
 	printf("Image width: %d, height: %d\n",width,height);
@@ -64,13 +62,6 @@ int loadPNMimage(char *filename, my1Image *image)
 			if(g>levels) g = levels;
 			if(b>levels) b = levels;
 			buff = encode_rgb(r,g,b);
-#ifdef MY1DEBUG
-			if(!loop)
-			{
-				printf("First pixel: {%d,%d,%d} => ",r,g,b);
-				printf("{%02X,%02X,%02X} => {%08X}\n",r,g,b,buff);
-			}
-#endif
 		}
 		else
 		{
@@ -90,7 +81,7 @@ int loadPNMimage(char *filename, my1Image *image)
 	}
 	fclose(pnmfile);
 	image->mask = (version==3) ? IMASK_COLOR24 : IMASK_GRAY8;
-	return 0;
+	return error;
 }
 /*----------------------------------------------------------------------------*/
 int savePNMimage(char *filename, my1Image *image)
@@ -123,14 +114,7 @@ int savePNMimage(char *filename, my1Image *image)
 		buff = image->data[loop];
 		if(image->mask==IMASK_COLOR24)
 		{
-			decode_rgb(buff,(char*)&r,(char*)&g,(char*)&b);
-#ifdef MY1DEBUG
-			if(!loop)
-			{
-				printf("First pixel: {%d,%d,%d} => ",r,g,b);
-				printf("{%02X,%02X,%02X} => {%08X}\n",r,g,b,buff);
-			}
-#endif
+			decode_rgb(buff,&r,&g,&b);
 			fprintf(pnmfile,"%d %d %d\n",r,g,b);
 		}
 		else

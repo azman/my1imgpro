@@ -178,17 +178,20 @@ int histogram_maxindex(my1Hist *hist)
 	return index;
 }
 /*----------------------------------------------------------------------------*/
+#include<stdio.h>
 /*----------------------------------------------------------------------------*/
 void grayscale_image(my1Image *image)
 {
 	int loop;
-	char r, g, b;
+	cbyte r, g, b;
 	if(image->mask==IMASK_COLOR24)
 	{
 		for(loop=0;loop<image->length;loop++)
 		{
 			decode_rgb(image->data[loop],&r,&g,&b);
-			image->data[loop] = ((int)r+g+b)/3;
+			image->data[loop] = (((unsigned int)r+g+b)/3)&0xFF;
+			/** consider luminosity? */
+			/*0.21 R + 0.71 G + 0.07 B*/
 		}
 		image->mask = 0;
 	}
@@ -198,12 +201,12 @@ void grayscale_image(my1Image *image)
 	}
 }
 /*----------------------------------------------------------------------------*/
-int encode_rgb(char r, char g, char b)
+int encode_rgb(cbyte r, cbyte g, cbyte b)
 {
 	return (((int)r&0xff)<<16) | (((int)g&0xff)<<8) | ((int)b&0xff);
 }
 /*----------------------------------------------------------------------------*/
-void decode_rgb(int data, char *r, char *g, char *b)
+void decode_rgb(int data, cbyte *r, cbyte *g, cbyte *b)
 {
 	*r = (data&0xff0000)>>16;
 	*g = (data&0xff00)>>8;
@@ -211,7 +214,7 @@ void decode_rgb(int data, char *r, char *g, char *b)
 }
 /*----------------------------------------------------------------------------*/
 /*----------------------------------------------------------------------------*/
-int extract_rgb(my1Image *image, char *rgb)
+int extract_rgb(my1Image *image, cbyte *rgb)
 {
 	int mask = 0x0, loop, index = 0;
 	if(image->mask==IMASK_COLOR24)
@@ -237,7 +240,7 @@ int extract_rgb(my1Image *image, char *rgb)
 	return mask;
 }
 /*----------------------------------------------------------------------------*/
-int assign_rgb(my1Image *image, char *rgb)
+int assign_rgb(my1Image *image, cbyte *rgb)
 {
 	int mask = 0x0, loop, index = 0;
 	char chkr, chkg, chkb;
