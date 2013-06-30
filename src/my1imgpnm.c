@@ -126,23 +126,3 @@ int savePNMimage(char *filename, my1Image *image)
 	return 0;
 }
 /*----------------------------------------------------------------------------*/
-
-/*
-		fprintf(tfile,"char imagedata[%d] = {\n",count/2);
-		while(fscanf(pfile,"%d",&data)!=EOF)
-		{
-			loop++;
-			if(loop%2!=0)
-			{
-				fprintf(tfile,"%d",data);
-				if(loop!=count)
-					fprintf(tfile,",");
-			}
-			if(loop%width==0)
-				fprintf(tfile,"\n");
-		}
-		fprintf(tfile,"\n};\n");
-		fclose(tfile);
-		printf("Data Count: %d written!\n",count);
-
-*/

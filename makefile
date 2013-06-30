@@ -12,8 +12,6 @@ OFLAGS += -lavcodec -lavutil -lavformat -lSDL -lswscale
 VFLAGS = -DMY1APP_PROGVERS=\"$(shell date +%Y%m%d)\"
 DFLAGS =
 
-debug: DFLAGS = -g -DMY1DEBUG
-
 RM = rm -f
 CC = gcc -c
 LD = gcc
@@ -21,6 +19,7 @@ LD = gcc
 ifeq ($(DO_DEBUG),YES)
 	DFLAGS = -g -DMY1DEBUG
 endif
+debug: DFLAGS = -g -DMY1DEBUG
 
 main: image
 
