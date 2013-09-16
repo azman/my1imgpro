@@ -3,16 +3,18 @@
 #include "my1imgutil.h"
 #include <stdio.h> /** for file access */
 /*----------------------------------------------------------------------------*/
+#define GRAY8LEVEL_COUNT 256
+/*----------------------------------------------------------------------------*/
 int loadBMPimage(char *filename, my1Image *image)
 {
 	FILE *bmpfile;
 	unsigned int tellSize, fileSize;
 	unsigned char *pChar, someChar;
-	unsigned char bmpID[2];
+	unsigned char bmpID[BMP_ID_SIZE];
 	int row, col, temp, buff;
 	unsigned char r, g, b;
 	int iscolor = IMASK_COLOR24; /* assumes 24-bit rgb by default */
-	int palette[256]; /* 8-bit palette */
+	int palette[GRAY8LEVEL_COUNT]; /* 8-bit palette */
 	my1BMPHead head;
 	my1BMPInfo info;
 	/* open file for read */
@@ -40,7 +42,8 @@ int loadBMPimage(char *filename, my1Image *image)
 	printf("BMP DEBUG INFO\n");
 	printf("--------------\n");
 	printf("Sizeof my1BMPHead: %lu (%d)\n",sizeof(my1BMPHead),BMP_HEAD_SIZE);
-	printf("Sizeof my1BMPInfo: %lu (%d)\n",sizeof(my1BMPInfo),BMP_INFO_SIZE);
+	printf("Sizeof my1BMPInfo: %lu (%d/%d)\n",sizeof(my1BMPInfo),
+		BMP_INFO_SIZE,BMP_INFO_SIZE_V4);
 	printf("Width: %d Height: %d\n", info.bmpWidth, info.bmpHeight);
 	printf("File size: %u bytes\n", head.bmpSize);
 	printf("Info size: %u bytes\n", info.bmpInfoSize);
@@ -49,6 +52,7 @@ int loadBMPimage(char *filename, my1Image *image)
 	printf("Bits per pixel: %d, Colors: %d\n",
 		info.bmpBitsPerPixel, info.bmpColorCount);
 	printf("File: %u bytes, Tell: %u bytes\n", fileSize, tellSize);
+	printf("\n");
 #endif
 	/* sanity checks */
 	if(tellSize!=fileSize)
@@ -57,17 +61,18 @@ int loadBMPimage(char *filename, my1Image *image)
 		return BMP_ERROR_RGBNGRAY; /* only 24-bit RGB and 8-bit image */
 	if(createimage(image,info.bmpHeight,info.bmpWidth)==0x0)
 		return BMP_ERROR_MEMALLOC; /* cannot allocate memory */
+	if(info.bmpInfoSize!=BMP_INFO_SIZE&&info.bmpInfoSize!=BMP_INFO_SIZE_V4)
+		return BMP_ERROR_DIBINVAL; /* unsupported BMP header format? */
 	/* check if palette is available */
-	if(info.bmpColorCount==256) /* should be this for 8-bit per pixel */
+	if(info.bmpColorCount==GRAY8LEVEL_COUNT)
 	{
 		/* load palette */
-		fseek(bmpfile, BMP_HEAD_SIZE+BMP_INFO_SIZE, SEEK_SET);
-		for(row=0;row<256;row++)
+		fseek(bmpfile, BMP_ID_SIZE+BMP_HEAD_SIZE+info.bmpInfoSize, SEEK_SET);
+		for(row=0;row<GRAY8LEVEL_COUNT;row++)
 		{
 			pChar = (unsigned char*) &palette[row];
 			fread(pChar,sizeof(int),1,bmpfile);
 		}
-		/** iscolor = IMASK_GRAY8; */
 	}
 	else
 	{
@@ -132,7 +137,7 @@ int saveBMPimage(char *filename, my1Image *image)
 	unsigned int vectorSize;
 	int row, col, temp, buff, length, bytepp = 1;
 	unsigned char *pChar, someChar, r, g, b;
-	unsigned char bmpID[2];
+	unsigned char bmpID[BMP_ID_SIZE];
 	my1BMPHead head;
 	my1BMPInfo info;
 	/* check if color image - palette NOT possible! */
@@ -141,7 +146,7 @@ int saveBMPimage(char *filename, my1Image *image)
 	length = image->width*bytepp;
 	while(length%4) length++;
 	vectorSize = length*image->height;
-	headSize = 2+BMP_HEAD_SIZE+BMP_INFO_SIZE;
+	headSize = BMP_ID_SIZE+BMP_HEAD_SIZE+BMP_INFO_SIZE;
 	fileSize = headSize + vectorSize;
 	/* populate BMP header */
 	bmpID[0] = 'B';
@@ -175,6 +180,7 @@ int saveBMPimage(char *filename, my1Image *image)
 	printf("Data offset: %u bytes\n", head.bmpOffset);
 	printf("Bits per pixel: %d, Colors: %d\n",
 		info.bmpBitsPerPixel, info.bmpColorCount);
+	printf("\n");
 #endif
 	/* try to open file for write! */
 	bmpfile = fopen(filename,"wb");
