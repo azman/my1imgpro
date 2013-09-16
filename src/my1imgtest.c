@@ -385,13 +385,9 @@ void view_image(my1Image* image)
 		return;
 	}
 
+	/* copy image pixels to buffer */
 	pImage = malloc(image->height*image->width*3);
-	if(!extract_rgb(image,pImage))
-	{
-		free(pImage);
-		printf("Unable to extract data from image: %08X\n", image->mask);
-		return;
-	}
+	extract_rgb(image,pImage); /* should never be a problem! */
 
 	/* Create the temp surface from the raw RGB data */
 	temp = SDL_CreateRGBSurfaceFrom(pImage, image->width, image->height,
