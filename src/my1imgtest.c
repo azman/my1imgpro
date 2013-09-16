@@ -385,7 +385,6 @@ void view_image(my1Image* image)
 		return;
 	}
 
-	if(!image->mask) image-> mask = IMASK_GRAY8;
 	pImage = malloc(image->height*image->width*3);
 	if(!extract_rgb(image,pImage))
 	{

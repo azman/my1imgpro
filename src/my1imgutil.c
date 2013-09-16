@@ -195,7 +195,7 @@ void grayscale_image(my1Image *image)
 		}
 		image->mask = 0;
 	}
-	else if(image->mask==IMASK_GRAY8)
+	else
 	{
 		image->mask = 0; /* just remove formality? */
 	}
@@ -227,7 +227,7 @@ int extract_rgb(my1Image *image, cbyte *rgb)
 		}
 		mask = image->mask;
 	}
-	else if(image->mask==IMASK_GRAY8)
+	else
 	{
 		for(loop=0;loop<image->length;loop++)
 		{
@@ -254,7 +254,7 @@ int assign_rgb(my1Image *image, cbyte *rgb)
 		}
 		mask = image->mask;
 	}
-	else if(image->mask==IMASK_GRAY8)
+	else
 	{
 		for(loop=0;loop<image->length;loop++)
 		{

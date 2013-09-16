@@ -80,7 +80,7 @@ int loadPNMimage(char *filename, my1Image *image)
 		image->data[loop] = buff;
 	}
 	fclose(pnmfile);
-	image->mask = (version==3) ? IMASK_COLOR24 : IMASK_GRAY8;
+	image->mask = (version==3) ? IMASK_COLOR24 : 0;
 	return error;
 }
 /*----------------------------------------------------------------------------*/

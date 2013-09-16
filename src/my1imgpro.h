@@ -7,7 +7,6 @@
 #define BLACK 0 /* 8-bit grayscale */
 /*----------------------------------------------------------------------------*/
 #define IMASK_COLOR24 0xFFFFFF
-#define IMASK_GRAY8 0xFF
 #define IMASK_BINARY1 0x01
 /*----------------------------------------------------------------------------*/
 struct _image
