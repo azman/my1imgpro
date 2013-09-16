@@ -19,7 +19,7 @@
 #define MY1APP_PROGINFO "Basic Image Tool Library"
 #endif
 /*----------------------------------------------------------------------------*/
-#define ERROR_GENERAL -1 
+#define ERROR_GENERAL -1
 /*----------------------------------------------------------------------------*/
 #define COMMAND_NONE 0
 #define COMMAND_LAPLACE1 1
@@ -400,7 +400,7 @@ void view_image(my1Image* image)
 	if(!temp)
 	{
 		printf("Unable to load image to SDL: %s\n", SDL_GetError());
-		return; 
+		return;
 	}
 
 	SDL_BlitSurface(temp, NULL, screen, NULL);
@@ -431,10 +431,29 @@ void view_image(my1Image* image)
 	SDL_Quit();
 }
 /*----------------------------------------------------------------------------*/
+void about(void)
+{
+	printf("Command-line use:\n");
+	printf("  %s [options] <image-file> [command]\n\n",MY1APP_PROGNAME);
+	printf("Valid Commands (image filter) are:\n");
+	printf("  laplace1  : Laplace Gradient Filter\n");
+	printf("  laplace2  : Laplace Gradient Filter (floating-point data)\n");
+	printf("  sobelx    : Sobel Horizontal Gradient Filter\n");
+	printf("  sobely    : Sobel Vertical Gradient Filter\n");
+	printf("  sobelall  : Sobel Directional Gradient Filter\n");
+	printf("  gauss     : Gaussian Gradient Filter\n\n");
+	printf("Options are:\n");
+	printf("  --save <filename>  : save to image file\n");
+	printf("  --cdata <filename> : save to C source file\n");
+	printf("  --gray    : force grayscale format\n");
+	printf("  --hide    : skip image display\n");
+	printf("  --help    : show this message - overrides ALL above options\n\n");
+}
+/*----------------------------------------------------------------------------*/
 int main(int argc, char* argv[])
 {
 	int loop, test = 0, error = 0, command = COMMAND_NONE;
-	int gray = 0, view = 1;
+	int gray = 0, view = 1, help = 0;
 	char *psave = 0x0, *pname = 0x0, *pdata = 0x0;
 	my1Image currimage, tempimage, *pimage;
 	my1IFrame currframe, tempframe;
@@ -473,6 +492,10 @@ int main(int argc, char* argv[])
 				else if(!strcmp(argv[loop],"--hide"))
 				{
 					view = 0;
+				}
+				else if(!strcmp(argv[loop],"--help"))
+				{
+					help = 1;
 				}
 				else
 				{
@@ -532,6 +555,13 @@ int main(int argc, char* argv[])
 				test = loop;
 			}
 		}
+	}
+
+	/* check if user requested help */
+	if(help)
+	{
+		about();
+		return 0;
 	}
 
 	/** check input filename */
