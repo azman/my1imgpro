@@ -15,7 +15,7 @@ int loadPNMimage(char *filename, my1Image *image)
 	/* open file for read */
 	pnmfile = fopen(filename, "rt");
 	if(!pnmfile) return PNM_ERROR_FILEOPEN; /* cannot open file */
-	/* get and check magic number */
+	/* get and check magic number - will read PNM_MAGIC_SIZE-1 char */
 	fgets(buffer, PNM_MAGIC_SIZE, pnmfile);
 	if(buffer[0]=='P'&&(buffer[1]>0x30&&buffer[1]<0x37))
 	{
@@ -31,9 +31,15 @@ int loadPNMimage(char *filename, my1Image *image)
 		fclose(pnmfile);
 		return PNM_ERROR_VALIDPNM; /* not a pnm format */
 	}
-	/** skip the next 2 newlines (magic number line & comment line) */
-	while(!feof(pnmfile)) if(fgetc(pnmfile)=='\n') break;
-	while(!feof(pnmfile)) if(fgetc(pnmfile)=='\n') break;
+	/** skip to third line (magic number line & comment line) */
+	while(!feof(pnmfile)&&fgetc(pnmfile)!='\n');
+	while(!feof(pnmfile)&&fgetc(pnmfile)!='\n');
+	/** skip the following lines if starting with comment char */
+	do {
+		buff = fgetc(pnmfile);
+		if (buff=='#') while(!feof(pnmfile)&&fgetc(pnmfile)!='\n');
+		else ungetc(buff,pnmfile);
+	} while(buff=='#');
 	/** get width and height */
 	fscanf(pnmfile,"%d %d",&width,&height);
 	/** levels for version 2/3 only! */
