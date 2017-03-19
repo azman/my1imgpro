@@ -10,6 +10,7 @@
 #define BMP_ERROR_RGBNGRAY -4
 #define BMP_ERROR_MEMALLOC -5
 #define BMP_ERROR_DIBINVAL -6
+#define BMP_ERROR_COMPRESS -7
 /*----------------------------------------------------------------------------*/
 #define BMP_ID_SIZE 2
 /*----------------------------------------------------------------------------*/
@@ -40,6 +41,7 @@ typedef struct
 my1BMPInfo;
 #define BMP_INFO_SIZE 40
 #define BMP_INFO_SIZE_V4 108
+#define BMP_INFO_SIZE_V5 124
 /*----------------------------------------------------------------------------*/
 int loadBMPimage(char *filename, my1Image *image);
 int saveBMPimage(char *filename, my1Image *image);

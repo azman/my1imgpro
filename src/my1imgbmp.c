@@ -50,8 +50,8 @@ int loadBMPimage(char *filename, my1Image *image)
 	printf("Info size: %u bytes\n", info.bmpInfoSize);
 	printf("Data size: %u bytes\n", info.bmpDataSize);
 	printf("Data offset: %u bytes\n", head.bmpOffset);
-	printf("Bits per pixel: %d, Colors: %d\n",
-		info.bmpBitsPerPixel, info.bmpColorCount);
+	printf("Bits per pixel: %d, Colors: %d, Compression: %d\n",
+		info.bmpBitsPerPixel, info.bmpColorCount,info.bmpCompression);
 	printf("File: %u bytes, Tell: %u bytes\n", fileSize, tellSize);
 	printf("\n");
 #endif
@@ -62,8 +62,17 @@ int loadBMPimage(char *filename, my1Image *image)
 		return BMP_ERROR_RGBNGRAY; /* only 24-bit RGB and 8-bit image */
 	if(createimage(image,info.bmpHeight,info.bmpWidth)==0x0)
 		return BMP_ERROR_MEMALLOC; /* cannot allocate memory */
-	if(info.bmpInfoSize!=BMP_INFO_SIZE&&info.bmpInfoSize!=BMP_INFO_SIZE_V4)
+	switch(info.bmpInfoSize)
+	{
+	case BMP_INFO_SIZE:
+	case BMP_INFO_SIZE_V4:
+	case BMP_INFO_SIZE_V5:
+		break;
+	default:
 		return BMP_ERROR_DIBINVAL; /* unsupported BMP header format? */
+	}
+	if(info.bmpCompression>0)
+		return BMP_ERROR_COMPRESS; /* compression NOT supported! */
 	/* check if palette is available */
 	if(info.bmpColorCount==GRAY8LEVEL_COUNT)
 	{
