@@ -31,10 +31,9 @@ int loadPNMimage(char *filename, my1Image *image)
 		fclose(pnmfile);
 		return PNM_ERROR_VALIDPNM; /* not a pnm format */
 	}
-	/** skip to third line (magic number line & comment line) */
+	/** get to end of magic number line */
 	while(!feof(pnmfile)&&fgetc(pnmfile)!='\n');
-	while(!feof(pnmfile)&&fgetc(pnmfile)!='\n');
-	/** skip the following lines if starting with comment char */
+	/** skip any comment lines */
 	do {
 		buff = fgetc(pnmfile);
 		if (buff=='#') while(!feof(pnmfile)&&fgetc(pnmfile)!='\n');
@@ -45,7 +44,7 @@ int loadPNMimage(char *filename, my1Image *image)
 	/** levels for version 2/3 only! */
 	if(version>1) fscanf(pnmfile,"%d",&levels);
 #ifdef MY1DEBUG
-	printf("Version: %d, levels: %d!\n",version,levels);
+	printf("Image format: P%d, levels: %d\n",version,levels);
 	printf("Image width: %d, height: %d\n",width,height);
 #endif
 	/** try to create storage */
