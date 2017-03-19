@@ -41,9 +41,10 @@ int loadBMPimage(char *filename, my1Image *image)
 	printf("--------------\n");
 	printf("BMP DEBUG INFO\n");
 	printf("--------------\n");
-	printf("Sizeof my1BMPHead: %lu (%d)\n",sizeof(my1BMPHead),BMP_HEAD_SIZE);
-	printf("Sizeof my1BMPInfo: %lu (%d/%d)\n",sizeof(my1BMPInfo),
-		BMP_INFO_SIZE,BMP_INFO_SIZE_V4);
+	printf("Sizeof my1BMPHead: %lu (%d)\n",
+		(long unsigned)sizeof(my1BMPHead),BMP_HEAD_SIZE);
+	printf("Sizeof my1BMPInfo: %lu (%d/%d)\n",
+		(long unsigned)sizeof(my1BMPInfo),BMP_INFO_SIZE,BMP_INFO_SIZE_V4);
 	printf("Width: %d Height: %d\n", info.bmpWidth, info.bmpHeight);
 	printf("File size: %u bytes\n", head.bmpSize);
 	printf("Info size: %u bytes\n", info.bmpInfoSize);
@@ -171,8 +172,10 @@ int saveBMPimage(char *filename, my1Image *image)
 	printf("-------------------------\n");
 	printf("BMP DEBUG INFO (CREATED!)\n");
 	printf("-------------------------\n");
-	printf("Sizeof my1BMPHead: %lu (%d)\n",sizeof(my1BMPHead),BMP_HEAD_SIZE);
-	printf("Sizeof my1BMPInfo: %lu (%d)\n",sizeof(my1BMPInfo),BMP_INFO_SIZE);
+	printf("Sizeof my1BMPHead: %lu (%d)\n",
+		(long unsigned)sizeof(my1BMPHead),BMP_HEAD_SIZE);
+	printf("Sizeof my1BMPInfo: %lu (%d)\n",
+		(long unsigned)sizeof(my1BMPInfo),BMP_INFO_SIZE);
 	printf("Width: %d Height: %d\n", info.bmpWidth, info.bmpHeight);
 	printf("File size: %u bytes\n", head.bmpSize);
 	printf("Info size: %u bytes\n", info.bmpInfoSize);
