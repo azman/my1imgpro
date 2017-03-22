@@ -4,7 +4,6 @@
 /*----------------------------------------------------------------------------*/
 #include "my1imgvid.h"
 #include <libavformat/avformat.h>
-//#include <libavcodec/avcodec.h>
 #include <SDL/SDL.h>
 /*----------------------------------------------------------------------------*/
 typedef struct SwsContext AVswsContext;

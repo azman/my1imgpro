@@ -1,6 +1,5 @@
 /*----------------------------------------------------------------------------*/
 #include "my1visdev.h"
-//#include <stdlib.h>
 #include <libswscale/swscale.h>
 /*----------------------------------------------------------------------------*/
 void av2img(AVFrame* frame, my1Image* image)
@@ -23,7 +22,12 @@ void img2av(my1Image* image, AVFrame* frame)
 	vrgb temp;
 	for(index=0,count=0;index<image->length;index++)
 	{
-		temp = decode_vrgb(image->data[index]);
+		if(image->mask)
+			temp = decode_vrgb(image->data[index]);
+		else
+		{
+			temp.r = temp.g = temp.b = image->data[index];
+		}
 		frame->data[0][count++] = temp.r;
 		frame->data[0][count++] = temp.g;
 		frame->data[0][count++] = temp.b;
@@ -75,7 +79,7 @@ void* grabframe(my1Capture *object)
 			/* did we get a complete frame? */
 			if(done) frame = object->frame;
 		}
-		// free the packet alloced by av_read_frame
+		/* free the packet alloced by av_read_frame */
 		av_free_packet(&packet);
 		if(frame) break;
 	}
@@ -220,7 +224,7 @@ void filecapture(my1Capture *object, char *filename)
 /*----------------------------------------------------------------------------*/
 void livecapture(my1Capture *object, int camindex)
 {
-	// NOT IMPLEMENTED YET! TODO!
+	/* NOT IMPLEMENTED YET! TODO! */
 	printf("Live feed not implemented... yet!\n");
 	exit(-1);
 	/* check if captured... can we use this as captured flag? */
@@ -239,8 +243,8 @@ void livecapture(my1Capture *object, int camindex)
 	iformat = av_find_input_format("video4linux");
 	av_open_input_file(&ffmpegFormatContext, filename, iformat, 0, &formatParams);
 */
-	// create/init device
-	object->video->count = -1; // already default!
+	/* create/init device */
+	object->video->count = -1; /* already default! */
 	object->video->index = -1;
 	object->video->update = 0x1;
 	object->video->stepit = 0x0;

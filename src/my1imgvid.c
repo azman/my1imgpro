@@ -84,13 +84,7 @@ void prevvframe(my1Video *video)
 /*----------------------------------------------------------------------------*/
 void filtervideo(my1Video *video)
 {
-	my1VFilter *pfilter = video->filter;
-	while(pfilter)
-	{
-		if(pfilter->filter)
-			video->frame = pfilter->filter(video->frame,&pfilter->buffer,pfilter->userdata);
-		pfilter = pfilter->next;
-	}
+	video->frame = filter_image(video->filter,video->frame);
 }
 /*----------------------------------------------------------------------------*/
 void postinput(my1Video *video)
@@ -98,7 +92,7 @@ void postinput(my1Video *video)
 	if(video->update&&!video->stepit)
 	{
 		nextvframe(video);
-		video->stepit = 0x0; // override step in nextframe
+		video->stepit = 0x0; /* override step in nextframe */
 	}
 }
 /*----------------------------------------------------------------------------*/

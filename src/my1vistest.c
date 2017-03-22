@@ -1,6 +1,5 @@
 /*----------------------------------------------------------------------------*/
 #include "my1visdev.h"
-//#include "my1imgbmp.h"
 #include <stdio.h>
 #include <ctype.h>
 #include <string.h>
@@ -20,13 +19,25 @@ static char showkeys[] =
 	"\t---------------------------\n"
 };
 /*----------------------------------------------------------------------------*/
+my1Image* fgrayfilter(my1Image* image, my1Image* result, void* userdata)
+{
+	if(image->mask!=0xffffff) return image;
+	if(!result->data) createimage(result,image->height,image->width);
+	int loop;
+	for(loop=0;loop<image->length;loop++)
+		result->data[loop] = color2gray(image->data[loop]);
+	result->mask = 0;
+	return result;
+}
+/*----------------------------------------------------------------------------*/
 int main(int argc, char* argv[])
 {
 	my1Video cMain;
 	my1Capture cCapture;
 	my1Display cDisplay;
 	SDL_Event event;
-	int loop, live = -1, errorcount = 0;
+	my1VFilter grayfilter;
+	int loop, live = -1, filter = 1, errorcount = 0;
 	char *pFileName = 0x0;
 
 	/* check parameter */
@@ -34,14 +45,14 @@ int main(int argc, char* argv[])
 	{
 		if(!strcmp(argv[loop],"--live"))
 		{
-			if(loop<argc-1) // still with param!
+			if(loop<argc-1) /* still with param! */
 				live = atoi(argv[++loop]);
 		}
 		else
 		{
 			if(pFileName)
 			{
-				// already given filename!
+				/* already given filename! */
 				printf("Invalid param? (%s)",argv[loop]);
 				errorcount++;
 			}
@@ -59,6 +70,8 @@ int main(int argc, char* argv[])
 	initdisplay(&cDisplay);
 	cCapture.video = &cMain;
 	cDisplay.video = &cMain;
+	filter_init(&grayfilter,fgrayfilter);
+	cMain.filter = &grayfilter;
 
 	/* setup devices */
 	if(pFileName)
@@ -69,12 +82,13 @@ int main(int argc, char* argv[])
 
 	printf("Press 'h' for hotkeys.\n");
 	printf("Starting main capture loop.\n");
-	// main capture loop
+	/* main capture loop */
 	while(1)
 	{
 		grabcapture(&cCapture);
 		if(cMain.newframe)
 		{
+			if(filter) filtervideo(&cMain);
 			printf("Video frame index: %d/%d\n", cMain.index, cMain.count);
 			buffdisplay(&cDisplay);
 			showdisplay(&cDisplay);
@@ -127,11 +141,25 @@ int main(int argc, char* argv[])
 				{
 					printf("%s",showkeys);
 				}
+				else if(event.key.keysym.sym == SDLK_z)
+				{
+					if(filter)
+					{
+						filter = 0;
+						printf("Disable filter.\n");
+					}
+					else
+					{
+						filter = 1;
+						printf("Enable filter.\n");
+					}
+				}
 			}
 		}
 		postinput(&cMain);
 	}
 
+	filter_free(&grayfilter);
 	cleancapture(&cCapture);
 	cleandisplay(&cDisplay);
 	cleanvideo(&cMain);

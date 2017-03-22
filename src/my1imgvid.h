@@ -2,7 +2,7 @@
 #ifndef __MY1IMGVIDH__
 #define __MY1IMGVIDH__
 /*----------------------------------------------------------------------------*/
-#include "my1imgpro.h"
+#include "my1imgutil.h"
 /*----------------------------------------------------------------------------*/
 typedef unsigned char vbyte;
 typedef struct
@@ -11,16 +11,8 @@ typedef struct
 }
 vrgb; /* TODO: may change this to YUV-based */
 /*----------------------------------------------------------------------------*/
-typedef my1Image* (*pVFilter)(my1Image* image, my1Image* result, void* userdata);
-/*----------------------------------------------------------------------------*/
-typedef struct _vfilter
-{
-	void *userdata;
-	my1Image buffer;
-	pVFilter filter;
-	struct _vfilter *next; /* linked list */
-}
-my1VFilter;
+typedef pImgPro pVFilter;
+typedef my1ImgFilter my1VFilter;
 /*----------------------------------------------------------------------------*/
 struct _video
 {
@@ -49,7 +41,7 @@ void prevvframe(my1Video *video);
 void filtervideo(my1Video *video);
 /* for processing user requests */
 void postinput(my1Video *video);
-// special converter
+/* special converter */
 int encode_vrgb(vrgb colorpix);
 vrgb decode_vrgb(int rgbcode);
 int vrgb2gray(vrgb colorpix);

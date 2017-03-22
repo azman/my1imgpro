@@ -171,12 +171,10 @@ void filter_free(my1ImgFilter* pfilter)
 my1Image* filter_image(my1ImgFilter* pfilter, my1Image* image)
 {
 	my1Image *pcheck = image;
-	void *platch = 0x0;
 	while(pfilter)
 	{
-		if(!platch) platch = pfilter->userdata;
 		if(pfilter->filter)
-			pcheck = pfilter->filter(pcheck,&pfilter->buffer,platch);
+			pcheck = pfilter->filter(pcheck,&pfilter->buffer,pfilter->userdata);
 		pfilter = pfilter->next;
 	}
 	return pcheck;
