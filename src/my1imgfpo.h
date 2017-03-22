@@ -16,7 +16,7 @@ struct _kernel
 {
 	int size; /* square mask - should be odd number */
 	int length; /* memory is cheap - precalculate this! */
-	int orig_x, orig_y; /* origin for kernel placement */
+	int origin; /* origin for kernel placement - always size/2 */
 	float *factor;
 };
 typedef struct _kernel my1Kernel;
@@ -41,6 +41,7 @@ void limitrange_frame(my1IFrame *frame);
 void absolute_frame(my1IFrame *frame);
 /* other operators */
 void correlate_frame(my1IFrame *src, my1IFrame *dst, my1Kernel *kernel);
+void convolute_frame(my1IFrame *src, my1IFrame *dst, my1Kernel *kernel);
 /*----------------------------------------------------------------------------*/
 #endif
 /*----------------------------------------------------------------------------*/

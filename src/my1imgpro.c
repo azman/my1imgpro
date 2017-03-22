@@ -2,7 +2,6 @@
 #include "my1imgpro.h"
 #include <stdlib.h> /* for malloc and free? */
 /*----------------------------------------------------------------------------*/
-/*----------------------------------------------------------------------------*/
 void initimage(my1Image *image)
 {
 	image->width = 0;
@@ -28,7 +27,7 @@ int* createimage(my1Image *image, int height, int width)
 /*----------------------------------------------------------------------------*/
 void freeimage(my1Image *image)
 {
-	if(image->length) free(image->data);
+	if(image->data) free((void*)image->data);
 	image->data = 0x0;
 	image->length = 0;
 }
@@ -65,7 +64,6 @@ int* imgrowdata(my1Image *image, int row)
 {
 	return &(image->data[row*image->width]);
 }
-/*----------------------------------------------------------------------------*/
 /*----------------------------------------------------------------------------*/
 void limit_pixel(my1Image *image)
 {
@@ -164,7 +162,6 @@ void scale_pixel(my1Image *image, float value)
 	}
 }
 /*----------------------------------------------------------------------------*/
-/*----------------------------------------------------------------------------*/
 void image_add(my1Image *image1, my1Image *image2, my1Image *result)
 {
 	int iloop, ilength = image1->length;
@@ -213,5 +210,4 @@ void image_pan(my1Image *image, my1Image *result, int shx, int shy, int vin)
 		}
 	}
 }
-/*----------------------------------------------------------------------------*/
 /*----------------------------------------------------------------------------*/

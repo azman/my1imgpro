@@ -2,7 +2,6 @@
 #include "my1imgfpo.h"
 #include <stdlib.h> /* for malloc & free */
 /*----------------------------------------------------------------------------*/
-/*----------------------------------------------------------------------------*/
 void initframe(my1IFrame *frame)
 {
 	frame->width = 0;
@@ -33,7 +32,6 @@ void frame2image(my1IFrame *frame, my1Image *image, int align)
 	}
 }
 /*----------------------------------------------------------------------------*/
-/*----------------------------------------------------------------------------*/
 float* createframe(my1IFrame *frame, int height, int width)
 {
 	int length = height*width;
@@ -50,7 +48,7 @@ float* createframe(my1IFrame *frame, int height, int width)
 /*----------------------------------------------------------------------------*/
 void freeframe(my1IFrame *frame)
 {
-	if(frame->length) free(frame->data);
+	if(frame->data) free((void*)frame->data);
 	frame->data = 0x0;
 	frame->length = 0;
 }
@@ -91,7 +89,7 @@ float* createkernel(my1Kernel *kernel, int size)
 /*----------------------------------------------------------------------------*/
 void freekernel(my1Kernel *kernel)
 {
-	free(kernel->factor);
+	free((void*)kernel->factor);
 	kernel->factor = 0x0;
 }
 /*----------------------------------------------------------------------------*/
@@ -103,7 +101,6 @@ void setkernel(my1Kernel *kernel, float *farray)
 		kernel->factor[index] = farray[index];
 	}
 }
-/*----------------------------------------------------------------------------*/
 /*----------------------------------------------------------------------------*/
 void getminmax_frame(my1IFrame *frame, float* min, float* max)
 {
@@ -152,7 +149,6 @@ void absolute_frame(my1IFrame *frame)
 	}
 }
 /*----------------------------------------------------------------------------*/
-/*----------------------------------------------------------------------------*/
 void correlate_frame(my1IFrame *src, my1IFrame *dst, my1Kernel *kernel)
 {
 	int irow, icol, srow, scol, trow, tcol, mrow, mcol, index;
@@ -163,19 +159,20 @@ void correlate_frame(my1IFrame *src, my1IFrame *dst, my1Kernel *kernel)
 		for(icol=0;icol<dst->width;icol++)
 		{
 			value = 0.0; index = 0;
-			srow=irow-kernel->orig_x;
+			srow=irow-kernel->origin;
 			for(mrow=0;mrow<kernel->size;mrow++)
 			{
 				if(srow<0) trow = 0;
 				else if(srow>=src->height) trow = src->height-1;
 				else trow = srow;
-				scol=icol-kernel->orig_y;
+				scol=icol-kernel->origin;
 				for(mcol=0;mcol<kernel->size;mcol++)
 				{
 					if(scol<0) tcol = 0;
 					else if(scol>=src->width) tcol = src->width-1;
 					else tcol = scol;
-					value += kernel->factor[index++] * framepixel (src,trow,tcol);
+					value += kernel->factor[index++] *
+						framepixel(src,trow,tcol);
 					scol++;
 				}
 				srow++;
@@ -185,4 +182,36 @@ void correlate_frame(my1IFrame *src, my1IFrame *dst, my1Kernel *kernel)
 	}
 }
 /*----------------------------------------------------------------------------*/
+void convolute_frame(my1IFrame *src, my1IFrame *dst, my1Kernel *kernel)
+{
+	int irow, icol, srow, scol, trow, tcol, mrow, mcol, index;
+	float value;
+	/* main loop */
+	for(irow=0;irow<dst->height;irow++)
+	{
+		for(icol=0;icol<dst->width;icol++)
+		{
+			value = 0.0; index = 0;
+			srow=irow+kernel->origin;
+			for(mrow=0;mrow<kernel->size;mrow++)
+			{
+				if(srow<0) trow = 0;
+				else if(srow>=src->height) trow = src->height-1;
+				else trow = srow;
+				scol=icol+kernel->origin;
+				for(mcol=0;mcol<kernel->size;mcol++)
+				{
+					if(scol<0) tcol = 0;
+					else if(scol>=src->width) tcol = src->width-1;
+					else tcol = scol;
+					value += kernel->factor[index++] *
+						framepixel(src,trow,tcol);
+					scol--;
+				}
+				srow--;
+			}
+			setframepixel(dst,irow,icol,value);
+		}
+	}
+}
 /*----------------------------------------------------------------------------*/

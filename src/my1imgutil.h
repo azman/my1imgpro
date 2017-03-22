@@ -15,7 +15,7 @@ struct _mask
 {
 	int size; /* square mask - should be odd number */
 	int length; /* memory is cheap - precalculate this! */
-	int orig_x, orig_y; /* origin for mask placement */
+	int origin; /* origin for mask placement - always size/2 */
 	int *factor;
 };
 typedef struct _mask my1Mask;
@@ -27,6 +27,17 @@ struct _hist
 };
 typedef struct _hist my1Hist;
 /*----------------------------------------------------------------------------*/
+typedef my1Image* (*pImgPro)(my1Image* image, my1Image* result, void* userdata);
+/*----------------------------------------------------------------------------*/
+typedef struct _imgfilter
+{
+	void *userdata;
+	my1Image buffer;
+	pImgPro filter;
+	struct _imgfilter *next; /* linked list */
+}
+my1ImgFilter;
+/*----------------------------------------------------------------------------*/
 typedef unsigned char cbyte; /** color byte */
 /*----------------------------------------------------------------------------*/
 /* sub-image management functions */
@@ -37,8 +48,13 @@ void fillregion(my1Image *image, int value, my1Region *region);
 int* createmask(my1Mask *mask, int size);
 void freemask(my1Mask *mask);
 void setmask(my1Mask *mask, int *parray); /* user must set correct size */
-/* generic filter/convolution */
-void filter_image(my1Image *src, my1Image *dst, my1Mask *mask);
+/* linear filter : cross-correlation & convolution */
+void mask_image(my1Mask *mask, my1Image *src, my1Image *dst);
+void conv_image(my1Mask *mask, my1Image *src, my1Image *dst);
+/* generic filter */
+void filter_init(my1ImgFilter* pfilter, pImgPro filter);
+void filter_free(my1ImgFilter* pfilter);
+void filter_image(my1ImgFilter* pfilter, my1Image* image, my1Image* result);
 /* grayscale histogram utility */
 void histogram_image(my1Image *image, my1Hist *hist);
 void histogram_smooth(my1Image *image, my1Hist *hist); /* not much use? */

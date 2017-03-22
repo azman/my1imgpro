@@ -2,7 +2,6 @@
 #include "my1imgmath.h"
 #include <math.h> /* trig functions */
 /*----------------------------------------------------------------------------*/
-/*----------------------------------------------------------------------------*/
 void image_rotate(my1Image *image, my1Image *result, int radian, int vin)
 {
 	int iloop, jloop;
@@ -36,7 +35,6 @@ void image_rotate(my1Image *image, my1Image *result, int radian, int vin)
 		}
 	}
 }
-/*----------------------------------------------------------------------------*/
 /*----------------------------------------------------------------------------*/
 void identitymatrix(my1Matrix *matrix)
 {
@@ -105,5 +103,4 @@ void matrix_mul(my1Matrix *matrix1, my1Matrix *matrix2, my1Matrix *result)
 		}
 	}
 }
-/*----------------------------------------------------------------------------*/
 /*----------------------------------------------------------------------------*/

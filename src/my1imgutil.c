@@ -2,7 +2,6 @@
 #include "my1imgutil.h"
 #include <stdlib.h> /* for malloc and free? */
 /*----------------------------------------------------------------------------*/
-/*----------------------------------------------------------------------------*/
 void image2sub(my1Image *image, my1Image *subimage, my1Region *region)
 {
 	int iloop, jloop, xoff = 0, yoff = 0;
@@ -68,7 +67,6 @@ void fillregion(my1Image *image, int value, my1Region *region)
 	}
 }
 /*----------------------------------------------------------------------------*/
-/*----------------------------------------------------------------------------*/
 int* createmask(my1Mask *mask, int size)
 {
 	int length = size*size;
@@ -77,8 +75,7 @@ int* createmask(my1Mask *mask, int size)
 	{
 		mask->size = size;
 		mask->length = length;
-		mask->orig_x = 0;
-		mask->orig_y = 0;
+		mask->origin = size/2;
 		mask->factor = temp;
 	}
 	return temp;
@@ -86,52 +83,100 @@ int* createmask(my1Mask *mask, int size)
 /*----------------------------------------------------------------------------*/
 void freemask(my1Mask *mask)
 {
-	free(mask->factor);
+	free((void*)mask->factor);
 	mask->factor = 0x0;
 }
 /*----------------------------------------------------------------------------*/
 void setmask(my1Mask *mask, int *parray)
 {
 	int index;
-	for(index=0;index<mask->length;index++ )
+	for(index=0;index<mask->length;index++)
 	{
 		mask->factor[index] = parray[index];
 	}
 }
 /*----------------------------------------------------------------------------*/
-/*----------------------------------------------------------------------------*/
-void filter_image(my1Image *src, my1Image *dst, my1Mask *mask)
+int validpixel(my1Image *image, int row, int col)
 {
-	int irow, icol, srow, scol, trow, tcol, mrow, mcol, index;
-	int value;
+	if(row<0) row = 0;
+	else if(row>=image->height) row = image->height-1;
+	if(col<0) col = 0;
+	else if(col>=image->width) col = image->width-1;
+	return image->data[row*image->width+col];
+}
+/*----------------------------------------------------------------------------*/
+void mask_image(my1Mask *mask, my1Image *src, my1Image *dst)
+{
+	int irow, icol, mrow, mcol;
+	int index, value;
 	/* main loop */
 	for(irow=0;irow<dst->height;irow++)
 	{
 		for(icol=0;icol<dst->width;icol++)
 		{
 			value = 0; index = 0;
-			srow=irow-mask->orig_x;
-			for(mrow=0;mrow<mask->size;mrow++)
+			for(mrow=-mask->origin;mrow<=mask->origin;mrow++)
 			{
-				if(srow<0) trow = 0;
-				else if(srow>=src->height) trow = src->height-1;
-				else trow = srow;
-				scol=icol-mask->orig_y;
-				for(mcol=0;mcol<mask->size;mcol++)
+				for(mcol=-mask->origin;mcol<=mask->origin;mcol++)
 				{
-					if(scol<0) tcol = 0;
-					else if(scol>=src->width) tcol = src->width-1;
-					else tcol = scol;
-					value += mask->factor[index++] * imagepixel(src,trow,tcol);
-					scol++;
+					/* cross-correlation */
+					value += mask->factor[index++] *
+						validpixel(src,irow+mrow,icol+mcol);
 				}
-				srow++;
 			}
 			setimagepixel(dst,irow,icol,value);
 		}
 	}
 }
 /*----------------------------------------------------------------------------*/
+void conv_image(my1Mask *mask, my1Image *src, my1Image *dst)
+{
+	int irow, icol, mrow, mcol;
+	int index, value;
+	/* main loop */
+	for(irow=0;irow<dst->height;irow++)
+	{
+		for(icol=0;icol<dst->width;icol++)
+		{
+			value = 0; index = 0;
+			for(mrow=-mask->origin;mrow<=mask->origin;mrow++)
+			{
+				for(mcol=-mask->origin;mcol<=mask->origin;mcol++)
+				{
+					/* convolution */
+					value += mask->factor[index++] *
+						validpixel(src,irow-mrow,icol-mcol);
+				}
+			}
+			setimagepixel(dst,irow,icol,value);
+		}
+	}
+}
+/*----------------------------------------------------------------------------*/
+void filter_init(my1ImgFilter* pfilter, pImgPro filter)
+{
+	pfilter->userdata = 0x0;
+	initimage(&pfilter->buffer);
+	pfilter->filter = filter;
+	pfilter->next = 0x0;
+}
+/*----------------------------------------------------------------------------*/
+void filter_free(my1ImgFilter* pfilter)
+{
+	freeimage((void*)&pfilter->buffer);
+	if(pfilter->next)
+		filter_free(pfilter->next);
+}
+/*----------------------------------------------------------------------------*/
+void filter_image(my1ImgFilter* pfilter, my1Image* image, my1Image* result)
+{
+	while(pfilter)
+	{
+		if(pfilter->filter)
+			result = pfilter->filter(image,result,pfilter->userdata);
+		pfilter = pfilter->next;
+	}
+}
 /*----------------------------------------------------------------------------*/
 void histogram_image(my1Image *image, my1Hist *hist)
 {
@@ -178,8 +223,6 @@ int histogram_maxindex(my1Hist *hist)
 	return index;
 }
 /*----------------------------------------------------------------------------*/
-#include<stdio.h>
-/*----------------------------------------------------------------------------*/
 void grayscale_image(my1Image *image)
 {
 	int loop;
@@ -212,7 +255,6 @@ void decode_rgb(int data, cbyte *r, cbyte *g, cbyte *b)
 	*g = (data&0xff00)>>8;
 	*b = (data&0xff);
 }
-/*----------------------------------------------------------------------------*/
 /*----------------------------------------------------------------------------*/
 int extract_rgb(my1Image *image, cbyte *rgb)
 {
@@ -267,5 +309,4 @@ int assign_rgb(my1Image *image, cbyte *rgb)
 	}
 	return mask;
 }
-/*----------------------------------------------------------------------------*/
 /*----------------------------------------------------------------------------*/
