@@ -69,7 +69,7 @@ int iabs(int value)
 my1Image* sobel_image(my1Image* image, my1Image* result, void* userdata)
 {
 	my1Image buff1, buff2, *pphase = (my1Image*) userdata;
-	int irow, icol, x, y, temp;
+	int irow, icol, x, y;
 
 	/* initialize buffer stuctures */
 	initimage(&buff1);
@@ -98,70 +98,9 @@ my1Image* sobel_image(my1Image* image, my1Image* result, void* userdata)
 		{
 			x = imagepixel(&buff1,irow,icol);
 			y = imagepixel(&buff2,irow,icol);
-			setimagepixel(result,irow,icol,iabs(y)+iabs(x));
+			setimagepixel(result,irow,icol,(int)sqrt((y*y)+(x*x)));
 			if(!pphase) continue;
-			if(x>0)
-			{
-				if(y>0)
-				{
-					/* q1 */
-					y = iabs(y); x = iabs(x);
-					if(y>2*x) temp = 90;
-					else if(x>2*y) temp = 0;
-					else temp = 45;
-				}
-				else if(y<0)
-				{
-					/* q4 */
-					y = iabs(y); x = iabs(x);
-					if(y>2*x) temp = 270;
-					else if(x>2*y) temp = 0;
-					else temp = 315;
-				}
-				else
-				{
-					temp = 0; /* +ve x-axis */
-				}
-			}
-			else if(x<0)
-			{
-				if(y>0)
-				{
-					/* q2 */
-					y = iabs(y); x = iabs(x);
-					if(y>2*x) temp = 90;
-					else if(x>2*y) temp = 180;
-					else temp = 135;
-				}
-				else if(y<0)
-				{
-					/* q3 */
-					y = iabs(y); x = iabs(x);
-					if(y>2*x) temp = 270;
-					else if(x>2*y) temp = 180;
-					else temp = 225;
-				}
-				else
-				{
-					temp = 180; /* -ve x-axis */
-				}
-			}
-			else
-			{
-				if(y>0)
-				{
-					temp = 90; /* +ve y-axis */
-				}
-				else if(y<0)
-				{
-					temp = 270; /* -ve y-axis */
-				}
-				else
-				{
-					temp = 0; /* origin! no edge? */
-				}
-			}
-			setimagepixel(pphase,irow,icol,temp);
+			setimagepixel(pphase,irow,icol,(int)atan2(y,x));
 		}
 	}
 
@@ -185,7 +124,7 @@ my1Image* laplace_frame(my1Image* image, my1Image* result, void* userdata)
 		if(createframe(&buff1,image->height,image->width)&&
 			createframe(&buff2,image->height,image->width))
 		{
-			image2frame(image,&buff1,0);
+			image2frame(image,&buff1,1);
 			correlate_frame(&buff1,&buff2,&kernel);
 			if(!result->data)
 				createimage(result,image->height,image->width);
@@ -203,8 +142,7 @@ my1Image* gaussian_image(my1Image* image, my1Image* result, void* userdata)
 	int coeff[] = { 1,4,7,4,1, 4,16,26,16,4,
 		7,26,41,26,7, 4,16,26,16,4, 1,4,7,4,1};
 	apply_mask2image(image,result,5,coeff);
-	/* divide 273??? */
-	scale_pixel(image,(1.0/273.0));
+	scale_pixel(result,(1.0/273.0));
 	return result;
 }
 /*----------------------------------------------------------------------------*/
@@ -369,7 +307,7 @@ void about(void)
 	printf("  laplace2  : Laplace Gradient Filter (floating-point data)\n");
 	printf("  sobelx    : Sobel Horizontal Gradient Filter\n");
 	printf("  sobely    : Sobel Vertical Gradient Filter\n");
-	printf("  sobelall  : Sobel Directional Gradient Filter\n");
+	printf("  sobel     : Sobel Directional Gradient Filter\n");
 	printf("  gauss     : Gaussian Gradient Filter\n\n");
 	printf("Options are:\n");
 	printf("  --save <filename>  : save to image file\n");
@@ -465,7 +403,7 @@ int main(int argc, char* argv[])
 					pfilter = insert_imgfilter(pfilter,&ifilter_sobely);
 					gray = 1;
 				}
-				else if(!strcmp(argv[loop],"sobelall"))
+				else if(!strcmp(argv[loop],"sobel"))
 				{
 					pfilter = insert_imgfilter(pfilter,&ifilter_sobel);
 					gray = 1;
@@ -519,7 +457,12 @@ int main(int argc, char* argv[])
 	if(gray) grayscale_image(pimage);
 
 	/* run image filter */
-	if (pfilter) pimage = filter_image(pfilter,pimage);
+	if (pfilter)
+	{
+		pimage = filter_image(pfilter,pimage);
+		absolute_pixel(pimage);
+		cliphi_pixel(pimage,WHITE);
+	}
 
 	printf("Check image:\n");
 	print_image_info(pimage);

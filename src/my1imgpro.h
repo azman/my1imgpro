@@ -37,6 +37,7 @@ void cliphi_pixel(my1Image *image, int hithresh);
 void cliplo_pixel(my1Image *image, int lothresh);
 void shift_pixel(my1Image *image, int value);
 void scale_pixel(my1Image *image, float value);
+void rescale_pixel(my1Image *image); /* get max value, rescale */
 /* image functions */
 void image_add(my1Image *image1, my1Image *image2, my1Image *result);
 void image_sub(my1Image *image1, my1Image *image2, my1Image *result);

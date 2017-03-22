@@ -162,6 +162,25 @@ void scale_pixel(my1Image *image, float value)
 	}
 }
 /*----------------------------------------------------------------------------*/
+void rescale_pixel(my1Image *image)
+{
+	float scale;
+	int iloop, ilength = image->length;
+	int max = image->data[0], min = image->data[0];
+	/* get min max range */
+	for(iloop=1;iloop<ilength;iloop++)
+	{
+		if(max<image->data[iloop]) max = image->data[iloop];
+		else if(min>image->data[iloop]) min = image->data[iloop];
+	}
+	/* rescale! */
+	scale = (float)(max-min)/WHITE;
+	for(iloop=0;iloop<ilength;iloop++)
+	{
+		image->data[iloop] = (int) ((image->data[iloop]-min)/scale);
+	}
+}
+/*----------------------------------------------------------------------------*/
 void image_add(my1Image *image1, my1Image *image2, my1Image *result)
 {
 	int iloop, ilength = image1->length;
