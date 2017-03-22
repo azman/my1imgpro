@@ -21,68 +21,43 @@
 /*----------------------------------------------------------------------------*/
 #define ERROR_GENERAL -1
 /*----------------------------------------------------------------------------*/
-#define COMMAND_NONE 0
-#define COMMAND_LAPLACE1 1
-#define COMMAND_SOBELX 2
-#define COMMAND_SOBELY 3
-#define COMMAND_SOBELALL 4
-#define COMMAND_LAPLACE2 5
-#define COMMAND_GAUSS 6
+my1ImgFilter* insert_imgfilter(my1ImgFilter* pstack, my1ImgFilter* pcheck)
+{
+	my1ImgFilter *pthis = pstack;
+	if (!pstack) return pcheck;
+	while(pthis->next) pthis = pthis->next;
+	pthis->next = pcheck;
+	return pstack;
+}
 /*----------------------------------------------------------------------------*/
-/* sample filters */
+my1Image* apply_mask2image(my1Image* image, my1Image* result,
+	int size, int* pdata)
+{
+	my1Mask mask;
+	if(!createmask(&mask,size)) return image;
+	setmask(&mask,pdata);
+	if(!result->data) createimage(result,image->height,image->width);
+	mask_image(&mask,image,result);
+	freemask(&mask);
+	return result;
+}
 /*----------------------------------------------------------------------------*/
-int laplace_image(my1Image *src, my1Image *dst)
+my1Image* laplace_image(my1Image* image, my1Image* result, void* userdata)
 {
 	int coeff[] = { 0,-1,0, -1,4,-1, 0,-1,0 };
-	my1Mask mask;
-
-	if(createmask(&mask,3)==0x0)
-		return -1;
-
-	setmask(&mask,coeff);
-	mask.orig_x = 1;
-	mask.orig_y = 1;
-
-	filter_image(src,dst,&mask);
-	freemask(&mask);
-
-	return 0;
+	return apply_mask2image(image,result,3,coeff);
 }
 /*----------------------------------------------------------------------------*/
-int sobel_x_image(my1Image *src, my1Image *dst)
+my1Image* sobel_x_image(my1Image* image, my1Image* result, void* userdata)
 {
 	int coeff[] = { -1,0,1, -2,0,2, -1,0,1 };
-	my1Mask mask;
-
-	if(createmask(&mask,3)==0x0)
-		return -1;
-
-	setmask(&mask,coeff);
-	mask.orig_x = 1;
-	mask.orig_y = 1;
-
-	filter_image(src,dst,&mask);
-	freemask(&mask);
-
-	return 0;
+	return apply_mask2image(image,result,3,coeff);
 }
 /*----------------------------------------------------------------------------*/
-int sobel_y_image(my1Image *src, my1Image *dst)
+my1Image* sobel_y_image(my1Image* image, my1Image* result, void* userdata)
 {
 	int coeff[] = { -1,-2,-1, 0,0,0, 1,2,1 };
-	my1Mask mask;
-
-	if(createmask(&mask,3)==0x0)
-		return -1;
-
-	setmask(&mask,coeff);
-	mask.orig_x = 1;
-	mask.orig_y = 1;
-
-	filter_image(src,dst,&mask);
-	freemask(&mask);
-
-	return 0;
+	return apply_mask2image(image,result,3,coeff);
 }
 /*----------------------------------------------------------------------------*/
 int iabs(int value)
@@ -91,42 +66,45 @@ int iabs(int value)
 	return value;
 }
 /*----------------------------------------------------------------------------*/
-int sobel_image(my1Image *src, my1Image *dst_mag, my1Image *dst_ang)
+my1Image* sobel_image(my1Image* image, my1Image* result, void* userdata)
 {
-	my1Image buff1, buff2;
+	my1Image buff1, buff2, *pphase = (my1Image*) userdata;
 	int irow, icol, x, y, temp;
 
-	// create temporary buffer
-	if(!createimage(&buff1,src->height,src->width))
-	{
-		//printf("Cannot allocate buff1 memory\n");
-		return -1;
-	}
-	if(!createimage(&buff2,src->height,src->width))
+	/* initialize buffer stuctures */
+	initimage(&buff1);
+	initimage(&buff2);
+	/* create temporary buffers */
+	if(!createimage(&buff1,image->height,image->width)||
+		!createimage(&buff2,image->height,image->width))
 	{
 		freeimage(&buff1);
-		//printf("Cannot allocate buff2 memory\n");
-		return -1;
+		freeimage(&buff2);
+		return image;
 	}
 
-	// calculate directional edge
-	sobel_x_image(src, &buff1);
-	sobel_y_image(src, &buff2);
+	/* calculate directional edge */
+	sobel_x_image(image, &buff1, 0x0);
+	sobel_y_image(image, &buff2, 0x0);
 
-	// calculate angle for 3x3 neighbourhood
-	for(irow=0;irow<src->height;irow++)
+	/* prepare resulting image structure */
+	if(!result->data) createimage(result,image->height,image->width);
+	if(pphase&&!pphase->data) createimage(pphase,image->height,image->width);
+
+	/* calculate magniture & phase for 3x3 neighbourhood */
+	for(irow=0;irow<image->height;irow++)
 	{
-		for(icol=0;icol<src->width;icol++)
+		for(icol=0;icol<image->width;icol++)
 		{
 			x = imagepixel(&buff1,irow,icol);
 			y = imagepixel(&buff2,irow,icol);
-			setimagepixel(dst_mag,irow,icol,iabs(y)+iabs(x));
-			if(!dst_ang) continue;
+			setimagepixel(result,irow,icol,iabs(y)+iabs(x));
+			if(!pphase) continue;
 			if(x>0)
 			{
 				if(y>0)
 				{
-					// q1
+					/* q1 */
 					y = iabs(y); x = iabs(x);
 					if(y>2*x) temp = 90;
 					else if(x>2*y) temp = 0;
@@ -134,7 +112,7 @@ int sobel_image(my1Image *src, my1Image *dst_mag, my1Image *dst_ang)
 				}
 				else if(y<0)
 				{
-					// q4
+					/* q4 */
 					y = iabs(y); x = iabs(x);
 					if(y>2*x) temp = 270;
 					else if(x>2*y) temp = 0;
@@ -142,14 +120,14 @@ int sobel_image(my1Image *src, my1Image *dst_mag, my1Image *dst_ang)
 				}
 				else
 				{
-					temp = 0; // +ve x-axis
+					temp = 0; /* +ve x-axis */
 				}
 			}
 			else if(x<0)
 			{
 				if(y>0)
 				{
-					// q2
+					/* q2 */
 					y = iabs(y); x = iabs(x);
 					if(y>2*x) temp = 90;
 					else if(x>2*y) temp = 180;
@@ -157,7 +135,7 @@ int sobel_image(my1Image *src, my1Image *dst_mag, my1Image *dst_ang)
 				}
 				else if(y<0)
 				{
-					// q3
+					/* q3 */
 					y = iabs(y); x = iabs(x);
 					if(y>2*x) temp = 270;
 					else if(x>2*y) temp = 180;
@@ -165,25 +143,25 @@ int sobel_image(my1Image *src, my1Image *dst_mag, my1Image *dst_ang)
 				}
 				else
 				{
-					temp = 180; // -ve x-axis
+					temp = 180; /* -ve x-axis */
 				}
 			}
 			else
 			{
 				if(y>0)
 				{
-					temp = 90; // +ve y-axis
+					temp = 90; /* +ve y-axis */
 				}
 				else if(y<0)
 				{
-					temp = 270; // -ve y-axis
+					temp = 270; /* -ve y-axis */
 				}
 				else
 				{
-					temp = 0; // origin! no edge?
+					temp = 0; /* origin! no edge? */
 				}
 			}
-			setimagepixel(dst_ang,irow,icol,temp);
+			setimagepixel(pphase,irow,icol,temp);
 		}
 	}
 
@@ -191,88 +169,44 @@ int sobel_image(my1Image *src, my1Image *dst_mag, my1Image *dst_ang)
 	freeimage(&buff1);
 	freeimage(&buff2);
 
-	return 0;
+	return result;
 }
 /*----------------------------------------------------------------------------*/
-int laplace_frame(my1IFrame *src, my1IFrame *dst)
+my1Image* laplace_frame(my1Image* image, my1Image* result, void* userdata)
 {
+	my1IFrame buff1, buff2;
 	float coeff[] = { 0.0,-1.0,0.0, -1.0,4.0,-1.0, 0.0,-1.0,0.0 };
 	my1Kernel kernel;
-
-	if(createkernel(&kernel,3)==0x0)
-		return -1;
-
-	setkernel(&kernel,coeff);
-	kernel.orig_x = 1;
-	kernel.orig_y = 1;
-
-	correlate_frame(src,dst,&kernel);
-	freekernel(&kernel);
-
-	return 0;
-}
-/*----------------------------------------------------------------------------*/
-#define PI 3.14159265
-#define THRES2 0.0039 /* 1/256 - max division possible for grayscale */
-#define THRES1 0.0156 /* 1/64 - leave 2 significant bits */
-#define THRESH 0.0625 /* 1/16 - leave 4 significant bits */
-/*----------------------------------------------------------------------------*/
-float fgaussian2d(float x, float y, float sigma)
-{
-	/* isotropic (circularly symmetric) mean at (0,0) */
-	return pow(2.71828,-(((x*x)+(y*y))/(2*sigma*sigma)))/(sigma*sigma*2*PI);
-}
-/*----------------------------------------------------------------------------*/
-int gauss_frame(my1IFrame *src, my1IFrame *dst, float sigma, float *over)
-{
-	my1Kernel kernel;
-	/* computing MY 2D gaussian smoothing kernel */
-	int loop = 0, loop2, index = 0;
-	float temp = 1.0, corner;
-	float mult, value;
-	while(temp>THRESH)
+	if(createkernel(&kernel,3))
 	{
-		temp = fgaussian2d(loop,loop,sigma);
-		corner = temp;
-		loop++;
-	}
-	value = 1.0/corner;
-
-	int windowsize = (loop*2)-1;
-	int count = windowsize/2;
-	int length = windowsize*windowsize;
-	float *pcoeff = (float*) malloc(length*sizeof(float));
-	if(pcoeff==0x0)
-		return -1;
-	for(loop=0;loop<windowsize;loop++)
-	{
-		for(loop2=0;loop2<windowsize;loop2++)
+		setkernel(&kernel,coeff);
+		initframe(&buff1);
+		initframe(&buff2);
+		if(createframe(&buff1,image->height,image->width)&&
+			createframe(&buff2,image->height,image->width))
 		{
-			if(over)
-				mult = value * (int)fgaussian2d(loop-count, loop2-count, sigma);
-			else
-				mult = fgaussian2d(loop-count, loop2-count, sigma);
-			pcoeff[index++] = mult;
+			image2frame(image,&buff1,0);
+			correlate_frame(&buff1,&buff2,&kernel);
+			if(!result->data)
+				createimage(result,image->height,image->width);
+			frame2image(&buff2,result,1);
 		}
+		freeframe(&buff1);
+		freeframe(&buff2);
+		freekernel(&kernel);
 	}
-	if(over) *over = value;
-
-	if(createkernel(&kernel,windowsize)==0x0)
-	{
-		free(pcoeff);
-		return -1;
-	}
-	setkernel(&kernel, pcoeff);
-	kernel.orig_x = count;
-	kernel.orig_y = count;
-	free(pcoeff);
-
-	correlate_frame(src, dst, &kernel);
-	freekernel(&kernel);
-
-	return 0;
+	return result;
 }
 /*----------------------------------------------------------------------------*/
+my1Image* gaussian_image(my1Image* image, my1Image* result, void* userdata)
+{
+	int coeff[] = { 1,4,7,4,1, 4,16,26,16,4,
+		7,26,41,26,7, 4,16,26,16,4, 1,4,7,4,1};
+	apply_mask2image(image,result,5,coeff);
+	/* divide 273??? */
+	scale_pixel(image,(1.0/273.0));
+	return result;
+}
 /*----------------------------------------------------------------------------*/
 void print_image_info(my1Image* image)
 {
@@ -429,8 +363,8 @@ void view_image(my1Image* image)
 void about(void)
 {
 	printf("Command-line use:\n");
-	printf("  %s [options] <image-file> [command]\n\n",MY1APP_PROGNAME);
-	printf("Valid Commands (image filter) are:\n");
+	printf("  %s [options] <image-file> [filter(s)]\n\n",MY1APP_PROGNAME);
+	printf("Valid (stackable) image filter(s) are:\n");
 	printf("  laplace1  : Laplace Gradient Filter\n");
 	printf("  laplace2  : Laplace Gradient Filter (floating-point data)\n");
 	printf("  sobelx    : Sobel Horizontal Gradient Filter\n");
@@ -447,15 +381,25 @@ void about(void)
 /*----------------------------------------------------------------------------*/
 int main(int argc, char* argv[])
 {
-	int loop, test = 0, error = 0, command = COMMAND_NONE;
+	int loop, error = 0;
 	int gray = 0, view = 1, help = 0;
 	char *psave = 0x0, *pname = 0x0, *pdata = 0x0;
-	my1Image currimage, tempimage, *pimage;
-	my1IFrame currframe, tempframe;
+	my1Image currimage, *pimage;
+	my1ImgFilter ifilter_laplace1,ifilter_laplace2,
+		ifilter_sobelx, ifilter_sobely, ifilter_sobel, ifilter_gauss;
+	my1ImgFilter *pfilter = 0x0;
 
 	/* print tool info */
 	printf("\n%s - %s (%s)\n",MY1APP_PROGNAME,MY1APP_PROGINFO,MY1APP_PROGVERS);
 	printf("  => by azman@my1matrix.net\n\n");
+
+	/* initialize filters */
+	filter_init(&ifilter_laplace1, laplace_image);
+	filter_init(&ifilter_laplace2, laplace_frame);
+	filter_init(&ifilter_sobelx, sobel_x_image);
+	filter_init(&ifilter_sobely, sobel_y_image);
+	filter_init(&ifilter_sobel, sobel_image);
+	filter_init(&ifilter_gauss, gaussian_image);
 
 	/* check program arguments */
 	if(argc>1)
@@ -508,32 +452,32 @@ int main(int argc, char* argv[])
 				/* then check for command! */
 				if(!strcmp(argv[loop],"laplace1"))
 				{
-					command = COMMAND_LAPLACE1;
+					pfilter = insert_imgfilter(pfilter,&ifilter_laplace1);
 					gray = 1;
 				}
 				else if(!strcmp(argv[loop],"sobelx"))
 				{
-					command = COMMAND_SOBELX;
+					pfilter = insert_imgfilter(pfilter,&ifilter_sobelx);
 					gray = 1;
 				}
 				else if(!strcmp(argv[loop],"sobely"))
 				{
-					command = COMMAND_SOBELY;
+					pfilter = insert_imgfilter(pfilter,&ifilter_sobely);
 					gray = 1;
 				}
 				else if(!strcmp(argv[loop],"sobelall"))
 				{
-					command = COMMAND_SOBELALL;
+					pfilter = insert_imgfilter(pfilter,&ifilter_sobel);
 					gray = 1;
 				}
 				else if(!strcmp(argv[loop],"laplace2"))
 				{
-					command = COMMAND_LAPLACE2;
+					pfilter = insert_imgfilter(pfilter,&ifilter_laplace2);
 					gray = 1;
 				}
 				else if(!strcmp(argv[loop],"gauss"))
 				{
-					command = COMMAND_GAUSS;
+					pfilter = insert_imgfilter(pfilter,&ifilter_gauss);
 					gray = 1;
 				}
 				else
@@ -541,13 +485,6 @@ int main(int argc, char* argv[])
 					printf("Unknown parameter %s!\n",argv[loop]);
 					continue;
 				}
-				/* warn if overriding previous command! */
-				if(command)
-				{
-					printf("Warning! Command '%s' overrides '%s'!\n",
-						argv[loop],argv[test]);
-				}
-				test = loop;
 			}
 		}
 	}
@@ -568,76 +505,22 @@ int main(int argc, char* argv[])
 
 	/* initialize image & frame*/
 	initimage(&currimage);
-	initimage(&tempimage);
-	initframe(&currframe);
-	initframe(&tempframe);
 
 	/* try to open file */
 	if((error=load_image(&currimage,pname))<0)
-	{
 		return error;
-	}
+	pimage = &currimage;
 
 	/* display basic info */
 	printf("Input image: %s\n",pname);
-	print_image_info(&currimage);
+	print_image_info(pimage);
 
 	/* convert grayscale if requested/required */
-	if(gray) grayscale_image(&currimage);
+	if(gray) grayscale_image(pimage);
 
-	/* process command */
-	switch(command)
-	{
-		case COMMAND_LAPLACE1:
-		{
-			createimage(&tempimage,currimage.height,currimage.width);
-			laplace_image(&currimage,&tempimage);
-			break;
-		}
-		case COMMAND_SOBELX:
-		{
-			createimage(&tempimage,currimage.height,currimage.width);
-			sobel_x_image(&currimage,&tempimage);
-			break;
-		}
-		case COMMAND_SOBELY:
-		{
-			createimage(&tempimage,currimage.height,currimage.width);
-			sobel_y_image(&currimage,&tempimage);
-			break;
-		}
-		case COMMAND_SOBELALL:
-		{
-			createimage(&tempimage,currimage.height,currimage.width);
-			sobel_image(&currimage,&tempimage,0x0);
-			break;
-		}
-		case COMMAND_LAPLACE2:
-		{
-			createimage(&tempimage,currimage.height,currimage.width);
-			createframe(&currframe,currimage.height,currimage.width);
-			createframe(&tempframe,currimage.height,currimage.width);
-			image2frame(&currimage,&currframe,0);
-			laplace_frame(&currframe,&tempframe);
-			frame2image(&tempframe,&tempimage,1);
-			break;
-		}
-		case COMMAND_GAUSS:
-		{
-			createimage(&tempimage,currimage.height,currimage.width);
-			createframe(&currframe,currimage.height,currimage.width);
-			createframe(&tempframe,currimage.height,currimage.width);
-			image2frame(&currimage,&currframe,0);
-			gauss_frame(&currframe,&tempframe,1.0,0x0);
-			frame2image(&tempframe,&tempimage,1);
-			break;
-		}
-	}
+	/* run image filter */
+	if (pfilter) pimage = filter_image(pfilter,pimage);
 
-	if(!tempimage.length)
-		pimage = &currimage;
-	else
-		pimage = &tempimage;
 	printf("Check image:\n");
 	print_image_info(pimage);
 
@@ -659,10 +542,13 @@ int main(int argc, char* argv[])
 	if(view) view_image(pimage);
 
 	/* cleanup */
-	freeframe(&currframe);
-	freeframe(&tempframe);
 	freeimage(&currimage);
-	freeimage(&tempimage);
+	filter_free(&ifilter_laplace1);
+	filter_free(&ifilter_laplace2);
+	filter_free(&ifilter_sobelx);
+	filter_free(&ifilter_sobely);
+	filter_free(&ifilter_sobel);
+	filter_free(&ifilter_gauss);
 
 	return error;
 }

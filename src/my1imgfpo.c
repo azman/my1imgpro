@@ -80,8 +80,7 @@ float* createkernel(my1Kernel *kernel, int size)
 	{
 		kernel->size = size;
 		kernel->length = length;
-		kernel->orig_x = 0;
-		kernel->orig_y = 0;
+		kernel->origin = size/2;
 		kernel->factor = temp;
 	}
 	return temp;

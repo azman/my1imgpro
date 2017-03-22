@@ -168,14 +168,18 @@ void filter_free(my1ImgFilter* pfilter)
 		filter_free(pfilter->next);
 }
 /*----------------------------------------------------------------------------*/
-void filter_image(my1ImgFilter* pfilter, my1Image* image, my1Image* result)
+my1Image* filter_image(my1ImgFilter* pfilter, my1Image* image)
 {
+	my1Image *pcheck = image;
+	void *platch = 0x0;
 	while(pfilter)
 	{
+		if(!platch) platch = pfilter->userdata;
 		if(pfilter->filter)
-			result = pfilter->filter(image,result,pfilter->userdata);
+			pcheck = pfilter->filter(pcheck,&pfilter->buffer,platch);
 		pfilter = pfilter->next;
 	}
+	return pcheck;
 }
 /*----------------------------------------------------------------------------*/
 void histogram_image(my1Image *image, my1Hist *hist)
