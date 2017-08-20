@@ -30,6 +30,8 @@ void transposematrix(my1Matrix *matrix1, my1Matrix *matrix2);
 void matrix_add(my1Matrix *matrix1, my1Matrix *matrix2, my1Matrix *result);
 void matrix_sub(my1Matrix *matrix1, my1Matrix *matrix2, my1Matrix *result);
 void matrix_mul(my1Matrix *matrix1, my1Matrix *matrix2, my1Matrix *result);
+void matrix_dot(my1Matrix *matrix1, my1Matrix *matrix2, my1Matrix *result);
+void matrix_div(my1Matrix *matrix1, my1Matrix *matrix2, my1Matrix *result);
 /*----------------------------------------------------------------------------*/
 #endif
 /*----------------------------------------------------------------------------*/

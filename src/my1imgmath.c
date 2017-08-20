@@ -69,8 +69,7 @@ void matrix_add(my1Matrix *matrix1, my1Matrix *matrix2, my1Matrix *result)
 	int iloop, ilength = matrix1->length;
 	for(iloop=0;iloop<ilength;iloop++)
 	{
-		result->data[iloop] =
-			matrix1->data[iloop] + matrix2->data[iloop];
+		result->data[iloop] = matrix1->data[iloop] + matrix2->data[iloop];
 	}
 }
 /*----------------------------------------------------------------------------*/
@@ -79,8 +78,7 @@ void matrix_sub(my1Matrix *matrix1, my1Matrix *matrix2, my1Matrix *result)
 	int iloop, ilength = matrix1->length;
 	for(iloop=0;iloop<ilength;iloop++)
 	{
-		result->data[iloop] =
-			matrix1->data[iloop] - matrix2->data[iloop];
+		result->data[iloop] = matrix1->data[iloop] - matrix2->data[iloop];
 	}
 }
 /*----------------------------------------------------------------------------*/
@@ -101,6 +99,27 @@ void matrix_mul(my1Matrix *matrix1, my1Matrix *matrix2, my1Matrix *result)
 					pMatrix1[kloop] * getrow(matrix2,kloop)[jloop];
 			}
 		}
+	}
+}
+/*----------------------------------------------------------------------------*/
+void matrix_dot(my1Matrix *matrix1, my1Matrix *matrix2, my1Matrix *result)
+{
+	int iloop, ilength = matrix1->length;
+	for(iloop=0;iloop<ilength;iloop++)
+	{
+		result->data[iloop] = matrix1->data[iloop] * matrix2->data[iloop];
+	}
+}
+/*----------------------------------------------------------------------------*/
+void matrix_div(my1Matrix *matrix1, my1Matrix *matrix2, my1Matrix *result)
+{
+	int iloop, ilength = matrix1->length;
+	for(iloop=0;iloop<ilength;iloop++)
+	{
+		if (matrix2->data[iloop]!=0.0)
+			result->data[iloop] = matrix1->data[iloop] / matrix2->data[iloop];
+		else
+			result->data[iloop] = 0.0;
 	}
 }
 /*----------------------------------------------------------------------------*/
