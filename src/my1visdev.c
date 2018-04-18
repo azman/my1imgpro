@@ -1,13 +1,14 @@
 /*----------------------------------------------------------------------------*/
 #include "my1visdev.h"
 #include <libswscale/swscale.h>
+#include <libavutil/imgutils.h>
 /*----------------------------------------------------------------------------*/
 void av2img(AVFrame* frame, my1Image* image)
 {
 	int index, count;
 	vrgb temp;
 	image->mask = 0xffffff; /* rgb encoded int */
-	for(index=0,count=0;index<image->length;index++)
+	for (index=0,count=0;index<image->length;index++)
 	{
 		temp.r = frame->data[0][count++];
 		temp.g = frame->data[0][count++];
@@ -20,9 +21,9 @@ void img2av(my1Image* image, AVFrame* frame)
 {
 	int index,count;
 	vrgb temp;
-	for(index=0,count=0;index<image->length;index++)
+	for (index=0,count=0;index<image->length;index++)
 	{
-		if(image->mask)
+		if (image->mask)
 			temp = decode_vrgb(image->data[index]);
 		else
 		{
@@ -43,6 +44,10 @@ void initcapture(my1Capture *object)
 	object->ccontext = 0x0;
 	object->rgb24fmt = 0x0;
 	object->pixbuf = 0x0;
+	object->strbuf = (uint8_t*)
+		malloc(STRBUF_SIZE+AV_INPUT_BUFFER_PADDING_SIZE);
+	memset((void*)object->strbuf,0,STRBUF_SIZE+AV_INPUT_BUFFER_PADDING_SIZE);
+	object->packet = av_packet_alloc();
 	object->frame = 0x0;
 	object->buffer = 0x0;
 	object->ready = 0x0;
@@ -52,12 +57,12 @@ void initcapture(my1Capture *object)
 /*----------------------------------------------------------------------------*/
 void cleancapture(my1Capture *object)
 {
-	if(object->frame) av_free(object->frame);
-	if(object->buffer) av_free(object->buffer);
-	if(object->rgb24fmt) sws_freeContext(object->rgb24fmt);
-	if(object->pixbuf) av_free(object->pixbuf);
-	if(object->ccontext) avcodec_close(object->ccontext);
-	if(object->fcontext) avformat_close_input(&object->fcontext);
+	if (object->frame) av_free(object->frame);
+	if (object->buffer) av_free(object->buffer);
+	if (object->rgb24fmt) sws_freeContext(object->rgb24fmt);
+	if (object->pixbuf) av_free(object->pixbuf);
+	if (object->ccontext) avcodec_close(object->ccontext);
+	if (object->fcontext) avformat_close_input(&object->fcontext);
 	object->fcontext = 0x0;
 }
 /*----------------------------------------------------------------------------*/
@@ -67,30 +72,50 @@ void* grabframe(my1Capture *object)
 	AVCodecContext *pCodecCtx = object->ccontext;
 	AVFrame *frame = 0x0;
 	AVPacket packet;
-	int done;
-	if(!pFormatCtx) return frame;
-	while(av_read_frame(pFormatCtx, &packet)>=0)
+	int test;
+	if (!pFormatCtx) return frame;
+	while (av_read_frame(pFormatCtx,&packet)>=0)
 	{
 		/* look for video stream packet */
-		if(packet.stream_index==object->vstream)
+		if (packet.stream_index==object->vstream)
 		{
-			/* decode video frame */
-			avcodec_decode_video2(pCodecCtx, object->frame, &done, &packet);
-			/* did we get a complete frame? */
-			if(done) frame = object->frame;
+			/* decode video frame - NEW! */
+			test = avcodec_send_packet(pCodecCtx,&packet);
+			if (test>=0)
+			{
+				test = avcodec_receive_frame(pCodecCtx,object->frame);
+				if (test>=0) /* 0: success */
+				{
+					/* did we get a complete frame? */
+					frame = object->frame;
+				}
+/*
+AVERROR(EAGAIN): output is not available in this state - user must try to send new input
+AVERROR_EOF: the decoder has been fully flushed, and there will be no more output frames
+AVERROR(EINVAL): codec not opened, or it is an encoder other negative values: legitimate decoding errors
+*/
+			}
 		}
 		/* free the packet alloced by av_read_frame */
-		av_free_packet(&packet);
-		if(frame) break;
+		av_packet_unref(&packet);
+		if (frame) break;
 	}
 	return frame;
 }
+/**
+ * to drain codec internal buffers:
+ * - avcodec_send_packet(NULL,NULL); => enter draining mode
+ * - avcodec_receive_frame(); => loop until AVERROR_EOF returned
+ * to reset codec to resum decoding:
+ * - avcodec_flush_buffers();
+ *
+**/
 /*----------------------------------------------------------------------------*/
 void resetframe(my1Capture *object)
 {
 	AVFormatContext *pFormatCtx = object->fcontext;
-	if(!pFormatCtx) return;
-	if(avformat_seek_file(pFormatCtx, object->vstream,
+	if (!pFormatCtx) return;
+	if (avformat_seek_file(pFormatCtx, object->vstream,
 		0, object->video->index, object->video->count-1,
 		AVSEEK_FLAG_ANY|AVSEEK_FLAG_FRAME)<0)
 	{
@@ -115,95 +140,96 @@ void filecapture(my1Capture *object, char *filename)
 	int loop, size;
 	AVFormatContext *pFormatCtx = 0x0;
 	AVCodecContext *pCodecCtx;
-	AVCodec *pCodec;
+	AVCodec *pCodec = 0x0;
+	AVStream *pStream;
 	/* check if captured... can we use this as captured flag? */
-	if(object->fcontext) return;
+	if (object->fcontext) return;
 	/* abort if my1Video NOT defined! */
-	if(!object->video) return;
-	/* read video file header */
-	if(avformat_open_input(&pFormatCtx, filename, NULL, NULL))
+	if (!object->video) return;
+	/* read video file header - autodetect format & no dictionary */
+	if (avformat_open_input(&pFormatCtx,filename,NULL,NULL))
 	{
-		printf("Cannot open video file %s\n", filename);
+		printf("Cannot open video file %s\n",filename);
 		exit(-1);
 	}
 	object->fcontext = pFormatCtx;
-	/* retrieve stream information */
-	if(avformat_find_stream_info(pFormatCtx,NULL)<0)
+	/* retrieve stream information - no dictionary */
+	if (avformat_find_stream_info(pFormatCtx,NULL)<0)
 	{
-		printf("Cannot find stream info in video file %s\n", filename);
+		printf("Cannot find stream info in video file %s\n",filename);
 		exit(-1);
 	}
-	/** find the first video stream  (OLD method libavcodec <0.8) * /
-	object->vstream = -1;
-	for(loop=0;loop<pFormatCtx->nb_streams;loop++)
+	/* find the best video stream - autodetect stream#, no pref, noflags */
+	loop = av_find_best_stream(pFormatCtx,AVMEDIA_TYPE_VIDEO,-1,-1,&pCodec,0);
+	if (loop<0)
 	{
-		pCodecCtx = pFormatCtx->streams[loop]->codec;
-		if(pCodecCtx->codec_type==AVMEDIA_TYPE_VIDEO)
+		av_dump_format(pFormatCtx,0,filename,0);
+		if (loop==AVERROR_STREAM_NOT_FOUND)
 		{
-			object->vstream = loop;
-			break;
+			printf("Cannot find video stream(s) in file %s!\n",filename);
+			exit(-1);
 		}
-	} */
-	/** OR... find the best video stream  (NEW method libavcodec >=0.8) */
-	loop = av_find_best_stream(pFormatCtx,
-		AVMEDIA_TYPE_VIDEO, -1, -1, &pCodec, 0);
-	pCodecCtx = pFormatCtx->streams[loop]->codec;
+		if (loop==AVERROR_DECODER_NOT_FOUND)
+		{
+			printf("Cannot find decoder for video file %s\n",filename);
+			exit(-1);
+		}
+	}
+	/* success! */
 	object->vstream = loop;
-	if(object->vstream<0)
-	{
-		/* dump file information to console */
-		av_dump_format(pFormatCtx, 0, filename, 0);
-		printf("Cannot find video stream(s) in file %s!\n", filename);
-		exit(-1);
-	}
-	/* assign pointer to codec context */
-	object->ccontext = pCodecCtx;
 	/* find the decoder for the video stream */
-	pCodec = avcodec_find_decoder(pCodecCtx->codec_id);
-	if(pCodec==0x0)
+	pStream = pFormatCtx->streams[loop];
+	pCodec = avcodec_find_decoder(pStream->codecpar->codec_id);
+	if (pCodec==0x0)
 	{
-		/* dump file information to console */
-		av_dump_format(pFormatCtx, 0, filename, 0);
-		printf("Cannot find suitable codec for file %s!\n", filename);
+		av_dump_format(pFormatCtx,0,filename,0);
+		printf("Cannot find suitable codec for file %s!\n",filename);
 		exit(-1);
 	}
+	/* allocate memory for codec context */
+	pCodecCtx = avcodec_alloc_context3(pCodec);
+	avcodec_parameters_to_context(pCodecCtx,pStream->codecpar);
+	object->ccontext = pCodecCtx;
 	/* prepare codec */
-	if(avcodec_open2(pCodecCtx, pCodec, NULL)<0)
+	if (avcodec_open2(pCodecCtx,pCodec,NULL)<0)
 	{
 		printf("Cannot open codec for file %s!\n", filename);
 		exit(-1);
 	}
 	/* check size requirements */
-	if(!object->video->height) object->video->height = pCodecCtx->height;
-	if(!object->video->width) object->video->width = pCodecCtx->width;
-	/* create RGB24 converter context */
+	if (!object->video->height) object->video->height = pCodecCtx->height;
+	if (!object->video->width) object->video->width = pCodecCtx->width;
+	/* create RGB24 converter context SWS_BILINEAR */
 	object->rgb24fmt = sws_getContext(pCodecCtx->width, pCodecCtx->height,
 		pCodecCtx->pix_fmt, object->video->width, object->video->height,
-		PIX_FMT_RGB24, SWS_BICUBIC, NULL, NULL, NULL);
-	if(object->rgb24fmt==0x0)
+		AV_PIX_FMT_RGB24, SWS_BICUBIC, NULL, NULL, NULL);
+	if (object->rgb24fmt==0x0)
 	{
 		printf("Cannot initialize the capture conversion context!\n");
 		exit(-1);
 	}
 	/* allocate video frames */
-	object->frame = avcodec_alloc_frame();
-	if(object->frame==0x0)
+	object->frame = av_frame_alloc();
+	if (object->frame==0x0)
 	{
 		printf("Cannot allocate memory for input frame!\n");
 		exit(-1);
 	}
-	object->buffer = avcodec_alloc_frame();
-	if(object->buffer==0x0)
+	object->buffer = av_frame_alloc();
+	if (object->buffer==0x0)
 	{
 		printf("Cannot allocate memory for video frame!\n");
 		exit(-1);
 	}
 	/* create RGB buffer - allocate the actual pixel buffer */
-	size = avpicture_get_size(PIX_FMT_RGB24,object->video->width,
-		object->video->height);
+	size = av_image_get_buffer_size(AV_PIX_FMT_RGB24,object->video->width,
+		object->video->height,32); /* 256bits/8 - 32-byte alignment! */
 	object->pixbuf = (uint8_t *)av_malloc(size*sizeof(uint8_t));
-	avpicture_fill((AVPicture*)object->buffer,object->pixbuf,
-		PIX_FMT_RGB24,object->video->width,object->video->height);
+	/** avpicture_fill((AVPicture*)object->buffer,object->pixbuf,
+		AV_PIX_FMT_RGB24,object->video->width,object->video->height); */
+	av_image_fill_arrays(object->buffer->data,object->buffer->linesize,
+		object->pixbuf,AV_PIX_FMT_RGB24,
+		object->video->width,object->video->height,1);
 	/* count frame? */
 	object->video->count = 0;
 	while(grabframe(object)) { object->video->count++; }
@@ -290,7 +316,7 @@ void grabcapture(my1Capture *object)
 /*----------------------------------------------------------------------------*/
 void stopcapture(my1Capture *object)
 {
-	if(!object->fcontext) return;
+	if (!object->fcontext) return;
 	av_free(object->frame);
 	object->frame = 0x0;
 	av_free(object->buffer);
@@ -308,7 +334,7 @@ void stopcapture(my1Capture *object)
 void initdisplay(my1Display *object)
 {
 	/* initialize SDL - audio not needed, actually! */
-	if(SDL_Init(SDL_INIT_VIDEO|SDL_INIT_AUDIO|SDL_INIT_TIMER))
+	if (SDL_Init(SDL_INIT_VIDEO|SDL_INIT_AUDIO|SDL_INIT_TIMER))
 	{
 		printf("Could not initialize SDL - %s\n", SDL_GetError());
 		exit(-1);
@@ -322,9 +348,9 @@ void initdisplay(my1Display *object)
 /*----------------------------------------------------------------------------*/
 void cleandisplay(my1Display *object)
 {
-	if(object->yuv12fmt) sws_freeContext(object->yuv12fmt);
-	if(object->pixbuf) av_free(object->pixbuf);
-	if(object->buffer) av_free(object->buffer);
+	if (object->yuv12fmt) sws_freeContext(object->yuv12fmt);
+	if (object->pixbuf) av_free(object->pixbuf);
+	if (object->buffer) av_free(object->buffer);
 	SDL_Quit();
 }
 /*----------------------------------------------------------------------------*/
@@ -332,26 +358,29 @@ void setupdisplay(my1Display *object)
 {
 	int size;
 	if(object->overlay) return;
-	if(!object->video) return;
+	if (!object->video) return;
 	/* create buffer frame */
-	object->buffer = avcodec_alloc_frame();
-	if(object->buffer==0x0)
+	object->buffer = av_frame_alloc();
+	if (object->buffer==0x0)
 	{
 		printf("Cannot allocate memory for display frame!\n");
 		exit(-1);
 	}
 	/* create RGB buffer - allocate the actual pixel buffer */
-	size = avpicture_get_size(PIX_FMT_RGB24,object->video->width,object->video->height);
+	size = av_image_get_buffer_size(AV_PIX_FMT_RGB24,object->video->width,
+		object->video->height,32); /* 256bits/8 - 32-byte alignment! */
 	object->pixbuf = (uint8_t *)av_malloc(size*sizeof(uint8_t));
-	avpicture_fill((AVPicture*)object->buffer,object->pixbuf,PIX_FMT_RGB24,object->video->width,object->video->height);
+	av_image_fill_arrays(object->buffer->data,object->buffer->linesize,
+		object->pixbuf,AV_PIX_FMT_RGB24,
+		object->video->width,object->video->height,1);
 	/* create format converter */
-	if(!object->yuv12fmt)
+	if (!object->yuv12fmt)
 	{
 		object->yuv12fmt = sws_getContext(object->video->width, object->video->height,
-			PIX_FMT_RGB24, object->video->width, object->video->height,
-			PIX_FMT_YUV420P, SWS_BICUBIC, NULL, NULL, NULL);
+			AV_PIX_FMT_RGB24, object->video->width, object->video->height,
+			AV_PIX_FMT_YUV420P, SWS_BICUBIC, NULL, NULL, NULL);
 	}
-	if(!object->yuv12fmt)
+	if (!object->yuv12fmt)
 	{
 		printf("Cannot initialize the display conversion context!\n");
 		exit(-1);
@@ -363,7 +392,7 @@ void setupdisplay(my1Display *object)
 	object->view.w = object->video->width;
 	/* create display screen & overlay */
 	object->screen = SDL_SetVideoMode(object->video->width, object->video->height, 0, 0);
-	if(!object->screen)
+	if (!object->screen)
 	{
 		printf("SDL: could not set video mode - exiting\n");
 		exit(-1);
@@ -382,8 +411,8 @@ void setupdisplay(my1Display *object)
 /*----------------------------------------------------------------------------*/
 void buffdisplay(my1Display *object)
 {
-	if(!object->overlay) return;
-	if(!object->video) return;
+	if (!object->overlay) return;
+	if (!object->video) return;
 	img2av(object->video->frame,object->buffer);
 	SDL_LockYUVOverlay(object->overlay);
 	sws_scale(object->yuv12fmt,
@@ -395,13 +424,13 @@ void buffdisplay(my1Display *object)
 /*----------------------------------------------------------------------------*/
 void showdisplay(my1Display *object)
 {
-	if(!object->video) return;
+	if (!object->video) return;
 	SDL_DisplayYUVOverlay(object->overlay, &object->view); /* blit op? */
 }
 /*----------------------------------------------------------------------------*/
 void titledisplay(my1Display *object, const char *title, const char *icon)
 {
-	if(!object->video) return;
+	if (!object->video) return;
 	SDL_WM_SetCaption(title,icon);
 }
 /*----------------------------------------------------------------------------*/

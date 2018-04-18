@@ -8,13 +8,16 @@
 /*----------------------------------------------------------------------------*/
 typedef struct SwsContext AVswsContext;
 /*----------------------------------------------------------------------------*/
+#define STRBUF_SIZE 4096
+/*----------------------------------------------------------------------------*/
 struct _capture
 {
 	AVFormatContext *fcontext;
 	int vstream; /* stream index */
 	AVCodecContext *ccontext;
 	AVswsContext *rgb24fmt;
-	uint8_t *pixbuf;
+	uint8_t *pixbuf, *strbuf; /* pixel buffer & stream buffer */
+	AVPacket *packet;
 	AVFrame *frame; /* input frame */
 	AVFrame *buffer; /* internal capture buffer (RGB) */
 	AVFrame *ready; /* pure pointer to buffer */
@@ -40,7 +43,7 @@ struct _display
 	uint8_t *pixbuf;
 	AVFrame *buffer; /* internal display buffer (RGB) */
 	SDL_Rect view;
-	AVPicture pict; /* AV 'front-end' for SDL */
+	AVFrame pict; /* AV 'front-end' for SDL */
 	my1Video *video; /* pure pointer to video object */
 };
 typedef struct _display my1Display;
