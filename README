@@ -14,6 +14,7 @@ This software consists of several small modules:
   * my1imgfpo  - floating-point grayscale structure & utility
   * my1imgbmp  - bitmap file load/save functions
   * my1imgpnm  - netpbm file load/save functions (only P1/P2/P3 supported)
+  * my1imgfilt - sample image filters
   * my1imgtest - main test program for my1imgpro & friends (SDL for viewing!)
   * my1imgvid  - video structure based on basic image structure
   * my1visdev  - sample video processing (using libav and SDL)
@@ -28,4 +29,4 @@ RGB-encoded integer (assuming int is at least 32-bit).
 Only 2 image file formats supported: BMP and NetPBM@PNM (Portable Any Map:
 bit - *.pbm, gray - *.pgm, pix - *.ppm).
 
-See LICENSE for licensing details. 
+See LICENSE for licensing details.
