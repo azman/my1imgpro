@@ -31,7 +31,7 @@ void img2av(my1Image* image, AVFrame* frame);
 void initcapture(my1Capture *object);
 void cleancapture(my1Capture *object);
 void filecapture(my1Capture *object, char *filename);
-void livecapture(my1Capture *object, int camindex);
+void livecapture(my1Capture *object, char *camname);
 void grabcapture(my1Capture *object);
 void stopcapture(my1Capture *object);
 /*----------------------------------------------------------------------------*/

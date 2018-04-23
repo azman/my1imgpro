@@ -2,6 +2,7 @@
 #include "my1visdev.h"
 #include <libswscale/swscale.h>
 #include <libavutil/imgutils.h>
+#include <libavdevice/avdevice.h>
 /*----------------------------------------------------------------------------*/
 void av2img(AVFrame* frame, my1Image* image)
 {
@@ -39,6 +40,7 @@ void initcapture(my1Capture *object)
 {
 	avcodec_register_all();
 	av_register_all();
+	avdevice_register_all();
 	object->fcontext = 0x0;
 	object->vstream = -1;
 	object->ccontext = 0x0;
@@ -90,9 +92,13 @@ void* grabframe(my1Capture *object)
 					frame = object->frame;
 				}
 /*
-AVERROR(EAGAIN): output is not available in this state - user must try to send new input
-AVERROR_EOF: the decoder has been fully flushed, and there will be no more output frames
-AVERROR(EINVAL): codec not opened, or it is an encoder other negative values: legitimate decoding errors
+AVERROR(EAGAIN):
+- output is not available in this state - user must try to send new input
+AVERROR_EOF:
+- the decoder has been fully flushed, and there will be no more output frames
+AVERROR(EINVAL):
+- codec not opened, or it is an encoder other negative values:
+  legitimate decoding errors
 */
 			}
 		}
@@ -135,43 +141,39 @@ void formframe(my1Capture *object)
 		object->buffer->data, object->buffer->linesize);
 }
 /*----------------------------------------------------------------------------*/
-void filecapture(my1Capture *object, char *filename)
+void commcapture(my1Capture *object, char *doname)
 {
 	int loop, size;
 	AVFormatContext *pFormatCtx = 0x0;
 	AVCodecContext *pCodecCtx;
 	AVCodec *pCodec = 0x0;
 	AVStream *pStream;
-	/* check if captured... can we use this as captured flag? */
-	if (object->fcontext) return;
-	/* abort if my1Video NOT defined! */
-	if (!object->video) return;
-	/* read video file header - autodetect format & no dictionary */
-	if (avformat_open_input(&pFormatCtx,filename,NULL,NULL))
+	/* open resource - autodetect format & no dictionary */
+	if (avformat_open_input(&pFormatCtx,doname,NULL,NULL))
 	{
-		printf("Cannot open video file %s\n",filename);
+		printf("Cannot open resource %s\n",doname);
 		exit(-1);
 	}
 	object->fcontext = pFormatCtx;
 	/* retrieve stream information - no dictionary */
 	if (avformat_find_stream_info(pFormatCtx,NULL)<0)
 	{
-		printf("Cannot find stream info in video file %s\n",filename);
+		printf("Cannot find stream info in resource %s\n",doname);
 		exit(-1);
 	}
 	/* find the best video stream - autodetect stream#, no pref, noflags */
 	loop = av_find_best_stream(pFormatCtx,AVMEDIA_TYPE_VIDEO,-1,-1,&pCodec,0);
 	if (loop<0)
 	{
-		av_dump_format(pFormatCtx,0,filename,0);
+		av_dump_format(pFormatCtx,0,doname,0);
 		if (loop==AVERROR_STREAM_NOT_FOUND)
 		{
-			printf("Cannot find video stream(s) in file %s!\n",filename);
+			printf("Cannot find video stream(s) in %s!\n",doname);
 			exit(-1);
 		}
 		if (loop==AVERROR_DECODER_NOT_FOUND)
 		{
-			printf("Cannot find decoder for video file %s\n",filename);
+			printf("Cannot find decoder for resource %s\n",doname);
 			exit(-1);
 		}
 	}
@@ -182,8 +184,8 @@ void filecapture(my1Capture *object, char *filename)
 	pCodec = avcodec_find_decoder(pStream->codecpar->codec_id);
 	if (pCodec==0x0)
 	{
-		av_dump_format(pFormatCtx,0,filename,0);
-		printf("Cannot find suitable codec for file %s!\n",filename);
+		av_dump_format(pFormatCtx,0,doname,0);
+		printf("Cannot find suitable codec for file %s!\n",doname);
 		exit(-1);
 	}
 	/* allocate memory for codec context */
@@ -193,7 +195,7 @@ void filecapture(my1Capture *object, char *filename)
 	/* prepare codec */
 	if (avcodec_open2(pCodecCtx,pCodec,NULL)<0)
 	{
-		printf("Cannot open codec for file %s!\n", filename);
+		printf("Cannot open codec for file %s!\n",doname);
 		exit(-1);
 	}
 	/* check size requirements */
@@ -230,12 +232,23 @@ void filecapture(my1Capture *object, char *filename)
 	av_image_fill_arrays(object->buffer->data,object->buffer->linesize,
 		object->pixbuf,AV_PIX_FMT_RGB24,
 		object->video->width,object->video->height,1);
+}
+/*----------------------------------------------------------------------------*/
+void filecapture(my1Capture *object, char *filename)
+{
+	/* check if captured... can we use this as captured flag? */
+	if (object->fcontext) return;
+	/* abort if my1Video NOT defined! */
+	if (!object->video) return;
+	/* try to initialize? */
+	commcapture(object,filename);
+	if (!object->fcontext) return;
 	/* count frame? */
 	object->video->count = 0;
 	while(grabframe(object)) { object->video->count++; }
 	if(!object->video->count)
 	{
-		printf("Cannot get frame count in '%s'?\n",pFormatCtx->filename);
+		printf("Cannot get frame count in '%s'?\n",filename);
 		exit(-1);
 	}
 #ifdef MY1DEBUG
@@ -248,27 +261,15 @@ void filecapture(my1Capture *object, char *filename)
 	object->video->stepit = 0x1;
 }
 /*----------------------------------------------------------------------------*/
-void livecapture(my1Capture *object, int camindex)
+void livecapture(my1Capture *object, char *camname)
 {
-	/* NOT IMPLEMENTED YET! TODO! */
-	printf("Live feed not implemented... yet!\n");
-	exit(-1);
 	/* check if captured... can we use this as captured flag? */
-	if(object->fcontext) return;
-/*
-	AVFormatParameters formatParams;
-	AVInputFormat *iformat;
-	formatParams.device = "/dev/video0";
-	formatParams.channel = 0;
-	formatParams.standard = "ntsc";
-	formatParams.width = 640;
-	formatParams.height = 480;
-	formatParams.frame_rate = 29;
-	formatParams.frame_rate_base = 1;
-	filename = "";
-	iformat = av_find_input_format("video4linux");
-	av_open_input_file(&ffmpegFormatContext, filename, iformat, 0, &formatParams);
-*/
+	if (object->fcontext) return;
+	/* abort if my1Video NOT defined! */
+	if (!object->video) return;
+	/* try to initialize? */
+	commcapture(object,camname);
+	if (!object->fcontext) return;
 	/* create/init device */
 	object->video->count = -1; /* already default! */
 	object->video->index = -1;
@@ -285,8 +286,9 @@ void grabcapture(my1Capture *object)
 	if(!object->video->update) return;
 	if(object->video->count<0) /* flag for livefeed */
 	{
-		printf("Live feed not implemented... yet!\n");
-		exit(-1);
+		//printf("Live feed not implemented... yet!\n");
+		//exit(-1);
+		object->ready = grabframe(object);
 	}
 	else
 	{
@@ -306,7 +308,8 @@ void grabcapture(my1Capture *object)
 	{
 		formframe(object); /* get frame in rgb format */
 		if(!object->video->image.data)
-			createimage(&object->video->image,object->video->height,object->video->width);
+			createimage(&object->video->image,
+				object->video->height,object->video->width);
 		av2img(object->buffer,&object->video->image);
 		object->video->frame = &object->video->image;
 		object->video->newframe = 0x1;
