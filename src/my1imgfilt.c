@@ -3,15 +3,6 @@
 /*----------------------------------------------------------------------------*/
 #include <math.h>
 /*----------------------------------------------------------------------------*/
-my1ImgFilter* insert_imgfilter(my1ImgFilter* pstack, my1ImgFilter* pcheck)
-{
-	my1ImgFilter *pthis = pstack;
-	if (!pstack) return pcheck;
-	while(pthis->next) pthis = pthis->next;
-	pthis->next = pcheck;
-	return pstack;
-}
-/*----------------------------------------------------------------------------*/
 my1Image* apply_mask2image(my1Image* image, my1Image* result,
 	int size, int* pdata)
 {

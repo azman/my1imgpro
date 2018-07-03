@@ -54,6 +54,7 @@ void conv_image(my1Mask *mask, my1Image *src, my1Image *dst);
 /* generic filter */
 void filter_init(my1ImgFilter* pfilter, pImgPro filter);
 void filter_free(my1ImgFilter* pfilter);
+my1ImgFilter* filter_insert(my1ImgFilter* pstack, my1ImgFilter* pcheck);
 my1Image* filter_image(my1ImgFilter* pfilter, my1Image* image);
 /* grayscale histogram utility */
 void histogram_image(my1Image *image, my1Hist *hist);

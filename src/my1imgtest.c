@@ -262,32 +262,32 @@ int main(int argc, char* argv[])
 				/* then check for command! */
 				if(!strcmp(argv[loop],"laplace1"))
 				{
-					pfilter = insert_imgfilter(pfilter,&ifilter_laplace1);
+					pfilter = filter_insert(pfilter,&ifilter_laplace1);
 					gray = 1;
 				}
 				else if(!strcmp(argv[loop],"sobelx"))
 				{
-					pfilter = insert_imgfilter(pfilter,&ifilter_sobelx);
+					pfilter = filter_insert(pfilter,&ifilter_sobelx);
 					gray = 1;
 				}
 				else if(!strcmp(argv[loop],"sobely"))
 				{
-					pfilter = insert_imgfilter(pfilter,&ifilter_sobely);
+					pfilter = filter_insert(pfilter,&ifilter_sobely);
 					gray = 1;
 				}
 				else if(!strcmp(argv[loop],"sobel"))
 				{
-					pfilter = insert_imgfilter(pfilter,&ifilter_sobel);
+					pfilter = filter_insert(pfilter,&ifilter_sobel);
 					gray = 1;
 				}
 				else if(!strcmp(argv[loop],"laplace2"))
 				{
-					pfilter = insert_imgfilter(pfilter,&ifilter_laplace2);
+					pfilter = filter_insert(pfilter,&ifilter_laplace2);
 					gray = 1;
 				}
 				else if(!strcmp(argv[loop],"gauss"))
 				{
-					pfilter = insert_imgfilter(pfilter,&ifilter_gauss);
+					pfilter = filter_insert(pfilter,&ifilter_gauss);
 					gray = 1;
 				}
 				else

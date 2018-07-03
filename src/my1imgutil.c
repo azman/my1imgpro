@@ -168,6 +168,16 @@ void filter_free(my1ImgFilter* pfilter)
 		filter_free(pfilter->next);
 }
 /*----------------------------------------------------------------------------*/
+my1ImgFilter* filter_insert(my1ImgFilter* pstack, my1ImgFilter* pcheck)
+{
+	my1ImgFilter *pthis = pstack;
+	if (!pstack) return pcheck;
+	while(pthis->next) pthis = pthis->next;
+	pthis->next = pcheck;
+	return pstack;
+}
+
+/*----------------------------------------------------------------------------*/
 my1Image* filter_image(my1ImgFilter* pfilter, my1Image* image)
 {
 	my1Image *pcheck = image;
