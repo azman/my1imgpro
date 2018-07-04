@@ -2,7 +2,7 @@
 #include "my1imgpro.h"
 #include <stdlib.h> /* for malloc and free? */
 /*----------------------------------------------------------------------------*/
-void initimage(my1Image *image)
+void image_init(my1image_t *image)
 {
 	image->width = 0;
 	image->height = 0;
@@ -11,7 +11,7 @@ void initimage(my1Image *image)
 	image->data = 0x0;
 }
 /*----------------------------------------------------------------------------*/
-int* createimage(my1Image *image, int height, int width)
+int* image_make(my1image_t *image, int height, int width)
 {
 	int length = height*width;
 	int *temp = (int*) malloc(length*sizeof(int));
@@ -25,47 +25,43 @@ int* createimage(my1Image *image, int height, int width)
 	return temp;
 }
 /*----------------------------------------------------------------------------*/
-void freeimage(my1Image *image)
+void image_free(my1image_t *image)
 {
 	if(image->data) free((void*)image->data);
 	image->data = 0x0;
 	image->length = 0;
 }
 /*----------------------------------------------------------------------------*/
-void copyimage(my1Image *src, my1Image *dst)
+void image_copy(my1image_t *src, my1image_t *dst)
 {
 	int iloop;
 	for(iloop=0;iloop<dst->length;iloop++)
-	{
 		dst->data[iloop] = src->data[iloop];
-	}
 }
 /*----------------------------------------------------------------------------*/
-void fillimage(my1Image *image, int value)
+void image_fill(my1image_t *image, int value)
 {
 	int iloop, ilength = image->length;
 	for(iloop=0;iloop<ilength;iloop++)
-	{
 		image->data[iloop] = value;
-	}
 }
 /*----------------------------------------------------------------------------*/
-int imagepixel(my1Image *image, int row, int col) /* col(x),row(y) */
+int image_get_pixel(my1image_t *image, int row, int col) /* col(x),row(y) */
 {
 	return image->data[row*image->width+col];
 }
 /*----------------------------------------------------------------------------*/
-void setimagepixel(my1Image *image, int row, int col, int pixel)
+void image_set_pixel(my1image_t *image, int row, int col, int pixel)
 {
 	image->data[row*image->width+col] = pixel;
 }
 /*----------------------------------------------------------------------------*/
-int* imgrowdata(my1Image *image, int row)
+int* image_row_data(my1image_t *image, int row)
 {
 	return &(image->data[row*image->width]);
 }
 /*----------------------------------------------------------------------------*/
-void limit_pixel(my1Image *image)
+void image_limit(my1image_t *image)
 {
 	int iloop, ilength = image->length;
 	for(iloop=0;iloop<ilength;iloop++)
@@ -75,16 +71,14 @@ void limit_pixel(my1Image *image)
 	}
 }
 /*----------------------------------------------------------------------------*/
-void negate_pixel(my1Image *image)
+void image_invert(my1image_t *image)
 {
 	int iloop, ilength = image->length;
 	for(iloop=0;iloop<ilength;iloop++)
-	{
 		image->data[iloop] = WHITE - image->data[iloop];
-	}
 }
 /*----------------------------------------------------------------------------*/
-void absolute_pixel(my1Image *image)
+void image_absolute(my1image_t *image)
 {
 	int iloop, ilength = image->length;
 	for(iloop=0;iloop<ilength;iloop++)
@@ -94,7 +88,7 @@ void absolute_pixel(my1Image *image)
 	}
 }
 /*----------------------------------------------------------------------------*/
-void binary_pixel(my1Image *image, int threshold)
+void image_threshold(my1image_t *image, int threshold)
 {
 	int iloop, ilength = image->length;
 	for(iloop=0;iloop<ilength;iloop++)
@@ -106,20 +100,20 @@ void binary_pixel(my1Image *image, int threshold)
 	}
 }
 /*----------------------------------------------------------------------------*/
-void range_pixel(my1Image *image, int lo, int hi)
+void image_range(my1image_t *image, int lothresh, int hithresh)
 {
 	int temp, iloop, ilength = image->length;
 	for(iloop=0;iloop<ilength;iloop++)
 	{
 		temp = image->data[iloop];
-		if(temp>hi||temp<lo) /* check if out of range [lo,hi] */
+		if(temp>hithresh||temp<lothresh) /* check if out of range [lo,hi] */
 			image->data[iloop] = BLACK;
 		else /* hilite in-range pixels */
 			image->data[iloop] = WHITE;
 	}
 }
 /*----------------------------------------------------------------------------*/
-void cliphi_pixel(my1Image *image, int hithresh)
+void image_cliphi(my1image_t *image, int hithresh)
 {
 	int iloop, ilength = image->length;
 	for(iloop=0;iloop<ilength;iloop++)
@@ -129,7 +123,7 @@ void cliphi_pixel(my1Image *image, int hithresh)
 	}
 }
 /*----------------------------------------------------------------------------*/
-void cliplo_pixel(my1Image *image, int lothresh)
+void image_cliplo(my1image_t *image, int lothresh)
 {
 	int iloop, ilength = image->length;
 	for(iloop=0;iloop<ilength;iloop++)
@@ -139,7 +133,7 @@ void cliplo_pixel(my1Image *image, int lothresh)
 	}
 }
 /*----------------------------------------------------------------------------*/
-void shift_pixel(my1Image *image, int value)
+void image_shift(my1image_t *image, int value)
 {
 	int iloop, ilength = image->length;
 	for(iloop=0;iloop<ilength;iloop++)
@@ -151,7 +145,7 @@ void shift_pixel(my1Image *image, int value)
 	}
 }
 /*----------------------------------------------------------------------------*/
-void scale_pixel(my1Image *image, float value)
+void image_scale(my1image_t *image, float value)
 {
 	int iloop, ilength = image->length;
 	for(iloop=0;iloop<ilength;iloop++)
@@ -162,7 +156,7 @@ void scale_pixel(my1Image *image, float value)
 	}
 }
 /*----------------------------------------------------------------------------*/
-void rescale_pixel(my1Image *image)
+void image_scale_range(my1image_t *image)
 {
 	float scale;
 	int iloop, ilength = image->length;
@@ -173,7 +167,7 @@ void rescale_pixel(my1Image *image)
 		if(max<image->data[iloop]) max = image->data[iloop];
 		else if(min>image->data[iloop]) min = image->data[iloop];
 	}
-	/* rescale! */
+	/* normalize to min-max scale! */
 	scale = (float)(max-min)/WHITE;
 	for(iloop=0;iloop<ilength;iloop++)
 	{
@@ -181,7 +175,7 @@ void rescale_pixel(my1Image *image)
 	}
 }
 /*----------------------------------------------------------------------------*/
-void image_add(my1Image *image1, my1Image *image2, my1Image *result)
+void image_add(my1image_t *image1, my1image_t *image2, my1image_t *result)
 {
 	int iloop, ilength = image1->length;
 	for(iloop=0;iloop<ilength;iloop++)
@@ -193,7 +187,7 @@ void image_add(my1Image *image1, my1Image *image2, my1Image *result)
 	}
 }
 /*----------------------------------------------------------------------------*/
-void image_sub(my1Image *image1, my1Image *image2, my1Image *result)
+void image_sub(my1image_t *image1, my1image_t *image2, my1image_t *result)
 {
 	int iloop, ilength = image1->length;
 	for(iloop=0;iloop<ilength;iloop++)
@@ -205,7 +199,7 @@ void image_sub(my1Image *image1, my1Image *image2, my1Image *result)
 	}
 }
 /*----------------------------------------------------------------------------*/
-void image_pan(my1Image *image, my1Image *result, int shx, int shy, int vin)
+void image_pan(my1image_t *image, my1image_t *result, int shx, int shy, int vin)
 {
 	int iloop, jloop;
 	int calcx, calcy, calcv;
@@ -219,12 +213,12 @@ void image_pan(my1Image *image, my1Image *result, int shx, int shy, int vin)
 			calcy = iloop - shy;
 			if(calcx>=0&&calcx<col&&calcy>=0&&calcy<row)
 			{
-				calcv = imagepixel(image,calcy,calcx);
-				setimagepixel(result,iloop,jloop,calcv);
+				calcv = image_get_pixel(image,calcy,calcx);
+				image_set_pixel(result,iloop,jloop,calcv);
 			}
 			else
 			{
-				setimagepixel(result,iloop,jloop,vin);
+				image_set_pixel(result,iloop,jloop,vin);
 			}
 		}
 	}

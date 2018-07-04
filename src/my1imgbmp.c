@@ -1,11 +1,11 @@
 /*----------------------------------------------------------------------------*/
 #include "my1imgbmp.h"
-#include "my1imgutil.h"
+#include "my1imgcol.h"
 #include <stdio.h> /** for file access */
 /*----------------------------------------------------------------------------*/
 #define GRAY8LEVEL_COUNT 256
 /*----------------------------------------------------------------------------*/
-int loadBMPimage(char *filename, my1Image *image)
+int image_load_bmp(char *filename, my1image_t *image)
 {
 	FILE *bmpfile;
 	unsigned int tellSize, fileSize;
@@ -15,8 +15,8 @@ int loadBMPimage(char *filename, my1Image *image)
 	unsigned char r, g, b;
 	int iscolor = IMASK_COLOR24; /* assumes 24-bit rgb by default */
 	int palette[GRAY8LEVEL_COUNT]; /* 8-bit palette */
-	my1BMPHead head;
-	my1BMPInfo info;
+	my1image_bmp_head_t head;
+	my1image_bmp_info_t info;
 	/* open file for read */
 	bmpfile = fopen(filename, "rb");
 	if(!bmpfile) return BMP_ERROR_FILEOPEN; /* cannot open file */
@@ -41,10 +41,10 @@ int loadBMPimage(char *filename, my1Image *image)
 	printf("--------------\n");
 	printf("BMP DEBUG INFO\n");
 	printf("--------------\n");
-	printf("Sizeof my1BMPHead: %lu (%d)\n",
-		(long unsigned)sizeof(my1BMPHead),BMP_HEAD_SIZE);
-	printf("Sizeof my1BMPInfo: %lu (%d/%d)\n",
-		(long unsigned)sizeof(my1BMPInfo),BMP_INFO_SIZE,BMP_INFO_SIZE_V4);
+	printf("Sizeof my1image_bmp_head_t: %lu (%d)\n",
+		(long unsigned)sizeof(my1image_bmp_head_t),BMP_HEAD_SIZE);
+	printf("Sizeof my1image_bmp_info_t: %lu (%d/%d)\n",
+		(long unsigned)sizeof(my1image_bmp_info_t),BMP_INFO_SIZE,BMP_INFO_SIZE_V4);
 	printf("Width: %d Height: %d\n", info.bmpWidth, info.bmpHeight);
 	printf("File size: %u bytes\n", head.bmpSize);
 	printf("Info size: %u bytes\n", info.bmpInfoSize);
@@ -60,7 +60,7 @@ int loadBMPimage(char *filename, my1Image *image)
 		return BMP_ERROR_FILESIZE; /* mismatched filesize! */
 	if(info.bmpBitsPerPixel!=8&&info.bmpBitsPerPixel!=24)
 		return BMP_ERROR_RGBNGRAY; /* only 24-bit RGB and 8-bit image */
-	if(createimage(image,info.bmpHeight,info.bmpWidth)==0x0)
+	if(image_make(image,info.bmpHeight,info.bmpWidth)==0x0)
 		return BMP_ERROR_MEMALLOC; /* cannot allocate memory */
 	switch(info.bmpInfoSize)
 	{
@@ -125,7 +125,7 @@ int loadBMPimage(char *filename, my1Image *image)
 			/* 'encode' if necessary! */
 			if(iscolor) buff = encode_rgb(r,g,b);
 			else buff = r; /** just take ANY component */
-			setimagepixel(image,row,col,buff);
+			image_set_pixel(image,row,col,buff);
 		}
 		while(temp%4)
 		{
@@ -140,7 +140,7 @@ int loadBMPimage(char *filename, my1Image *image)
 	return 0;
 }
 /*----------------------------------------------------------------------------*/
-int saveBMPimage(char *filename, my1Image *image)
+int image_save_bmp(char *filename, my1image_t *image)
 {
 	FILE *bmpfile;
 	unsigned int headSize, fileSize;
@@ -148,8 +148,8 @@ int saveBMPimage(char *filename, my1Image *image)
 	int row, col, temp, buff, length, bytepp = 1;
 	unsigned char *pChar, someChar, r, g, b;
 	unsigned char bmpID[BMP_ID_SIZE];
-	my1BMPHead head;
-	my1BMPInfo info;
+	my1image_bmp_head_t head;
+	my1image_bmp_info_t info;
 	/* check if color image - palette NOT possible! */
 	if(image->mask==IMASK_COLOR24) bytepp = 3;
 	/* calculate filesize */
@@ -181,10 +181,10 @@ int saveBMPimage(char *filename, my1Image *image)
 	printf("-------------------------\n");
 	printf("BMP DEBUG INFO (CREATED!)\n");
 	printf("-------------------------\n");
-	printf("Sizeof my1BMPHead: %lu (%d)\n",
-		(long unsigned)sizeof(my1BMPHead),BMP_HEAD_SIZE);
-	printf("Sizeof my1BMPInfo: %lu (%d)\n",
-		(long unsigned)sizeof(my1BMPInfo),BMP_INFO_SIZE);
+	printf("Sizeof my1image_bmp_head_t: %lu (%d)\n",
+		(long unsigned)sizeof(my1image_bmp_head_t),BMP_HEAD_SIZE);
+	printf("Sizeof my1image_bmp_info_t: %lu (%d)\n",
+		(long unsigned)sizeof(my1image_bmp_info_t),BMP_INFO_SIZE);
 	printf("Width: %d Height: %d\n", info.bmpWidth, info.bmpHeight);
 	printf("File size: %u bytes\n", head.bmpSize);
 	printf("Info size: %u bytes\n", info.bmpInfoSize);
@@ -214,7 +214,7 @@ int saveBMPimage(char *filename, my1Image *image)
 		temp = 0;
 		for(col=0;col<image->width;col++)
 		{
-			buff = imagepixel(image,row,col);
+			buff = image_get_pixel(image,row,col);
 			if(image->mask==IMASK_COLOR24)
 			{
 				decode_rgb(buff,&r,&g,&b);

@@ -1,12 +1,12 @@
 /*----------------------------------------------------------------------------*/
 #include "my1imgpnm.h"
-#include "my1imgutil.h"
+#include "my1imgcol.h"
 #include <stdio.h>
 /*----------------------------------------------------------------------------*/
 #define PNM_MAGIC_CHAR 2
 #define PNM_MAGIC_SIZE (PNM_MAGIC_CHAR+1)
 /*----------------------------------------------------------------------------*/
-int loadPNMimage(char *filename, my1Image *image)
+int image_load_pnm(char *filename, my1image_t *image)
 {
 	FILE *pnmfile;
 	char buffer[PNM_MAGIC_SIZE];
@@ -48,7 +48,7 @@ int loadPNMimage(char *filename, my1Image *image)
 	printf("Image width: %d, height: %d\n",width,height);
 #endif
 	/** try to create storage */
-	if(createimage(image,height,width)==0x0)
+	if(image_make(image,height,width)==0x0)
 	{
 		fclose(pnmfile);
 		return PNM_ERROR_MEMALLOC; /* cannot allocate memory */
@@ -89,7 +89,7 @@ int loadPNMimage(char *filename, my1Image *image)
 	return error;
 }
 /*----------------------------------------------------------------------------*/
-int savePNMimage(char *filename, my1Image *image)
+int image_save_pnm(char *filename, my1image_t *image)
 {
 	FILE *pnmfile;
 	char buffer[PNM_MAGIC_SIZE];

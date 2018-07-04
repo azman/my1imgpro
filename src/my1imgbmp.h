@@ -14,17 +14,17 @@
 /*----------------------------------------------------------------------------*/
 #define BMP_ID_SIZE 2
 /*----------------------------------------------------------------------------*/
-typedef struct
+typedef struct _my1image_bmp_head_t
 {
 	/* unsigned char bmpID[2]; / * excluded! 2 bytes */
 	unsigned int bmpSize; /* 4 bytes */
 	unsigned int bmpReserved; /* 4 bytes */
 	unsigned int bmpOffset; /* 4 bytes */
 }
-my1BMPHead;
+my1image_bmp_head_t;
 #define BMP_HEAD_SIZE 12
 /*----------------------------------------------------------------------------*/
-typedef struct
+typedef struct _my1image_bmp_info_t
 {
 	unsigned int bmpInfoSize; /* 4 bytes */
 	unsigned int bmpWidth; /* 4 bytes */
@@ -38,13 +38,13 @@ typedef struct
 	unsigned int bmpColorCount; /* 4 bytes */
 	unsigned int bmpIColorCount; /* 4 bytes */
 }
-my1BMPInfo;
+my1image_bmp_info_t;
 #define BMP_INFO_SIZE 40
 #define BMP_INFO_SIZE_V4 108
 #define BMP_INFO_SIZE_V5 124
 /*----------------------------------------------------------------------------*/
-int loadBMPimage(char *filename, my1Image *image);
-int saveBMPimage(char *filename, my1Image *image);
+int image_load_bmp(char *filename, my1image_t *image);
+int image_save_bmp(char *filename, my1image_t *image);
 /*----------------------------------------------------------------------------*/
 #endif
 /*----------------------------------------------------------------------------*/

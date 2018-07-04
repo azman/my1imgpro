@@ -6,42 +6,39 @@
 #define WHITE 255 /* 8-bit grayscale */
 #define BLACK 0 /* 8-bit grayscale */
 /*----------------------------------------------------------------------------*/
-#define IMASK_COLOR24 0xFFFFFF
-#define IMASK_BINARY1 0x01
-/*----------------------------------------------------------------------------*/
-struct _image
+typedef struct _my1image_t
 {
 	int width,height;
 	int length; /* memory is cheap - precalculate this! */
 	int mask; /* can store rgb-encoded int - use this at user level */
 	int *data; /* 1-d vector for 2-d image */
-};
-typedef struct _image my1Image;
+}
+my1image_t;
 /*----------------------------------------------------------------------------*/
 /* management functions */
-void initimage(my1Image *image);
-int* createimage(my1Image *image, int height, int width);
-void freeimage(my1Image *image);
-void copyimage(my1Image *src, my1Image *dst);
-void fillimage(my1Image *src, int value);
-int imagepixel(my1Image *image, int row, int col); /* col(x),row(y) */
-void setimagepixel(my1Image *image, int row, int col, int pixel);
-int* imgrowdata(my1Image *image, int row);
+void image_init(my1image_t *image);
+int* image_make(my1image_t *image, int height, int width);
+void image_free(my1image_t *image);
+void image_copy(my1image_t *src, my1image_t *dst);
+void image_fill(my1image_t *src, int value);
+int image_get_pixel(my1image_t *image, int row, int col); /* col(x),row(y) */
+void image_set_pixel(my1image_t *image, int row, int col, int pixel);
+int* image_row_data(my1image_t *image, int row);
 /* pixel operators */
-void limit_pixel(my1Image *image);
-void negate_pixel(my1Image *image);
-void absolute_pixel(my1Image *image);
-void binary_pixel(my1Image *image, int threshold);
-void range_pixel(my1Image *image, int lo, int hi); /* hilite in-range pixels */
-void cliphi_pixel(my1Image *image, int hithresh);
-void cliplo_pixel(my1Image *image, int lothresh);
-void shift_pixel(my1Image *image, int value);
-void scale_pixel(my1Image *image, float value);
-void rescale_pixel(my1Image *image); /* get max value, rescale */
+void image_limit(my1image_t *image);
+void image_invert(my1image_t *image);
+void image_absolute(my1image_t *image);
+void image_threshold(my1image_t *image, int threshold);
+void image_range(my1image_t *image, int lothresh, int hithresh);
+void image_cliphi(my1image_t *image, int hithresh);
+void image_cliplo(my1image_t *image, int lothresh);
+void image_shift(my1image_t *image, int value);
+void image_scale(my1image_t *image, float value);
+void image_scale_range(my1image_t *image); /* get max value, rescale */
 /* image functions */
-void image_add(my1Image *image1, my1Image *image2, my1Image *result);
-void image_sub(my1Image *image1, my1Image *image2, my1Image *result);
-void image_pan(my1Image *image, my1Image *result, int shx, int shy, int vin);
+void image_add(my1image_t *image1, my1image_t *image2, my1image_t *result);
+void image_sub(my1image_t *image1, my1image_t *image2, my1image_t *result);
+void image_pan(my1image_t *image, my1image_t *result, int shx, int shy, int vin);
 /*----------------------------------------------------------------------------*/
 #endif
 /*----------------------------------------------------------------------------*/

@@ -10,8 +10,8 @@
 #define PNM_ERROR_NOSUPPORT -4
 #define PNM_ERROR_MEMALLOC -5
 /*----------------------------------------------------------------------------*/
-int loadPNMimage(char *filename, my1Image *image);
-int savePNMimage(char *filename, my1Image *image);
+int image_load_pnm(char *filename, my1image_t *image);
+int image_save_pnm(char *filename, my1image_t *image);
 /*----------------------------------------------------------------------------*/
 #endif
 /*----------------------------------------------------------------------------*/
