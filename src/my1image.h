@@ -1,6 +1,6 @@
 /*----------------------------------------------------------------------------*/
-#ifndef __MY1IMGPROH__
-#define __MY1IMGPROH__
+#ifndef __MY1IMAGEH__
+#define __MY1IMAGEH__
 /*----------------------------------------------------------------------------*/
 #define GRAYLEVEL 256 /* 8-bit grayscale */
 #define WHITE 255 /* 8-bit grayscale */
@@ -28,13 +28,13 @@ int* image_row_data(my1image_t *image, int row);
 void image_limit(my1image_t *image);
 void image_invert(my1image_t *image);
 void image_absolute(my1image_t *image);
-void image_threshold(my1image_t *image, int threshold);
+void image_binary(my1image_t *image, int threshold);
 void image_range(my1image_t *image, int lothresh, int hithresh);
 void image_cliphi(my1image_t *image, int hithresh);
 void image_cliplo(my1image_t *image, int lothresh);
 void image_shift(my1image_t *image, int value);
 void image_scale(my1image_t *image, float value);
-void image_scale_range(my1image_t *image); /* get max value, rescale */
+void image_normalize(my1image_t *image); /* get max value, rescale */
 /* image functions */
 void image_add(my1image_t *image1, my1image_t *image2, my1image_t *result);
 void image_sub(my1image_t *image1, my1image_t *image2, my1image_t *result);
