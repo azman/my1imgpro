@@ -8,14 +8,16 @@ This is a simple image processing library (meant to support work on vision
 @ video) that was written for personal use since 2006 (started as kimgpro).
 
 This software consists of several small modules:
-  * my1imgpro  - basic image structure & pixel/image operations
+  * my1image     - basic image structure, pixel/image operations, color option
+  * my1image_bmp - bitmap file load/save functions (only gray & 24-bit RGB)
+  * my1image_pnm - netpbm file load/save functions (only P1/P2/P3 supported)
+  * my1imgtest - main test program for my1image & friends (SDL for viewing!)
+
   * my1imgutil - basic region/mask/histogram structure & utility
   * my1imgmath - math-related function(s), matrix structure & operations
   * my1imgfpo  - floating-point grayscale structure & utility
-  * my1imgbmp  - bitmap file load/save functions
-  * my1imgpnm  - netpbm file load/save functions (only P1/P2/P3 supported)
   * my1imgfilt - sample image filters
-  * my1imgtest - main test program for my1imgpro & friends (SDL for viewing!)
+
   * my1imgvid  - video structure based on basic image structure
   * my1visdev  - sample video processing (using libav and SDL)
   * my1vistest - main test program for my1imgvid & my1visdev
@@ -26,7 +28,7 @@ Regarding the image structure, although my1imgpro library is meant for 8-bit
 grayscale processing, my1Image structure can support color image using
 RGB-encoded integer (assuming int is at least 32-bit).
 
-Only 2 image file formats supported: BMP and NetPBM@PNM (Portable Any Map:
-bit - *.pbm, gray - *.pgm, pix - *.ppm).
+Only 2 image file formats supported: BMP (gray & 24-bit RGB only) and
+NetPBM@PNM (Portable Any Map: bit - *.pbm, gray - *.pgm, pix - *.ppm).
 
 See LICENSE for licensing details.

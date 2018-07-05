@@ -1,10 +1,10 @@
 /*----------------------------------------------------------------------------*/
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <SDL/SDL.h>
-#include "my1imgbmp.h"
-#include "my1imgpnm.h"
-#include "my1imgfilt.h"
+#include "my1image_bmp.h"
+#include "my1image_pnm.h"
 /*----------------------------------------------------------------------------*/
 #ifndef MY1APP_PROGNAME
 #define MY1APP_PROGNAME "my1imgtest"
@@ -16,15 +16,16 @@
 #define MY1APP_PROGINFO "Basic Image Tool Library"
 #endif
 /*----------------------------------------------------------------------------*/
-#define ERROR_GENERAL -1
+#define ERROR_GENERAL 0
+#define ERROR_NOFILE -1
 /*----------------------------------------------------------------------------*/
-void print_image_info(my1Image* image)
+void print_image_info(my1image_t* image)
 {
-	printf("Size: %d x %d,",image->width,image->height);
-	printf("Mask: %08X\n\n",image->mask);
+	printf("Size: %d x %d, ",image->width,image->height);
+	printf("Mask: %08X\n",image->mask);
 }
 /*----------------------------------------------------------------------------*/
-int load_image(my1Image* image, char *pfilename)
+int load_image(my1image_t* image, char *pfilename)
 {
 	char filename[80];
 	int bmp = 0, pnm = 0;
@@ -38,8 +39,8 @@ int load_image(my1Image* image, char *pfilename)
 	/** try to open multiple type - maybe check extension? */
 	do
 	{
-		if(!(bmp=loadBMPimage(pfilename,image))) break;
-		if(!(pnm=loadPNMimage(pfilename,image))) break;
+		if(!(bmp=image_load_bmp(pfilename,image))) break;
+		if(!(pnm=image_load_pnm(pfilename,image))) break;
 		printf("Cannot load input file '%s'! [%d][%d]\n",
 			pfilename,bmp,pnm);
 	}
@@ -47,7 +48,7 @@ int load_image(my1Image* image, char *pfilename)
 	return pnm;
 }
 /*----------------------------------------------------------------------------*/
-int save_image(my1Image* image, char *pfilename)
+int save_image(my1image_t* image, char *pfilename)
 {
 	char filename[80];
 	int bmp = 0, pnm = 0, size;
@@ -65,12 +66,12 @@ int save_image(my1Image* image, char *pfilename)
 		ptest = &pfilename[size-4];
 		if(strcmp(ptest,".bmp")==0)
 		{
-			if((bmp=saveBMPimage(pfilename,image))<0)
+			if((bmp=image_save_bmp(pfilename,image))<0)
 				printf("Cannot write BMP file '%s'! [%d]\n", pfilename, bmp);
 		}
 		else /* default is pnm! */
 		{
-			if((pnm=savePNMimage(pfilename,image))<0)
+			if((pnm=image_save_pnm(pfilename,image))<0)
 				printf("Cannot write PNM file '%s'! [%d]\n", pfilename, pnm);
 		}
 		if(!bmp&&!pnm) printf("Image written to '%s'.\n", pfilename);
@@ -78,7 +79,7 @@ int save_image(my1Image* image, char *pfilename)
 	return pnm;
 }
 /*----------------------------------------------------------------------------*/
-int cdata_image(my1Image* image, char *pfilename)
+int cdata_image(my1image_t* image, char *pfilename)
 {
 	char filename[80];
 	int loop;
@@ -109,107 +110,32 @@ int cdata_image(my1Image* image, char *pfilename)
 	return 0;
 }
 /*----------------------------------------------------------------------------*/
-void view_image(my1Image* image)
-{
-	SDL_Surface *screen;
-	SDL_Surface *temp;
-	SDL_Event event;
-	unsigned char *pImage;
-
-	if(SDL_Init(SDL_INIT_VIDEO) != 0)
-	{
-		printf("Unable to initialize SDL: %s\n", SDL_GetError());
-		return;
-	}
-
-	screen = SDL_SetVideoMode(image->width, image->height, 24, SDL_ANYFORMAT);
-	if(!screen)
-	{
-		printf("Unable to set video mode: %s\n", SDL_GetError());
-		return;
-	}
-
-	/* copy image pixels to buffer */
-	pImage = malloc(image->height*image->width*3);
-	extract_rgb(image,pImage); /* should never be a problem! */
-
-	/* Create the temp surface from the raw RGB data */
-	temp = SDL_CreateRGBSurfaceFrom(pImage, image->width, image->height,
-		24, image->width*3, 0, 0, 0, 0);
-	if(!temp)
-	{
-		printf("Unable to load image to SDL: %s\n", SDL_GetError());
-		return;
-	}
-
-	SDL_BlitSurface(temp, NULL, screen, NULL);
-	SDL_Flip(screen);
-	SDL_FreeSurface(temp);
-	free(pImage);
-
-	printf("Showing image... Press 'q' to quit.\n");
-
-	while(1)
-	{
-		if(SDL_PollEvent(&event))
-		{
-			if(event.type==SDL_QUIT)
-			{
-				break;
-			}
-			else if(event.type==SDL_KEYDOWN)
-			{
-				if(event.key.keysym.sym == SDLK_q)
-				{
-					break;
-				}
-			}
-		}
-	}
-
-	SDL_Quit();
-}
-/*----------------------------------------------------------------------------*/
 void about(void)
 {
 	printf("Command-line use:\n");
 	printf("  %s [options] <image-file> [filter(s)]\n\n",MY1APP_PROGNAME);
-	printf("Valid (stackable) image filter(s) are:\n");
-	printf("  laplace1  : Laplace Gradient Filter\n");
-	printf("  laplace2  : Laplace Gradient Filter (floating-point data)\n");
-	printf("  sobelx    : Sobel Horizontal Gradient Filter\n");
-	printf("  sobely    : Sobel Vertical Gradient Filter\n");
-	printf("  sobel     : Sobel Directional Gradient Filter\n");
-	printf("  gauss     : Gaussian Gradient Filter\n\n");
 	printf("Options are:\n");
 	printf("  --save <filename>  : save to image file\n");
 	printf("  --cdata <filename> : save to C source file\n");
-	printf("  --gray    : force grayscale format\n");
-	printf("  --hide    : skip image display\n");
-	printf("  --help    : show this message - overrides ALL above options\n\n");
+	printf("  --gray  : force grayscale format\n");
+	printf("  --view  : show image (with user interface options)\n");
+	printf("  --help  : show this message - overrides ALL above options\n\n");
 }
 /*----------------------------------------------------------------------------*/
 int main(int argc, char* argv[])
 {
 	int loop, error = 0;
-	int gray = 0, view = 1, help = 0;
+	int gray = 0, view = 0, help = 0, next = 1, temp;
 	char *psave = 0x0, *pname = 0x0, *pdata = 0x0;
-	my1Image currimage, *pimage;
-	my1ImgFilter ifilter_laplace1,ifilter_laplace2,
-		ifilter_sobelx, ifilter_sobely, ifilter_sobel, ifilter_gauss;
-	my1ImgFilter *pfilter = 0x0;
+	my1image_t currimage, nextimage, *image;
+	unsigned char *pixbuf;
+	SDL_Surface *screen;
+	SDL_Surface *buffer;
+	SDL_Event event;
 
 	/* print tool info */
 	printf("\n%s - %s (%s)\n",MY1APP_PROGNAME,MY1APP_PROGINFO,MY1APP_PROGVERS);
 	printf("  => by azman@my1matrix.net\n\n");
-
-	/* initialize filters */
-	filter_init(&ifilter_laplace1, laplace_image);
-	filter_init(&ifilter_laplace2, laplace_frame);
-	filter_init(&ifilter_sobelx, sobel_x_image);
-	filter_init(&ifilter_sobely, sobel_y_image);
-	filter_init(&ifilter_sobel, sobel_image);
-	filter_init(&ifilter_gauss, gaussian_image);
 
 	/* check program arguments */
 	if(argc>1)
@@ -238,9 +164,9 @@ int main(int argc, char* argv[])
 				{
 					gray = 1;
 				}
-				else if(!strcmp(argv[loop],"--hide"))
+				else if(!strcmp(argv[loop],"--view"))
 				{
-					view = 0;
+					view = 1;
 				}
 				else if(!strcmp(argv[loop],"--help"))
 				{
@@ -258,37 +184,6 @@ int main(int argc, char* argv[])
 				{
 					pname = argv[loop];
 					continue;
-				}
-				/* then check for command! */
-				if(!strcmp(argv[loop],"laplace1"))
-				{
-					pfilter = filter_insert(pfilter,&ifilter_laplace1);
-					gray = 1;
-				}
-				else if(!strcmp(argv[loop],"sobelx"))
-				{
-					pfilter = filter_insert(pfilter,&ifilter_sobelx);
-					gray = 1;
-				}
-				else if(!strcmp(argv[loop],"sobely"))
-				{
-					pfilter = filter_insert(pfilter,&ifilter_sobely);
-					gray = 1;
-				}
-				else if(!strcmp(argv[loop],"sobel"))
-				{
-					pfilter = filter_insert(pfilter,&ifilter_sobel);
-					gray = 1;
-				}
-				else if(!strcmp(argv[loop],"laplace2"))
-				{
-					pfilter = filter_insert(pfilter,&ifilter_laplace2);
-					gray = 1;
-				}
-				else if(!strcmp(argv[loop],"gauss"))
-				{
-					pfilter = filter_insert(pfilter,&ifilter_gauss);
-					gray = 1;
 				}
 				else
 				{
@@ -310,60 +205,160 @@ int main(int argc, char* argv[])
 	if(!pname)
 	{
 		printf("No filename given! Aborting!\n");
-		return ERROR_GENERAL;
+		return ERROR_NOFILE;
 	}
 
-	/* initialize image & frame*/
-	initimage(&currimage);
+	/* initialize image */
+	image_init(&currimage);
+	image_init(&nextimage);
 
 	/* try to open file */
-	if((error=load_image(&currimage,pname))<0)
+	if((error|=load_image(&currimage,pname))<0)
 		return error;
-	pimage = &currimage;
+	image_make(&nextimage,currimage.height,currimage.width);
+	image_copy(&nextimage,&currimage);
+	image = &nextimage;
 
 	/* display basic info */
 	printf("Input image: %s\n",pname);
-	print_image_info(pimage);
+	print_image_info(image);
 
 	/* convert grayscale if requested/required */
-	if(gray) grayscale_image(pimage);
-
-	/* run image filter */
-	if (pfilter)
-	{
-		pimage = filter_image(pfilter,pimage);
-		absolute_pixel(pimage);
-		cliphi_pixel(pimage,WHITE);
-	}
-
-	printf("Check image:\n");
-	print_image_info(pimage);
+	if(gray) image_grayscale(image);
 
 	/** save results if requested */
 	if(psave)
 	{
 		printf("Saving image data to %s...\n",psave);
-		error=save_image(pimage,psave);
+		error |= save_image(image,psave);
 		view = 0;
 	}
 
+	/** save c-formatted data if requested */
 	if(pdata)
 	{
 		printf("Saving C data to %s...\n",pdata);
-		error=cdata_image(pimage,pdata);
+		error |= cdata_image(image,pdata);
 	}
 
-	/* view image if no request to hide! .. and NOT saving! */
-	if(view) view_image(pimage);
+	/* we are done if no request for ui? */
+	if (!view)
+	{
+		putchar('\n');
+		return error;
+	}
 
+	/* user interface section? */
+	if(SDL_Init(SDL_INIT_VIDEO)!=0)
+	{
+		printf("Unable to initialize SDL: %s\n", SDL_GetError());
+		exit(ERROR_GENERAL);
+	}
+
+	printf("\n-----------------------------\n");
+	printf("Image Processing Test Utility\n");
+	printf("-----------------------------\n\n");
+	printf("# <O>riginal Image\n");
+	printf("# <G>rayscale Image\n");
+	printf("# <I>nvert Image\n");
+	printf("# Fill Image All <B>lack\n");
+	printf("# Fill Image All <W>hite\n");
+	printf("# <Q>uit\n");
+
+	while(view)
+	{
+		if (next)
+		{
+			/* setup main surface */
+			screen = SDL_SetVideoMode(image->width,image->height,
+				24,SDL_ANYFORMAT);
+			if(!screen)
+			{
+				printf("Unable to set video mode: %s\n", SDL_GetError());
+				return ERROR_GENERAL;
+			}
+
+			/* copy image pixels to buffer */
+			pixbuf = malloc(image->height*image->width*3);
+			image_extract_rgb(image,pixbuf); /* should never be a problem! */
+
+			/* create the temp surface from the raw RGB data */
+			buffer = SDL_CreateRGBSurfaceFrom(pixbuf,image->width,image->height,
+				24,image->width*3,0,0,0,0);
+			if(!buffer)
+			{
+				printf("Unable to load image to SDL: %s\n", SDL_GetError());
+				return ERROR_GENERAL;
+			}
+			/* copy to main surface */
+			SDL_BlitSurface(buffer,0x0,screen,0x0);
+			SDL_Flip(screen);
+			SDL_FreeSurface(buffer);
+			free(pixbuf);
+
+			next = 0;
+		}
+		if(SDL_PollEvent(&event))
+		{
+			if(event.type==SDL_QUIT)
+			{
+				view = 0;
+			}
+			else if(event.type==SDL_KEYDOWN)
+			{
+				if(event.key.keysym.sym == SDLK_q)
+				{
+					view = 0;
+				}
+				else if(event.key.keysym.sym == SDLK_o)
+				{
+					image_copy(&nextimage,&currimage);
+					next = 1;
+				}
+				else if(event.key.keysym.sym == SDLK_g)
+				{
+					image_grayscale(image);
+					next = 1;
+				}
+				else if(event.key.keysym.sym == SDLK_i)
+				{
+					if (image->mask)
+					{
+						cbyte r, g, b;
+						for(loop=0;loop<image->length;loop++)
+						{
+							decode_rgb(image->data[loop],&r,&g,&b);
+							r = WHITE - r; g = WHITE - g; b = WHITE - b;
+							image->data[loop] = encode_rgb(r,g,b);
+						}
+					}
+					else image_invert(image);
+					next = 1;
+				}
+				else if(event.key.keysym.sym == SDLK_b)
+				{
+					temp = BLACK;
+					if (image->mask)
+						temp = encode_rgb(temp,temp,temp);
+					image_fill(image,temp);
+					next = 1;
+				}
+				else if(event.key.keysym.sym == SDLK_w)
+				{
+					temp = WHITE;
+					if (image->mask)
+						temp = encode_rgb(temp,temp,temp);
+					image_fill(image,temp);
+					next = 1;
+				}
+			}
+		}
+	}
+	putchar('\n');
 	/* cleanup */
-	freeimage(&currimage);
-	filter_free(&ifilter_laplace1);
-	filter_free(&ifilter_laplace2);
-	filter_free(&ifilter_sobelx);
-	filter_free(&ifilter_sobely);
-	filter_free(&ifilter_sobel);
-	filter_free(&ifilter_gauss);
+	SDL_Quit();
+	image_free(&currimage);
+	image_free(&nextimage);
 
 	return error;
 }

@@ -1,8 +1,8 @@
 /*----------------------------------------------------------------------------*/
-#ifndef __MY1IMGBMPH__
-#define __MY1IMGBMPH__
+#ifndef __MY1IMAGE_BMPH__
+#define __MY1IMAGE_BMPH__
 /*----------------------------------------------------------------------------*/
-#include "my1imgpro.h"
+#include "my1image.h"
 /*----------------------------------------------------------------------------*/
 #define BMP_ERROR_FILEOPEN -1
 #define BMP_ERROR_VALIDBMP -2
@@ -13,6 +13,7 @@
 #define BMP_ERROR_COMPRESS -7
 /*----------------------------------------------------------------------------*/
 #define BMP_ID_SIZE 2
+#define BMP_HEAD_SIZE 12
 /*----------------------------------------------------------------------------*/
 typedef struct _my1image_bmp_head_t
 {
@@ -22,7 +23,10 @@ typedef struct _my1image_bmp_head_t
 	unsigned int bmpOffset; /* 4 bytes */
 }
 my1image_bmp_head_t;
-#define BMP_HEAD_SIZE 12
+/*----------------------------------------------------------------------------*/
+#define BMP_INFO_SIZE 40
+#define BMP_INFO_SIZE_V4 108
+#define BMP_INFO_SIZE_V5 124
 /*----------------------------------------------------------------------------*/
 typedef struct _my1image_bmp_info_t
 {
@@ -39,9 +43,6 @@ typedef struct _my1image_bmp_info_t
 	unsigned int bmpIColorCount; /* 4 bytes */
 }
 my1image_bmp_info_t;
-#define BMP_INFO_SIZE 40
-#define BMP_INFO_SIZE_V4 108
-#define BMP_INFO_SIZE_V5 124
 /*----------------------------------------------------------------------------*/
 int image_load_bmp(char *filename, my1image_t *image);
 int image_save_bmp(char *filename, my1image_t *image);

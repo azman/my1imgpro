@@ -19,8 +19,8 @@ my1image_t;
 void image_init(my1image_t *image);
 int* image_make(my1image_t *image, int height, int width);
 void image_free(my1image_t *image);
-void image_copy(my1image_t *src, my1image_t *dst);
-void image_fill(my1image_t *src, int value);
+void image_copy(my1image_t *dst, my1image_t *src);
+void image_fill(my1image_t *image, int value);
 int image_get_pixel(my1image_t *image, int row, int col); /* col(x),row(y) */
 void image_set_pixel(my1image_t *image, int row, int col, int pixel);
 int* image_row_data(my1image_t *image, int row);
@@ -39,6 +39,20 @@ void image_normalize(my1image_t *image); /* get max value, rescale */
 void image_add(my1image_t *image1, my1image_t *image2, my1image_t *result);
 void image_sub(my1image_t *image1, my1image_t *image2, my1image_t *result);
 void image_pan(my1image_t *image, my1image_t *result, int shx, int shy, int vin);
+/*----------------------------------------------------------------------------*/
+#define IMASK_COLOR24 0x00FFFFFF
+#define IMASK_GRAY 0x00
+/*----------------------------------------------------------------------------*/
+typedef unsigned char cbyte; /** color byte */
+/*----------------------------------------------------------------------------*/
+/* color information - structure member 'mask' MUST BE assigned! */
+int image_assign_rgb(my1image_t *image, cbyte *rgb);
+int image_extract_rgb(my1image_t *image, cbyte *rgb);
+/* enforce grayscale image */
+void image_grayscale(my1image_t *image);
+/* rgb conversion utility */
+int encode_rgb(cbyte r, cbyte g, cbyte b);
+void decode_rgb(int data, cbyte *r, cbyte *g, cbyte *b);
 /*----------------------------------------------------------------------------*/
 #endif
 /*----------------------------------------------------------------------------*/

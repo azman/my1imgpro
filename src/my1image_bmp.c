@@ -1,6 +1,6 @@
 /*----------------------------------------------------------------------------*/
-#include "my1imgbmp.h"
-#include "my1imgcol.h"
+#include "my1image_bmp.h"
+/*----------------------------------------------------------------------------*/
 #include <stdio.h> /** for file access */
 /*----------------------------------------------------------------------------*/
 #define GRAY8LEVEL_COUNT 256
@@ -44,7 +44,8 @@ int image_load_bmp(char *filename, my1image_t *image)
 	printf("Sizeof my1image_bmp_head_t: %lu (%d)\n",
 		(long unsigned)sizeof(my1image_bmp_head_t),BMP_HEAD_SIZE);
 	printf("Sizeof my1image_bmp_info_t: %lu (%d/%d)\n",
-		(long unsigned)sizeof(my1image_bmp_info_t),BMP_INFO_SIZE,BMP_INFO_SIZE_V4);
+		(long unsigned)sizeof(my1image_bmp_info_t),
+		BMP_INFO_SIZE,BMP_INFO_SIZE_V4);
 	printf("Width: %d Height: %d\n", info.bmpWidth, info.bmpHeight);
 	printf("File size: %u bytes\n", head.bmpSize);
 	printf("Info size: %u bytes\n", info.bmpInfoSize);

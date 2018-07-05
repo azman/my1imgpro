@@ -1,8 +1,8 @@
 /*----------------------------------------------------------------------------*/
-#ifndef __MY1IMGPNMH__
-#define __MY1IMGPNMH__
+#ifndef __MY1IMAGE_PNMH__
+#define __MY1IMAGE_PNMH__
 /*----------------------------------------------------------------------------*/
-#include "my1imgpro.h"
+#include "my1image.h"
 /*----------------------------------------------------------------------------*/
 #define PNM_ERROR_FILEOPEN -1
 #define PNM_ERROR_VALIDPNM -2
