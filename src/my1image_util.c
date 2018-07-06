@@ -174,7 +174,7 @@ my1image_filter_t* filter_insert(my1image_filter_t* pstack,
 }
 
 /*----------------------------------------------------------------------------*/
-my1image_t* filter_image(my1image_filter_t* pfilter, my1image_t* image)
+my1image_t* image_filter(my1image_t* image, my1image_filter_t* pfilter)
 {
 	my1image_t *pcheck = image;
 	while (pfilter)

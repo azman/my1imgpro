@@ -5,6 +5,8 @@
 #include <SDL/SDL.h>
 #include "my1image_bmp.h"
 #include "my1image_pnm.h"
+#include "my1image_util.h"
+#include "my1image_work.h"
 /*----------------------------------------------------------------------------*/
 #ifndef MY1APP_PROGNAME
 #define MY1APP_PROGNAME "my1imgtest"
@@ -132,10 +134,21 @@ int main(int argc, char* argv[])
 	SDL_Surface *screen;
 	SDL_Surface *buffer;
 	SDL_Event event;
+	my1image_filter_t ifilter_laplace1,ifilter_laplace2,
+		ifilter_sobelx, ifilter_sobely, ifilter_sobel, ifilter_gauss;
+	my1image_filter_t *pfilter = 0x0;
 
 	/* print tool info */
 	printf("\n%s - %s (%s)\n",MY1APP_PROGNAME,MY1APP_PROGINFO,MY1APP_PROGVERS);
 	printf("  => by azman@my1matrix.net\n\n");
+
+	/* initialize filters */
+	filter_init(&ifilter_laplace1, image_laplace);
+	filter_init(&ifilter_laplace2, frame_laplace);
+	filter_init(&ifilter_sobelx, image_sobel_x);
+	filter_init(&ifilter_sobely, image_sobel_y);
+	filter_init(&ifilter_sobel, image_sobel);
+	filter_init(&ifilter_gauss, image_gauss);
 
 	/* check program arguments */
 	if(argc>1)
@@ -185,6 +198,37 @@ int main(int argc, char* argv[])
 					pname = argv[loop];
 					continue;
 				}
+				/* then check for command! */
+				if(!strcmp(argv[loop],"laplace1"))
+				{
+					pfilter = filter_insert(pfilter,&ifilter_laplace1);
+					gray = 1;
+				}
+				else if(!strcmp(argv[loop],"sobelx"))
+				{
+					pfilter = filter_insert(pfilter,&ifilter_sobelx);
+					gray = 1;
+				}
+				else if(!strcmp(argv[loop],"sobely"))
+				{
+					pfilter = filter_insert(pfilter,&ifilter_sobely);
+					gray = 1;
+				}
+				else if(!strcmp(argv[loop],"sobel"))
+				{
+					pfilter = filter_insert(pfilter,&ifilter_sobel);
+					gray = 1;
+				}
+				else if(!strcmp(argv[loop],"laplace2"))
+				{
+					pfilter = filter_insert(pfilter,&ifilter_laplace2);
+					gray = 1;
+				}
+				else if(!strcmp(argv[loop],"gauss"))
+				{
+					pfilter = filter_insert(pfilter,&ifilter_gauss);
+					gray = 1;
+				}
 				else
 				{
 					printf("Unknown parameter %s!\n",argv[loop]);
@@ -225,6 +269,18 @@ int main(int argc, char* argv[])
 
 	/* convert grayscale if requested/required */
 	if(gray) image_grayscale(image);
+
+	/* run image filter */
+	if (pfilter)
+	{
+		image = image_filter(image,pfilter);
+		image_absolute(image);
+		image_cliphi(image,WHITE);
+	}
+
+	/* display processed info */
+	printf("Check image:\n");
+	print_image_info(image);
 
 	/** save results if requested */
 	if(psave)
@@ -359,7 +415,12 @@ int main(int argc, char* argv[])
 	SDL_Quit();
 	image_free(&currimage);
 	image_free(&nextimage);
-
+	filter_free(&ifilter_laplace1);
+	filter_free(&ifilter_laplace2);
+	filter_free(&ifilter_sobelx);
+	filter_free(&ifilter_sobely);
+	filter_free(&ifilter_sobel);
+	filter_free(&ifilter_gauss);
 	return error;
 }
 /*----------------------------------------------------------------------------*/

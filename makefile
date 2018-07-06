@@ -1,11 +1,10 @@
 # makefile for my1imgpro (basic image/vision processing library)
 # - using libav & SDL for interfacing & display
 
-TESTIMG = my1imgtest
+TESTIMG = my1image_test
 OBJSIMG = my1image.o my1image_bmp.o my1image_pnm.o
-OBJSIMG += my1image_util.o my1image_math.o $(TESTIMG).o
-#OBJSIMG = my1imgpro.o my1imgutil.o my1imgmath.o my1imgfpo.o
-#OBJSIMG += my1imgbmp.o my1imgpnm.o my1imgfilt.o my1imgtest.o
+OBJSIMG += my1image_util.o my1image_math.o
+OBJSIMG += my1image_fpo.o my1image_work.o $(TESTIMG).o
 TESTVIS = my1vistest
 OBJSVIS = my1imgpro.o my1imgutil.o my1imgvid.o my1visdev.o my1vistest.o
 
