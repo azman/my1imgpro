@@ -8,13 +8,13 @@ This is a simple image processing library (meant to support work on vision
 @ video) that was written for personal use since 2006 (started as kimgpro).
 
 This software consists of several small modules:
-  * my1image     - basic image structure, pixel/image operations, color option
-  * my1image_bmp - bitmap file load/save functions (only gray & 24-bit RGB)
-  * my1image_pnm - netpbm file load/save functions (only P1/P2/P3 supported)
-  * my1imgtest - main test program for my1image & friends (SDL for viewing!)
+  * my1image      - basic image structure, pixel/image operations, color option
+  * my1image_bmp  - bitmap file load/save functions (only gray & 24-bit RGB)
+  * my1image_pnm  - netpbm file load/save functions (only P1/P2/P3 supported)
+  * my1image_util - basic region/mask@filter/histogram structure & utility
+  * my1image_math - math-related function(s), matrix structure & operations
+  * my1imgtest    - main test program for my1image & friends (SDL for viewing!)
 
-  * my1imgutil - basic region/mask/histogram structure & utility
-  * my1imgmath - math-related function(s), matrix structure & operations
   * my1imgfpo  - floating-point grayscale structure & utility
   * my1imgfilt - sample image filters
 
