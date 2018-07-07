@@ -3,7 +3,7 @@
 /*----------------------------------------------------------------------------*/
 #include <stdlib.h> /* for malloc and free? */
 /*----------------------------------------------------------------------------*/
-void image_region_get(my1image_t *img, my1image_t *sub, my1image_region_t *reg)
+void image_get_region(my1image_t *img, my1image_t *sub, my1image_region_t *reg)
 {
 	int iloop, jloop, xoff = 0, yoff = 0;
 	int row = img->height, col = img->width;
@@ -23,7 +23,7 @@ void image_region_get(my1image_t *img, my1image_t *sub, my1image_region_t *reg)
 	}
 }
 /*----------------------------------------------------------------------------*/
-void image_region_set(my1image_t *img, my1image_t *sub, my1image_region_t *reg)
+void image_set_region(my1image_t *img, my1image_t *sub, my1image_region_t *reg)
 {
 	int iloop, jloop, xoff = 0, yoff = 0;
 	int row = img->height, col = img->width;

@@ -32,12 +32,12 @@ void number_set_polar(my1num_t* num, my1pol_t* pol);
 /* matrix management */
 void matrix_init(my1matrix_t* mat);
 void matrix_free(my1matrix_t* mat);
-my1num_t* matrix_size(my1matrix_t* mat, int width, int height);
+my1num_t* matrix_size(my1matrix_t* mat, int height, int width);
 void matrix_copy(my1matrix_t* dst, my1matrix_t* src);
 void matrix_fill(my1matrix_t* mat, double real, double imag);
 my1num_t* matrix_get_row(my1matrix_t* mat, int row);
-void image_matrix_get(my1image_t *img,my1matrix_t *mat,my1image_region_t *reg);
-void image_matrix_set(my1image_t *img,my1matrix_t *mat,my1image_region_t *reg);
+void image_get_matrix(my1image_t *img,my1matrix_t *mat,my1image_region_t *reg);
+void image_set_matrix(my1image_t *img,my1matrix_t *mat,my1image_region_t *reg);
 /*----------------------------------------------------------------------------*/
 /* matrix operations */
 void matrix_identity(my1matrix_t *mat); /* must be square! */

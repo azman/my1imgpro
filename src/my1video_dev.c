@@ -226,10 +226,8 @@ void capture_core(my1video_capture_t* object, char *doname)
 	}
 	/* create RGB buffer - allocate the actual pixel buffer */
 	size = av_image_get_buffer_size(AV_PIX_FMT_RGB32,object->video->width,
-		object->video->height,32); /* 256bits/8 - 32-byte alignment! */
+		object->video->height,4); /* 4-byte alignment! */
 	object->pixbuf = (uint8_t *)av_malloc(size*sizeof(uint8_t));
-	/** avpicture_fill((AVPicture*)object->buffer,object->pixbuf,
-		AV_PIX_FMT_RGB32,object->video->width,object->video->height); */
 	av_image_fill_arrays(object->buffer->data,object->buffer->linesize,
 		object->pixbuf,AV_PIX_FMT_RGB32,
 		object->video->width,object->video->height,1);

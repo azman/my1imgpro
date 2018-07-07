@@ -55,7 +55,7 @@ void matrix_free(my1matrix_t* mat)
 	mat->length = 0;
 }
 /*----------------------------------------------------------------------------*/
-my1num_t* matrix_size(my1matrix_t* mat, int width, int height)
+my1num_t* matrix_size(my1matrix_t* mat, int height, int width)
 {
 	int irow, icol;
 	int length = height*width;
@@ -92,7 +92,7 @@ void matrix_copy(my1matrix_t* dst, my1matrix_t* src)
 {
 	int icol;
 	if (dst->length!=src->length)
-		matrix_size(dst,src->width,src->height);
+		matrix_size(dst,src->height,src->width);
 	/** just in case... */
 	dst->width = src->width;
 	dst->height = src->height;
@@ -118,7 +118,7 @@ my1num_t* matrix_get_row(my1matrix_t* mat, int row)
 	return (my1num_t*) &(mat->data[row*mat->width]);
 }
 /*----------------------------------------------------------------------------*/
-void image_matrix_get(my1image_t *img,my1matrix_t *mat,my1image_region_t *reg)
+void image_get_matrix(my1image_t *img,my1matrix_t *mat,my1image_region_t *reg)
 {
 	int iloop, jloop, xoff = 0, yoff = 0;
 	int row = img->height, col = img->width;
@@ -141,7 +141,7 @@ void image_matrix_get(my1image_t *img,my1matrix_t *mat,my1image_region_t *reg)
 	}
 }
 /*----------------------------------------------------------------------------*/
-void image_matrix_set(my1image_t *img,my1matrix_t *mat,my1image_region_t *reg)
+void image_set_matrix(my1image_t *img,my1matrix_t *mat,my1image_region_t *reg)
 {
 	int iloop, jloop, xoff = 0, yoff = 0;
 	int row = img->height, col = img->width;
