@@ -12,6 +12,7 @@ void image_get_frame(my1image_t* image, AVFrame* frame)
 	image->mask = 0xffffff; /* rgb encoded int */
 	for (index=0,count=0;index<image->length;index++)
 	{
+		count++;
 		temp.r = frame->data[0][count++];
 		temp.g = frame->data[0][count++];
 		temp.b = frame->data[0][count++];
@@ -31,6 +32,7 @@ void image_set_frame(my1image_t* image, AVFrame* frame)
 		{
 			temp.r = temp.g = temp.b = image->data[index];
 		}
+		count++;
 		frame->data[0][count++] = temp.r;
 		frame->data[0][count++] = temp.g;
 		frame->data[0][count++] = temp.b;
