@@ -1,8 +1,8 @@
 /*----------------------------------------------------------------------------*/
-#ifndef __MY1IMGVIDH__
-#define __MY1IMGVIDH__
+#ifndef __MY1VIDEOH__
+#define __MY1VIDEOH__
 /*----------------------------------------------------------------------------*/
-#include "my1imgutil.h"
+#include "my1image_util.h"
 /*----------------------------------------------------------------------------*/
 typedef unsigned char vbyte;
 typedef struct
@@ -11,14 +11,11 @@ typedef struct
 }
 vrgb; /* TODO: may change this to YUV-based */
 /*----------------------------------------------------------------------------*/
-typedef pImgPro pVFilter;
-typedef my1ImgFilter my1VFilter;
-/*----------------------------------------------------------------------------*/
-struct _video
+typedef struct _my1video_t
 {
-	my1Image *frame; /* pure pointer to buffered or filtered image */
-	my1Image image; /* internal buffer */
-	my1VFilter *filter; /* video/image filter */
+	my1image_t *frame; /* pure pointer to buffered or filtered image */
+	my1image_t image; /* internal buffer */
+	my1image_filter_t *filter; /* video/image filter */
 	int count; /* frame count in video file (-1 for live?) */
 	int index; /* frame index for video file */
 	int width, height; /* set these to desired size! */
@@ -26,22 +23,22 @@ struct _video
 	vbyte update; /* flag to activate frame grabber */
 	vbyte stepit; /* frame step option */
 	vbyte newframe; /* frame grabber should set this flag */
-};
-typedef struct _video my1Video;
+}
+my1video_t;
 /*----------------------------------------------------------------------------*/
-void initvideo(my1Video *video);
-void cleanvideo(my1Video *video);
+void video_init(my1video_t *video);
+void video_free(my1video_t *video);
 /* these functions manipulate index/flags only! */
-void playvideo(my1Video *video);
-void pausevideo(my1Video *video);
-void stopvideo(my1Video *video);
-void nextvframe(my1Video *video);
-void prevvframe(my1Video *video);
+void video_play(my1video_t *video);
+void video_hold(my1video_t *video);
+void video_stop(my1video_t *video);
+void video_next_frame(my1video_t *video);
+void video_prev_frame(my1video_t *video);
 /* filtering effect */
-void filtervideo(my1Video *video);
+void video_filter(my1video_t *video);
 /* for processing user requests */
-void postinput(my1Video *video);
-/* special converter */
+void video_post_input(my1video_t *video);
+/* color conversion helper functions */
 int encode_vrgb(vrgb colorpix);
 vrgb decode_vrgb(int rgbcode);
 int vrgb2gray(vrgb colorpix);

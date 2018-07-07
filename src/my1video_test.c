@@ -1,5 +1,6 @@
 /*----------------------------------------------------------------------------*/
-#include "my1visdev.h"
+#include "my1video_dev.h"
+/*----------------------------------------------------------------------------*/
 #include <stdio.h>
 #include <ctype.h>
 #include <string.h>
@@ -19,24 +20,24 @@ static char showkeys[] =
 	"\t---------------------------\n"
 };
 /*----------------------------------------------------------------------------*/
-my1Image* fgrayfilter(my1Image* image, my1Image* result, void* userdata)
+my1image_t* fgrayfilter(my1image_t* image, my1image_t* check, void* userdata)
 {
-	if (image->mask!=0xffffff) return image;
-	if (!result->data) createimage(result,image->height,image->width);
 	int loop;
+	if (image->mask!=0xffffff) return image;
+	if (!check->data) image_make(check,image->height,image->width);
 	for (loop=0;loop<image->length;loop++)
-		result->data[loop] = color2gray(image->data[loop]);
-	result->mask = 0;
-	return result;
+		check->data[loop] = color2gray(image->data[loop]);
+	check->mask = 0;
+	return check;
 }
 /*----------------------------------------------------------------------------*/
 int main(int argc, char* argv[])
 {
-	my1Video cMain;
-	my1Capture cCapture;
-	my1Display cDisplay;
+	my1video_t cMain;
+	my1video_capture_t cCapture;
+	my1video_display_t cDisplay;
 	SDL_Event event;
-	my1VFilter grayfilter;
+	my1image_filter_t grayfilter;
 	int loop, filter = 1, errorcount = 0;
 	char *pfilename = 0x0, *pdevice = 0x0;
 
@@ -47,16 +48,17 @@ int main(int argc, char* argv[])
 		{
 			if (pdevice)
 			{
-				printf("Multiple source? (%s&%s)",pdevice,argv[loop]);
+				printf("Multiple source? (%s&%s)\n",pdevice,argv[loop]);
 				errorcount++;
 			}
 			else if (loop<argc-1) /* still with param! */
 			{
+				/* on linux this should be /dev/video0 or something... */
 				pdevice = argv[++loop];
 			}
 			else
 			{
-				printf("No param for '--live'?");
+				printf("No param for '--live'?\n");
 				errorcount++;
 			}
 		}
@@ -64,7 +66,7 @@ int main(int argc, char* argv[])
 		{
 			if (pfilename)
 			{
-				printf("Multiple source? (%s&%s)",pfilename,argv[loop]);
+				printf("Multiple source? (%s&%s)\n",pfilename,argv[loop]);
 				errorcount++;
 			}
 			else
@@ -81,9 +83,9 @@ int main(int argc, char* argv[])
 	}
 
 	/* initialize main structures */
-	initvideo(&cMain);
-	initcapture(&cCapture);
-	initdisplay(&cDisplay);
+	video_init(&cMain);
+	capture_init(&cCapture);
+	display_init(&cDisplay);
 	cCapture.video = &cMain;
 	cDisplay.video = &cMain;
 	filter_init(&grayfilter,fgrayfilter);
@@ -91,24 +93,24 @@ int main(int argc, char* argv[])
 
 	/* setup devices */
 	if (pfilename)
-		filecapture(&cCapture,pfilename);
+		capture_file(&cCapture,pfilename);
 	else if (pdevice)
-		livecapture(&cCapture,pdevice);
-	setupdisplay(&cDisplay);
+		capture_live(&cCapture,pdevice);
+	display_make(&cDisplay);
 
 	printf("Press 'h' for hotkeys.\n");
 	printf("Starting main capture loop.\n");
 	/* main capture loop */
 	while (1)
 	{
-		grabcapture(&cCapture);
+		capture_grab(&cCapture);
 		if(cMain.newframe)
 		{
-			if (filter) filtervideo(&cMain);
+			if (filter) video_filter(&cMain);
 			if (cMain.count>=0)
 				printf("Video frame index: %d/%d\n", cMain.index, cMain.count);
-			buffdisplay(&cDisplay);
-			showdisplay(&cDisplay);
+			display_buff(&cDisplay);
+			display_view(&cDisplay);
 		}
 		if (SDL_PollEvent(&event))
 		{
@@ -126,41 +128,41 @@ int main(int argc, char* argv[])
 				else if (event.key.keysym.sym == SDLK_c)
 				{
 					printf("Play.\n");
-					playvideo(&cMain);
+					video_play(&cMain);
 				}
 				else if (event.key.keysym.sym == SDLK_s)
 				{
 					printf("Stop.\n");
-					stopvideo(&cMain);
+					video_stop(&cMain);
 				}
-				else if(event.key.keysym.sym == SDLK_SPACE)
+				else if (event.key.keysym.sym == SDLK_SPACE)
 				{
 					printf("Pause.\n");
-					pausevideo(&cMain);
+					video_hold(&cMain);
 				}
-				else if(event.key.keysym.sym == SDLK_f)
+				else if (event.key.keysym.sym == SDLK_f)
 				{
 					printf("Next.\n");
-					nextvframe(&cMain);
+					video_next_frame(&cMain);
 				}
-				else if(event.key.keysym.sym == SDLK_b)
+				else if (event.key.keysym.sym == SDLK_b)
 				{
 					printf("Previous.\n");
 					printf("Not implemented... yet!\n");
-					prevvframe(&cMain);
+					video_prev_frame(&cMain);
 				}
-				else if(event.key.keysym.sym == SDLK_l)
+				else if (event.key.keysym.sym == SDLK_l)
 				{
 					cMain.looping = !cMain.looping;
 					printf("Looping=%d.\n",cMain.looping);
 				}
-				else if(event.key.keysym.sym == SDLK_h)
+				else if (event.key.keysym.sym == SDLK_h)
 				{
 					printf("%s",showkeys);
 				}
-				else if(event.key.keysym.sym == SDLK_z)
+				else if (event.key.keysym.sym == SDLK_z)
 				{
-					if(filter)
+					if (filter)
 					{
 						filter = 0;
 						printf("Disable filter.\n");
@@ -173,13 +175,13 @@ int main(int argc, char* argv[])
 				}
 			}
 		}
-		postinput(&cMain);
+		video_post_input(&cMain);
 	}
 
 	filter_free(&grayfilter);
-	cleancapture(&cCapture);
-	cleandisplay(&cDisplay);
-	cleanvideo(&cMain);
+	display_free(&cDisplay);
+	capture_free(&cCapture);
+	video_free(&cMain);
 
 	return 0;
 }

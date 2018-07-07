@@ -1,10 +1,11 @@
 /*----------------------------------------------------------------------------*/
-#include "my1visdev.h"
+#include "my1video_dev.h"
+/*----------------------------------------------------------------------------*/
 #include <libswscale/swscale.h>
 #include <libavutil/imgutils.h>
 #include <libavdevice/avdevice.h>
 /*----------------------------------------------------------------------------*/
-void av2img(AVFrame* frame, my1Image* image)
+void image_get_frame(my1image_t* image, AVFrame* frame)
 {
 	int index, count;
 	vrgb temp;
@@ -18,7 +19,7 @@ void av2img(AVFrame* frame, my1Image* image)
 	}
 }
 /*----------------------------------------------------------------------------*/
-void img2av(my1Image* image, AVFrame* frame)
+void image_set_frame(my1image_t* image, AVFrame* frame)
 {
 	int index,count;
 	vrgb temp;
@@ -36,7 +37,7 @@ void img2av(my1Image* image, AVFrame* frame)
 	}
 }
 /*----------------------------------------------------------------------------*/
-void initcapture(my1Capture *object)
+void capture_init(my1video_capture_t* object)
 {
 	avcodec_register_all();
 	av_register_all();
@@ -57,7 +58,7 @@ void initcapture(my1Capture *object)
 	object->lindex = -1;
 }
 /*----------------------------------------------------------------------------*/
-void cleancapture(my1Capture *object)
+void capture_free(my1video_capture_t* object)
 {
 	if (object->frame) av_free(object->frame);
 	if (object->buffer) av_free(object->buffer);
@@ -68,7 +69,7 @@ void cleancapture(my1Capture *object)
 	object->fcontext = 0x0;
 }
 /*----------------------------------------------------------------------------*/
-void* grabframe(my1Capture *object)
+void* capture_grab_frame(my1video_capture_t* object)
 {
 	AVFormatContext *pFormatCtx = object->fcontext;
 	AVCodecContext *pCodecCtx = object->ccontext;
@@ -117,7 +118,7 @@ AVERROR(EINVAL):
  *
 **/
 /*----------------------------------------------------------------------------*/
-void resetframe(my1Capture *object)
+void capture_reset(my1video_capture_t* object)
 {
 	AVFormatContext *pFormatCtx = object->fcontext;
 	if (!pFormatCtx) return;
@@ -132,7 +133,7 @@ void resetframe(my1Capture *object)
 	avcodec_flush_buffers(object->ccontext);
 }
 /*----------------------------------------------------------------------------*/
-void formframe(my1Capture *object)
+void capture_form_frame(my1video_capture_t* object)
 {
 	/* convert to RGB! resize here as well? */
 	sws_scale(object->rgb24fmt,
@@ -141,7 +142,7 @@ void formframe(my1Capture *object)
 		object->buffer->data, object->buffer->linesize);
 }
 /*----------------------------------------------------------------------------*/
-void commcapture(my1Capture *object, char *doname)
+void capture_core(my1video_capture_t* object, char *doname)
 {
 	int loop, size;
 	AVFormatContext *pFormatCtx = 0x0;
@@ -234,19 +235,19 @@ void commcapture(my1Capture *object, char *doname)
 		object->video->width,object->video->height,1);
 }
 /*----------------------------------------------------------------------------*/
-void filecapture(my1Capture *object, char *filename)
+void capture_file(my1video_capture_t* object, char *filename)
 {
 	/* check if captured... can we use this as captured flag? */
 	if (object->fcontext) return;
 	/* abort if my1Video NOT defined! */
 	if (!object->video) return;
 	/* try to initialize? */
-	commcapture(object,filename);
+	capture_core(object,filename);
 	if (!object->fcontext) return;
 	/* count frame? */
 	object->video->count = 0;
-	while(grabframe(object)) { object->video->count++; }
-	if(!object->video->count)
+	while (capture_grab_frame(object)) { object->video->count++; }
+	if (!object->video->count)
 	{
 		printf("Cannot get frame count in '%s'?\n",filename);
 		exit(-1);
@@ -261,14 +262,14 @@ void filecapture(my1Capture *object, char *filename)
 	object->video->stepit = 0x1;
 }
 /*----------------------------------------------------------------------------*/
-void livecapture(my1Capture *object, char *camname)
+void capture_live(my1video_capture_t* object, char *camname)
 {
 	/* check if captured... can we use this as captured flag? */
 	if (object->fcontext) return;
 	/* abort if my1Video NOT defined! */
 	if (!object->video) return;
 	/* try to initialize? */
-	commcapture(object,camname);
+	capture_core(object,camname);
 	if (!object->fcontext) return;
 	/* create/init device */
 	object->video->count = -1; /* already default! */
@@ -277,47 +278,45 @@ void livecapture(my1Capture *object, char *camname)
 	object->video->stepit = 0x0;
 }
 /*----------------------------------------------------------------------------*/
-void grabcapture(my1Capture *object)
+void capture_grab(my1video_capture_t* object)
 {
-	if(!object->fcontext) return;
-	if(!object->video) return;
+	if (!object->fcontext) return;
+	if (!object->video) return;
 	object->video->newframe = 0x0;
 	object->ready = 0x0;
-	if(!object->video->update) return;
-	if(object->video->count<0) /* flag for livefeed */
+	if (!object->video->update) return;
+	if (object->video->count<0) /* flag for livefeed */
 	{
-		//printf("Live feed not implemented... yet!\n");
-		//exit(-1);
-		object->ready = grabframe(object);
+		object->ready = capture_grab_frame(object);
 	}
 	else
 	{
-		if(object->video->index==0) /* check reset request */
+		if (object->video->index==0) /* check reset request */
 		{
-			resetframe(object);
+			capture_reset(object);
 			object->lindex = -1;
 		}
 		/* using last index to see if grabbing is required */
-		if(object->lindex<object->video->index)
+		if (object->lindex<object->video->index)
 		{
-			object->ready = grabframe(object);
+			object->ready = capture_grab_frame(object);
 			object->lindex++;
 		}
 	}
-	if(object->ready) /* create video internal copy if valid frame */
+	if (object->ready) /* create video internal copy if valid frame */
 	{
-		formframe(object); /* get frame in rgb format */
+		capture_form_frame(object); /* get frame in rgb format */
 		if(!object->video->image.data)
-			createimage(&object->video->image,
+			image_make(&object->video->image,
 				object->video->height,object->video->width);
-		av2img(object->buffer,&object->video->image);
+		image_get_frame(&object->video->image,object->buffer);
 		object->video->frame = &object->video->image;
 		object->video->newframe = 0x1;
 	}
-	if(object->video->stepit) object->video->update = 0x0;
+	if (object->video->stepit) object->video->update = 0x0;
 }
 /*----------------------------------------------------------------------------*/
-void stopcapture(my1Capture *object)
+void capture_stop(my1video_capture_t* object)
 {
 	if (!object->fcontext) return;
 	av_free(object->frame);
@@ -334,7 +333,7 @@ void stopcapture(my1Capture *object)
 	object->fcontext = 0x0;
 }
 /*----------------------------------------------------------------------------*/
-void initdisplay(my1Display *object)
+void display_init(my1video_display_t* object)
 {
 	/* initialize SDL - audio not needed, actually! */
 	if (SDL_Init(SDL_INIT_VIDEO|SDL_INIT_AUDIO|SDL_INIT_TIMER))
@@ -349,7 +348,7 @@ void initdisplay(my1Display *object)
 	object->buffer = 0x0;
 }
 /*----------------------------------------------------------------------------*/
-void cleandisplay(my1Display *object)
+void display_free(my1video_display_t* object)
 {
 	if (object->yuv12fmt) sws_freeContext(object->yuv12fmt);
 	if (object->pixbuf) av_free(object->pixbuf);
@@ -357,7 +356,7 @@ void cleandisplay(my1Display *object)
 	SDL_Quit();
 }
 /*----------------------------------------------------------------------------*/
-void setupdisplay(my1Display *object)
+void display_make(my1video_display_t* object)
 {
 	int size;
 	if(object->overlay) return;
@@ -379,8 +378,9 @@ void setupdisplay(my1Display *object)
 	/* create format converter */
 	if (!object->yuv12fmt)
 	{
-		object->yuv12fmt = sws_getContext(object->video->width, object->video->height,
-			AV_PIX_FMT_RGB24, object->video->width, object->video->height,
+		object->yuv12fmt = sws_getContext(object->video->width,
+			object->video->height, AV_PIX_FMT_RGB24,
+			object->video->width, object->video->height,
 			AV_PIX_FMT_YUV420P, SWS_BICUBIC, NULL, NULL, NULL);
 	}
 	if (!object->yuv12fmt)
@@ -394,17 +394,19 @@ void setupdisplay(my1Display *object)
 	object->view.h = object->video->height;
 	object->view.w = object->video->width;
 	/* create display screen & overlay */
-	object->screen = SDL_SetVideoMode(object->video->width, object->video->height, 0, 0);
+	object->screen = SDL_SetVideoMode(object->video->width,
+		object->video->height, 0, 0);
 	if (!object->screen)
 	{
 		printf("SDL: could not set video mode - exiting\n");
 		exit(-1);
 	}
-	object->overlay = SDL_CreateYUVOverlay(object->video->width, object->video->height,
-		SDL_YV12_OVERLAY, object->screen); /* Y V U format! */
+	/* overlay in Y V U format! */
+	object->overlay = SDL_CreateYUVOverlay(object->video->width,
+		object->video->height,SDL_YV12_OVERLAY,object->screen);
 	/* assign ffmpeg object (AVPicture) to SDL object (overlay) */
 	object->pict.data[0] = object->overlay->pixels[0];
-	object->pict.data[1] = object->overlay->pixels[2]; /* switched because YVU? */
+	object->pict.data[1] = object->overlay->pixels[2]; /* switched... YVU? */
 	object->pict.data[2] = object->overlay->pixels[1];
 	/* linesize for each channel! */
 	object->pict.linesize[0] = object->overlay->pitches[0];
@@ -412,11 +414,11 @@ void setupdisplay(my1Display *object)
 	object->pict.linesize[2] = object->overlay->pitches[1];
 }
 /*----------------------------------------------------------------------------*/
-void buffdisplay(my1Display *object)
+void display_buff(my1video_display_t* object)
 {
 	if (!object->overlay) return;
 	if (!object->video) return;
-	img2av(object->video->frame,object->buffer);
+	image_set_frame(object->video->frame,object->buffer);
 	SDL_LockYUVOverlay(object->overlay);
 	sws_scale(object->yuv12fmt,
 		(const uint8_t**) object->buffer->data, object->buffer->linesize,
@@ -425,15 +427,15 @@ void buffdisplay(my1Display *object)
 	SDL_UnlockYUVOverlay(object->overlay);
 }
 /*----------------------------------------------------------------------------*/
-void showdisplay(my1Display *object)
+void display_view(my1video_display_t* object)
 {
 	if (!object->video) return;
 	SDL_DisplayYUVOverlay(object->overlay, &object->view); /* blit op? */
 }
 /*----------------------------------------------------------------------------*/
-void titledisplay(my1Display *object, const char *title, const char *icon)
+void display_name(my1video_display_t* object,const char *name,const char *icon)
 {
 	if (!object->video) return;
-	SDL_WM_SetCaption(title,icon);
+	SDL_WM_SetCaption(name,icon);
 }
 /*----------------------------------------------------------------------------*/
