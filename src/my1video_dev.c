@@ -45,7 +45,7 @@ void capture_init(my1video_capture_t* object)
 	object->fcontext = 0x0;
 	object->vstream = -1;
 	object->ccontext = 0x0;
-	object->rgb24fmt = 0x0;
+	object->rgb32fmt = 0x0;
 	object->pixbuf = 0x0;
 	object->strbuf = (uint8_t*)
 		malloc(STRBUF_SIZE+AV_INPUT_BUFFER_PADDING_SIZE);
@@ -62,7 +62,7 @@ void capture_free(my1video_capture_t* object)
 {
 	if (object->frame) av_free(object->frame);
 	if (object->buffer) av_free(object->buffer);
-	if (object->rgb24fmt) sws_freeContext(object->rgb24fmt);
+	if (object->rgb32fmt) sws_freeContext(object->rgb32fmt);
 	if (object->pixbuf) av_free(object->pixbuf);
 	if (object->ccontext) avcodec_close(object->ccontext);
 	if (object->fcontext) avformat_close_input(&object->fcontext);
@@ -136,7 +136,7 @@ void capture_reset(my1video_capture_t* object)
 void capture_form_frame(my1video_capture_t* object)
 {
 	/* convert to RGB! resize here as well? */
-	sws_scale(object->rgb24fmt,
+	sws_scale(object->rgb32fmt,
 		(const uint8_t**) object->frame->data, object->frame->linesize,
 		0, object->video->height,
 		object->buffer->data, object->buffer->linesize);
@@ -203,10 +203,10 @@ void capture_core(my1video_capture_t* object, char *doname)
 	if (!object->video->height) object->video->height = pCodecCtx->height;
 	if (!object->video->width) object->video->width = pCodecCtx->width;
 	/* create RGB24 converter context SWS_BILINEAR */
-	object->rgb24fmt = sws_getContext(pCodecCtx->width, pCodecCtx->height,
+	object->rgb32fmt = sws_getContext(pCodecCtx->width, pCodecCtx->height,
 		pCodecCtx->pix_fmt, object->video->width, object->video->height,
-		AV_PIX_FMT_RGB24, SWS_BICUBIC, NULL, NULL, NULL);
-	if (object->rgb24fmt==0x0)
+		AV_PIX_FMT_RGB32, SWS_BICUBIC, NULL, NULL, NULL);
+	if (object->rgb32fmt==0x0)
 	{
 		printf("Cannot initialize the capture conversion context!\n");
 		exit(-1);
@@ -225,13 +225,13 @@ void capture_core(my1video_capture_t* object, char *doname)
 		exit(-1);
 	}
 	/* create RGB buffer - allocate the actual pixel buffer */
-	size = av_image_get_buffer_size(AV_PIX_FMT_RGB24,object->video->width,
+	size = av_image_get_buffer_size(AV_PIX_FMT_RGB32,object->video->width,
 		object->video->height,32); /* 256bits/8 - 32-byte alignment! */
 	object->pixbuf = (uint8_t *)av_malloc(size*sizeof(uint8_t));
 	/** avpicture_fill((AVPicture*)object->buffer,object->pixbuf,
-		AV_PIX_FMT_RGB24,object->video->width,object->video->height); */
+		AV_PIX_FMT_RGB32,object->video->width,object->video->height); */
 	av_image_fill_arrays(object->buffer->data,object->buffer->linesize,
-		object->pixbuf,AV_PIX_FMT_RGB24,
+		object->pixbuf,AV_PIX_FMT_RGB32,
 		object->video->width,object->video->height,1);
 }
 /*----------------------------------------------------------------------------*/
@@ -325,8 +325,8 @@ void capture_stop(my1video_capture_t* object)
 	object->buffer = 0x0;
 	av_free(object->pixbuf);
 	object->pixbuf = 0x0;
-	sws_freeContext(object->rgb24fmt);
-	object->rgb24fmt = 0x0;
+	sws_freeContext(object->rgb32fmt);
+	object->rgb32fmt = 0x0;
 	avcodec_close(object->ccontext);
 	object->ccontext = 0x0;
 	avformat_close_input(&object->fcontext);
@@ -369,17 +369,17 @@ void display_make(my1video_display_t* object)
 		exit(-1);
 	}
 	/* create RGB buffer - allocate the actual pixel buffer */
-	size = av_image_get_buffer_size(AV_PIX_FMT_RGB24,object->video->width,
-		object->video->height,32); /* 256bits/8 - 32-byte alignment! */
+	size = av_image_get_buffer_size(AV_PIX_FMT_RGB32,object->video->width,
+		object->video->height,4); /* 4-byte alignment! */
 	object->pixbuf = (uint8_t *)av_malloc(size*sizeof(uint8_t));
 	av_image_fill_arrays(object->buffer->data,object->buffer->linesize,
-		object->pixbuf,AV_PIX_FMT_RGB24,
+		object->pixbuf,AV_PIX_FMT_RGB32,
 		object->video->width,object->video->height,1);
 	/* create format converter */
 	if (!object->yuv12fmt)
 	{
 		object->yuv12fmt = sws_getContext(object->video->width,
-			object->video->height, AV_PIX_FMT_RGB24,
+			object->video->height, AV_PIX_FMT_RGB32,
 			object->video->width, object->video->height,
 			AV_PIX_FMT_YUV420P, SWS_BICUBIC, NULL, NULL, NULL);
 	}

@@ -16,7 +16,7 @@ typedef struct _my1video_capture_t
 	AVFormatContext *fcontext;
 	int vstream; /* stream index */
 	AVCodecContext *ccontext;
-	AVswsContext *rgb24fmt;
+	AVswsContext *rgb32fmt;
 	uint8_t *pixbuf, *strbuf; /* pixel buffer & stream buffer */
 	AVPacket *packet;
 	AVFrame *frame; /* input frame */

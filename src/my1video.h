@@ -7,7 +7,7 @@
 typedef unsigned char vbyte;
 typedef struct
 {
-	vbyte b,g,r;
+	vbyte b,g,r,a;
 }
 vrgb; /* TODO: may change this to YUV-based */
 /*----------------------------------------------------------------------------*/
