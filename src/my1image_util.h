@@ -56,7 +56,8 @@ void filter_init(my1image_filter_t* pfilter, pfilter_t filter);
 void filter_free(my1image_filter_t* pfilter);
 my1image_filter_t* filter_insert(my1image_filter_t* pstack,
 	my1image_filter_t* pcheck);
-my1image_t* image_filter(my1image_t* image, my1image_filter_t* pfilter);
+my1image_t* image_filter(my1image_t* image, my1image_filter_t* pfilter,
+	void* passdata);
 /* grayscale histogram utility */
 void image_get_histogram(my1image_t *image, my1image_histogram_t *hist);
 void image_smooth_histogram(my1image_t *image, my1image_histogram_t *hist);
