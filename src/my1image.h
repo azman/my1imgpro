@@ -48,8 +48,9 @@ typedef unsigned char cbyte; /** color byte */
 /* color information - structure member 'mask' MUST BE assigned! */
 int image_assign_rgb(my1image_t *image, cbyte *rgb);
 int image_extract_rgb(my1image_t *image, cbyte *rgb);
-/* enforce grayscale image */
+/* enforce color modes */
 void image_grayscale(my1image_t *image);
+void image_colormode(my1image_t *image);
 /* rgb conversion utility */
 int encode_rgb(cbyte r, cbyte g, cbyte b);
 void decode_rgb(int data, cbyte *r, cbyte *g, cbyte *b);

@@ -15,7 +15,7 @@ void image_init(my1image_t *image)
 int* image_make(my1image_t *image, int height, int width)
 {
 	int length = height*width;
-	int *temp = (int*) malloc(length*sizeof(int));
+	int *temp = (int*) realloc(image->data,length*sizeof(int));
 	if (temp)
 	{
 		image->data = temp;
@@ -288,6 +288,20 @@ void image_grayscale(my1image_t *image)
 			/*0.21 R + 0.71 G + 0.07 B*/
 		}
 		image->mask = IMASK_GRAY;
+	}
+}
+/*----------------------------------------------------------------------------*/
+void image_colormode(my1image_t *image)
+{
+	int loop;
+	if (image->mask!=IMASK_COLOR24)
+	{
+		for(loop=0;loop<image->length;loop++)
+		{
+			int temp = image->data[loop];
+			image->data[loop] = encode_rgb(temp,temp,temp);
+		}
+		image->mask = IMASK_COLOR24;
 	}
 }
 /*----------------------------------------------------------------------------*/

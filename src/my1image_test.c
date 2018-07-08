@@ -130,7 +130,6 @@ int main(int argc, char* argv[])
 	int gray = 0, view = 0, help = 0, next = 1, temp;
 	char *psave = 0x0, *pname = 0x0, *pdata = 0x0;
 	my1image_t currimage, nextimage, *image;
-	unsigned char *pixbuf;
 	SDL_Surface *screen;
 	SDL_Surface *buffer;
 	SDL_Event event;
@@ -326,21 +325,18 @@ int main(int argc, char* argv[])
 		if (next)
 		{
 			/* setup main surface */
-			screen = SDL_SetVideoMode(image->width,image->height,
-				24,SDL_ANYFORMAT);
+			screen = SDL_SetVideoMode(image->width,
+				image->height,32,SDL_ANYFORMAT);
 			if(!screen)
 			{
 				printf("Unable to set video mode: %s\n", SDL_GetError());
 				return ERROR_GENERAL;
 			}
-
-			/* copy image pixels to buffer */
-			pixbuf = malloc(image->height*image->width*3);
-			image_extract_rgb(image,pixbuf); /* should never be a problem! */
-
+			/* if in grayscale, convert to colormode grayscale? */
+			if (image->mask!=IMASK_COLOR24) image_colormode(image);
 			/* create the temp surface from the raw RGB data */
-			buffer = SDL_CreateRGBSurfaceFrom(pixbuf,image->width,image->height,
-				24,image->width*3,0,0,0,0);
+			buffer = SDL_CreateRGBSurfaceFrom(image->data,image->width,
+				image->height,32,image->width*4,0,0,0,0);
 			if(!buffer)
 			{
 				printf("Unable to load image to SDL: %s\n", SDL_GetError());
@@ -350,8 +346,6 @@ int main(int argc, char* argv[])
 			SDL_BlitSurface(buffer,0x0,screen,0x0);
 			SDL_Flip(screen);
 			SDL_FreeSurface(buffer);
-			free(pixbuf);
-
 			next = 0;
 		}
 		if(SDL_PollEvent(&event))
