@@ -16,19 +16,22 @@ my1image_t* image_mask_this(my1image_t* img,my1image_t* res,int size,int* pdata)
 	return res;
 }
 /*----------------------------------------------------------------------------*/
-my1image_t* image_laplace(my1image_t* img, my1image_t* res, void* userdata)
+my1image_t* image_laplace(my1image_t* img, my1image_t* res,
+	void* userdata, void* passdata)
 {
 	int coeff[] = { 0,-1,0, -1,4,-1, 0,-1,0 };
 	return image_mask_this(img,res,3,coeff);
 }
 /*----------------------------------------------------------------------------*/
-my1image_t* image_sobel_x(my1image_t* img, my1image_t* res, void* userdata)
+my1image_t* image_sobel_x(my1image_t* img, my1image_t* res,
+	void* userdata, void* passdata)
 {
 	int coeff[] = { -1,0,1, -2,0,2, -1,0,1 };
 	return image_mask_this(img,res,3,coeff);
 }
 /*----------------------------------------------------------------------------*/
-my1image_t* image_sobel_y(my1image_t* img, my1image_t* res, void* userdata)
+my1image_t* image_sobel_y(my1image_t* img, my1image_t* res,
+	void* userdata, void* passdata)
 {
 	int coeff[] = { -1,-2,-1, 0,0,0, 1,2,1 };
 	return image_mask_this(img,res,3,coeff);
@@ -40,7 +43,8 @@ int iabs(int value)
 	return value;
 }
 /*----------------------------------------------------------------------------*/
-my1image_t* image_sobel(my1image_t* img, my1image_t* res, void* userdata)
+my1image_t* image_sobel(my1image_t* img, my1image_t* res,
+	void* userdata, void* passdata)
 {
 	my1image_t buff1, buff2, *pphase = (my1image_t*) userdata;
 	int irow, icol, x, y;
@@ -58,8 +62,8 @@ my1image_t* image_sobel(my1image_t* img, my1image_t* res, void* userdata)
 	}
 
 	/* calculate directional edge */
-	image_sobel_x(img,&buff1,0x0);
-	image_sobel_y(img,&buff2,0x0);
+	image_sobel_x(img,&buff1,0x0,0x0);
+	image_sobel_y(img,&buff2,0x0,0x0);
 
 	/* prepare resulting image structure */
 	if (!res->data) image_make(res,img->height,img->width);
@@ -85,7 +89,8 @@ my1image_t* image_sobel(my1image_t* img, my1image_t* res, void* userdata)
 	return res;
 }
 /*----------------------------------------------------------------------------*/
-my1image_t* frame_laplace(my1image_t* img, my1image_t* res, void* userdata)
+my1image_t* frame_laplace(my1image_t* img, my1image_t* res,
+	void* userdata, void* passdata)
 {
 	my1frame_t buff1, buff2;
 	float coeff[] = { 0.0,-1.0,0.0, -1.0,4.0,-1.0, 0.0,-1.0,0.0 };
@@ -109,7 +114,8 @@ my1image_t* frame_laplace(my1image_t* img, my1image_t* res, void* userdata)
 	return res;
 }
 /*----------------------------------------------------------------------------*/
-my1image_t* image_gauss(my1image_t* img, my1image_t* res, void* userdata)
+my1image_t* image_gauss(my1image_t* img, my1image_t* res,
+	void* userdata, void* passdata)
 {
 	int coeff[] = { 1,4,7,4,1, 4,16,26,16,4,
 		7,26,41,26,7, 4,16,26,16,4, 1,4,7,4,1};

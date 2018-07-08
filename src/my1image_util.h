@@ -20,12 +20,13 @@ typedef struct _my1image_mask_t
 }
 my1image_mask_t;
 /*----------------------------------------------------------------------------*/
-typedef my1image_t* (*pfilter_t)(my1image_t* image,
-	my1image_t* result, void* userdata);
+typedef my1image_t* (*pfilter_t)(my1image_t* curr, my1image_t* next,
+	void* user, void* pass);
 /*----------------------------------------------------------------------------*/
 typedef struct _my1image_filter_t
 {
 	void *userdata;
+	void *passdata;
 	my1image_t buffer;
 	pfilter_t filter;
 	struct _my1image_filter_t *next; /* linked list */

@@ -316,6 +316,12 @@ int main(int argc, char* argv[])
 	printf("# <O>riginal Image\n");
 	printf("# <G>rayscale Image\n");
 	printf("# <I>nvert Image\n");
+	printf("# Laplace<1> Image\n");
+	printf("# Laplace<2> Image\n");
+	printf("# Sobel<X> Image\n");
+	printf("# Sobel<Y> Image\n");
+	printf("# <S>obel Image\n");
+	printf("# G<a>uss Image\n");
 	printf("# Fill Image All <B>lack\n");
 	printf("# Fill Image All <W>hite\n");
 	printf("# <Q>uit\n");
@@ -363,6 +369,7 @@ int main(int argc, char* argv[])
 				else if(event.key.keysym.sym == SDLK_o)
 				{
 					image_copy(&nextimage,&currimage);
+					image = &nextimage;
 					next = 1;
 				}
 				else if(event.key.keysym.sym == SDLK_g)
@@ -383,6 +390,48 @@ int main(int argc, char* argv[])
 						}
 					}
 					else image_invert(image);
+					next = 1;
+				}
+				else if(event.key.keysym.sym == SDLK_1)
+				{
+					image_grayscale(image); /* need this! */
+					ifilter_laplace1.next = 0x0;
+					image = image_filter(image,&ifilter_laplace1);
+					next = 1;
+				}
+				else if(event.key.keysym.sym == SDLK_2)
+				{
+					image_grayscale(image); /* need this! */
+					ifilter_laplace2.next = 0x0;
+					image = image_filter(image,&ifilter_laplace2);
+					next = 1;
+				}
+				else if(event.key.keysym.sym == SDLK_x)
+				{
+					image_grayscale(image); /* need this! */
+					ifilter_sobelx.next = 0x0;
+					image = image_filter(image,&ifilter_sobelx);
+					next = 1;
+				}
+				else if(event.key.keysym.sym == SDLK_y)
+				{
+					image_grayscale(image); /* need this! */
+					ifilter_sobely.next = 0x0;
+					image = image_filter(image,&ifilter_sobely);
+					next = 1;
+				}
+				else if(event.key.keysym.sym == SDLK_s)
+				{
+					image_grayscale(image); /* need this! */
+					ifilter_sobel.next = 0x0;
+					image = image_filter(image,&ifilter_sobel);
+					next = 1;
+				}
+				else if(event.key.keysym.sym == SDLK_a)
+				{
+					image_grayscale(image); /* need this! */
+					ifilter_gauss.next = 0x0;
+					image = image_filter(image,&ifilter_gauss);
 					next = 1;
 				}
 				else if(event.key.keysym.sym == SDLK_b)
