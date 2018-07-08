@@ -310,6 +310,8 @@ void capture_grab(my1video_capture_t* object)
 				object->video->height,object->video->width);
 		image_get_frame(&object->video->image,object->buffer);
 		object->video->frame = &object->video->image;
+		object->video->height = object->video->frame->height;
+		object->video->width = object->video->frame->width;
 		object->video->newframe = 0x1;
 	}
 	if (object->video->stepit) object->video->update = 0x0;

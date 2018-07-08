@@ -86,6 +86,12 @@ void video_prev_frame(my1video_t *video)
 void video_filter(my1video_t *video)
 {
 	video->frame = image_filter(video->frame,video->filter);
+	/* update video size? */
+	if (video->frame)
+	{
+		video->height = video->frame->height;
+		video->width = video->frame->width;
+	}
 }
 /*----------------------------------------------------------------------------*/
 void video_post_input(my1video_t *video)
