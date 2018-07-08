@@ -5,17 +5,27 @@
 #include "my1image_util.h"
 /*----------------------------------------------------------------------------*/
 typedef unsigned char vbyte;
+typedef my1image_filter_t my1vpass_t;
+/*----------------------------------------------------------------------------*/
 typedef struct
 {
 	vbyte b,g,r,a;
 }
 vrgb;
 /*----------------------------------------------------------------------------*/
+typedef struct _my1video_data_t
+{
+	my1image_t *viewdata;
+	void *userdata;
+}
+my1video_data_t;
+/*----------------------------------------------------------------------------*/
 typedef struct _my1video_t
 {
+	my1video_data_t vdata;
 	my1image_t image; /* internal buffer */
 	my1image_t *frame; /* pure pointer to buffered or filtered image */
-	my1image_filter_t *filter; /* video/image filter */
+	my1vpass_t *filter; /* video/image filter */
 	int count; /* frame count in video file (-1 for live?) */
 	int index; /* frame index for video file */
 	int width, height; /* set to desired size */
@@ -35,6 +45,7 @@ void video_stop(my1video_t *video);
 void video_next_frame(my1video_t *video);
 void video_prev_frame(my1video_t *video);
 /* filtering effect */
+void video_filter_init(my1video_t *video,my1vpass_t *vpass);
 void video_filter(my1video_t *video);
 /* for processing user requests */
 void video_post_input(my1video_t *video);

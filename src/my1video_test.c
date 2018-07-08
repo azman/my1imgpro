@@ -1,5 +1,6 @@
 /*----------------------------------------------------------------------------*/
 #include "my1video_dev.h"
+#include "my1image_fpo.h"
 /*----------------------------------------------------------------------------*/
 #include <stdio.h>
 #include <ctype.h>
@@ -37,8 +38,33 @@ my1image_t* fgrayfilter(my1image_t* image, my1image_t* check, void* userdata)
 	if (!check->data) image_make(check,image->height,image->width);
 	for (loop=0;loop<image->length;loop++)
 		check->data[loop] = color2gray(image->data[loop]);
-	check->mask = 0;
+	check->mask = IMASK_GRAY;
 	return check;
+}
+/*----------------------------------------------------------------------------*/
+my1image_t* flaplacefilter(my1image_t* img, my1image_t* res, void* userdata)
+{
+	my1frame_t buff1, buff2;
+	float coeff[] = { 0.0,-1.0,0.0, -1.0,4.0,-1.0, 0.0,-1.0,0.0 };
+	my1frame_kernel_t kernel;
+	if (!frame_kernel_init(&kernel,3))
+		return img;
+	frame_kernel_make(&kernel,coeff);
+	frame_init(&buff1);
+	frame_init(&buff2);
+	if(frame_make(&buff1,img->height,img->width)&&
+		frame_make(&buff2,img->height,img->width))
+	{
+		frame_get_image(&buff1,img,1);
+		frame_correlate(&buff1,&buff2,&kernel);
+		if(!res->data) image_make(res,img->height,img->width);
+		frame_set_image(&buff2,res,1);
+		res->mask = IMASK_GRAY;
+	}
+	frame_free(&buff1);
+	frame_free(&buff2);
+	frame_kernel_free(&kernel);
+	return res;
 }
 /*----------------------------------------------------------------------------*/
 int main(int argc, char* argv[])
@@ -48,6 +74,9 @@ int main(int argc, char* argv[])
 	my1video_display_t cDisplay;
 	SDL_Event event;
 	my1image_filter_t grayfilter;
+	my1image_filter_t edgefilter;
+	my1image_filter_t morefilter;
+	my1image_filter_t *pfilter = 0x0;
 	int loop, filter = 0, errorcount = 0;
 	char *pfilename = 0x0, *pdevice = 0x0;
 
@@ -103,7 +132,12 @@ int main(int argc, char* argv[])
 	cCapture.video = &cMain;
 	cDisplay.video = &cMain;
 	filter_init(&grayfilter,fgrayfilter);
-	cMain.filter = &grayfilter;
+	filter_init(&edgefilter,flaplacefilter);
+	filter_init(&morefilter,flaplacefilter);
+	pfilter = filter_insert(pfilter,&grayfilter);
+	pfilter = filter_insert(pfilter,&edgefilter);
+	pfilter = filter_insert(pfilter,&morefilter);
+	video_filter_init(&cMain,pfilter);
 
 	/* setup devices */
 	if (pfilename)

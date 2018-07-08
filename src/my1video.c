@@ -4,6 +4,8 @@
 void video_init(my1video_t *video)
 {
 	image_init(&video->image);
+	video->vdata.viewdata = &video->image;
+	video->vdata.userdata = 0x0;
 	video->frame = 0x0; /* frame is pure pointer! */
 	video->filter = 0x0;
 	video->count = -1; video->index = -1;
@@ -79,6 +81,17 @@ void video_prev_frame(my1video_t *video)
 		video->update = 0x1;
 		video->index--;
 	}
+}
+/*----------------------------------------------------------------------------*/
+void video_filter_init(my1video_t *video, my1vpass_t *vpass)
+{
+	my1vpass_t* ptask = vpass;
+	while (ptask)
+	{
+		ptask->userdata = (void*) &video->vdata.viewdata;
+		ptask = ptask->next;
+	}
+	video->filter = vpass;
 }
 /*----------------------------------------------------------------------------*/
 void video_filter(my1video_t *video)
