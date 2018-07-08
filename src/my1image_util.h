@@ -20,13 +20,11 @@ typedef struct _my1image_mask_t
 }
 my1image_mask_t;
 /*----------------------------------------------------------------------------*/
-typedef my1image_t* (*pfilter_t)(my1image_t* curr, my1image_t* next,
-	void* user, void* pass);
+typedef my1image_t* (*pfilter_t)(my1image_t* curr,my1image_t* next,void* user);
 /*----------------------------------------------------------------------------*/
 typedef struct _my1image_filter_t
 {
 	void *userdata;
-	void *passdata;
 	my1image_t buffer;
 	pfilter_t filter;
 	struct _my1image_filter_t *next; /* linked list */
@@ -39,6 +37,11 @@ typedef struct _my1image_histogram_t
 	int count[GRAYLEVEL]; /* grayscale level count */
 }
 my1image_histogram_t;
+/*----------------------------------------------------------------------------*/
+typedef my1image_region_t my1region_t;
+typedef my1image_mask_t my1mask_t;
+typedef my1image_filter_t my1filter_t;
+typedef my1image_histogram_t my1histogram_t;
 /*----------------------------------------------------------------------------*/
 /* region@sub-image management functions */
 void image_get_region(my1image_t *img, my1image_t *sub,my1image_region_t *reg);
@@ -56,8 +59,7 @@ void filter_init(my1image_filter_t* pfilter, pfilter_t filter);
 void filter_free(my1image_filter_t* pfilter);
 my1image_filter_t* filter_insert(my1image_filter_t* pstack,
 	my1image_filter_t* pcheck);
-my1image_t* image_filter(my1image_t* image, my1image_filter_t* pfilter,
-	void* passdata);
+my1image_t* image_filter(my1image_t* image, my1image_filter_t* pfilter);
 /* grayscale histogram utility */
 void image_get_histogram(my1image_t *image, my1image_histogram_t *hist);
 void image_smooth_histogram(my1image_t *image, my1image_histogram_t *hist);

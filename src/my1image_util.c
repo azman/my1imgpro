@@ -173,16 +173,13 @@ my1image_filter_t* filter_insert(my1image_filter_t* pstack,
 	return pstack;
 }
 /*----------------------------------------------------------------------------*/
-my1image_t* image_filter(my1image_t* image, my1image_filter_t* pfilter,
-	void* passdata)
+my1image_t* image_filter(my1image_t* image, my1image_filter_t* pfilter)
 {
 	my1image_t *pcheck = image;
 	while (pfilter)
 	{
 		if (pfilter->filter)
-			pcheck = pfilter->filter(pcheck,&pfilter->buffer,
-				pfilter->userdata,passdata);
-		passdata = pfilter->passdata;
+			pcheck = pfilter->filter(pcheck,&pfilter->buffer,pfilter->userdata);
 		pfilter = pfilter->next;
 	}
 	return pcheck;

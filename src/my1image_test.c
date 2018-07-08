@@ -272,7 +272,7 @@ int main(int argc, char* argv[])
 	/* run image filter */
 	if (pfilter)
 	{
-		image = image_filter(image,pfilter,0x0);
+		image = image_filter(image,pfilter);
 		image_absolute(image);
 		image_cliphi(image,WHITE);
 	}
@@ -395,7 +395,7 @@ int main(int argc, char* argv[])
 				{
 					image_grayscale(image); /* need this! */
 					ifilter_laplace1.next = 0x0;
-					image_filter(image,&ifilter_laplace1,0x0);
+					image_filter(image,&ifilter_laplace1);
 					image_copy(image,&ifilter_laplace1.buffer);
 					next = 1;
 				}
@@ -403,7 +403,7 @@ int main(int argc, char* argv[])
 				{
 					image_grayscale(image); /* need this! */
 					ifilter_laplace2.next = 0x0;
-					image_filter(image,&ifilter_laplace2,0x0);
+					image_filter(image,&ifilter_laplace2);
 					image_copy(image,&ifilter_laplace2.buffer);
 					next = 1;
 				}
@@ -411,7 +411,7 @@ int main(int argc, char* argv[])
 				{
 					image_grayscale(image); /* need this! */
 					ifilter_sobelx.next = 0x0;
-					image_filter(image,&ifilter_sobelx,0x0);
+					image_filter(image,&ifilter_sobelx);
 					image_copy(image,&ifilter_sobelx.buffer);
 					next = 1;
 				}
@@ -419,7 +419,7 @@ int main(int argc, char* argv[])
 				{
 					image_grayscale(image); /* need this! */
 					ifilter_sobely.next = 0x0;
-					image_filter(image,&ifilter_sobely,0x0);
+					image_filter(image,&ifilter_sobely);
 					image_copy(image,&ifilter_sobelx.buffer);
 					next = 1;
 				}
@@ -427,7 +427,7 @@ int main(int argc, char* argv[])
 				{
 					image_grayscale(image); /* need this! */
 					ifilter_sobel.next = 0x0;
-					image_filter(image,&ifilter_sobel,0x0);
+					image_filter(image,&ifilter_sobel);
 					image_copy(image,&ifilter_sobel.buffer);
 					next = 1;
 				}
@@ -435,7 +435,7 @@ int main(int argc, char* argv[])
 				{
 					image_grayscale(image); /* need this! */
 					ifilter_gauss.next = 0x0;
-					image_filter(image,&ifilter_gauss,0x0);
+					image_filter(image,&ifilter_gauss);
 					image_copy(image,&ifilter_gauss.buffer);
 					next = 1;
 				}
