@@ -9,7 +9,7 @@
 #include "my1image_work.h"
 /*----------------------------------------------------------------------------*/
 #ifndef MY1APP_PROGNAME
-#define MY1APP_PROGNAME "my1imgtest"
+#define MY1APP_PROGNAME "my1image_test"
 #endif
 #ifndef MY1APP_PROGVERS
 #define MY1APP_PROGVERS "build"
@@ -140,7 +140,7 @@ int main(int argc, char* argv[])
 
 	/* print tool info */
 	printf("\n%s - %s (%s)\n",MY1APP_PROGNAME,MY1APP_PROGINFO,MY1APP_PROGVERS);
-	printf("  => by azman@my1matrix.net\n\n");
+	printf("  => by azman@my1matrix.org\n\n");
 
 	/* initialize filters */
 	filter_init(&ifilter_laplace1, image_laplace);

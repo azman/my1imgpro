@@ -5,6 +5,16 @@
 #include <ctype.h>
 #include <string.h>
 /*----------------------------------------------------------------------------*/
+#ifndef MY1APP_PROGNAME
+#define MY1APP_PROGNAME "my1video_test"
+#endif
+#ifndef MY1APP_PROGVERS
+#define MY1APP_PROGVERS "build"
+#endif
+#ifndef MY1APP_PROGINFO
+#define MY1APP_PROGINFO "Basic Video Tool Library"
+#endif
+/*----------------------------------------------------------------------------*/
 static char showkeys[] =
 {
 	"\t---------------------------\n"
@@ -40,6 +50,10 @@ int main(int argc, char* argv[])
 	my1image_filter_t grayfilter;
 	int loop, filter = 1, errorcount = 0;
 	char *pfilename = 0x0, *pdevice = 0x0;
+
+	/* print tool info */
+	printf("\n%s - %s (%s)\n",MY1APP_PROGNAME,MY1APP_PROGINFO,MY1APP_PROGVERS);
+	printf("  => by azman@my1matrix.org\n\n");
 
 	/* check parameter */
 	for (loop=1;loop<argc;loop++)
