@@ -33,7 +33,7 @@ static char showkeys[] =
 my1image_t* fgrayfilter(my1image_t* image, my1image_t* check, void* userdata)
 {
 	int loop;
-	if (image->mask!=0xffffff) return image;
+	if (image->mask!=IMASK_COLOR24) return image;
 	if (!check->data) image_make(check,image->height,image->width);
 	for (loop=0;loop<image->length;loop++)
 		check->data[loop] = color2gray(image->data[loop]);
