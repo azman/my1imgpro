@@ -3,8 +3,8 @@
 /*----------------------------------------------------------------------------*/
 void video_init(my1video_t *video)
 {
+	image_init(&video->image);
 	video->frame = 0x0; /* frame is pure pointer! */
-	video->image.data = 0x0;
 	video->filter = 0x0;
 	video->count = -1; video->index = -1;
 	video->width = 0; video->height = 0;
@@ -14,14 +14,12 @@ void video_init(my1video_t *video)
 /*----------------------------------------------------------------------------*/
 void video_free(my1video_t *video)
 {
-	video->frame = 0x0; /* frame is pure pointer! */
-	if (video->image.data) image_free(&video->image);
+	image_free(&video->image);
 	/* clean up ALL filter buffer?? */
 	my1image_filter_t *pfilter = video->filter;
 	while (pfilter)
 	{
-		if (pfilter->buffer.data)
-			image_free(&pfilter->buffer);
+		image_free(&pfilter->buffer);
 		pfilter = pfilter->next;
 	}
 }
