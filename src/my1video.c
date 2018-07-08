@@ -88,7 +88,7 @@ void video_filter_init(my1video_t *video, my1vpass_t *vpass)
 	my1vpass_t* ptask = vpass;
 	while (ptask)
 	{
-		ptask->userdata = (void*) &video->vdata.viewdata;
+		ptask->userdata = (void*) &video->vdata;
 		ptask = ptask->next;
 	}
 	video->filter = vpass;
