@@ -39,12 +39,7 @@ void capture_stop(my1video_capture_t* object);
 typedef struct _my1video_display_t
 {
 	SDL_Surface *screen;
-	SDL_Overlay *overlay;
-	AVswsContext *yuv12fmt;
-	uint8_t *pixbuf;
-	AVFrame *buffer; /* internal display buffer (RGB) */
 	SDL_Rect view;
-	AVFrame pict; /* AV 'front-end' for SDL */
 	my1video_t *video; /* pure pointer to video object */
 }
 my1video_display_t;
@@ -52,7 +47,6 @@ my1video_display_t;
 void display_init(my1video_display_t* object);
 void display_free(my1video_display_t* object);
 void display_make(my1video_display_t* object);
-void display_buff(my1video_display_t* object);
 void display_view(my1video_display_t* object);
 void display_name(my1video_display_t* object,
 	const char *name,const char *icon);

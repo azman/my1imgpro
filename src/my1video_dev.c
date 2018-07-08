@@ -68,7 +68,6 @@ void capture_free(my1video_capture_t* object)
 	if (object->pixbuf) av_free(object->pixbuf);
 	if (object->ccontext) avcodec_close(object->ccontext);
 	if (object->fcontext) avformat_close_input(&object->fcontext);
-	object->fcontext = 0x0;
 }
 /*----------------------------------------------------------------------------*/
 void* capture_grab_frame(my1video_capture_t* object)
@@ -204,7 +203,7 @@ void capture_core(my1video_capture_t* object, char *doname)
 	/* check size requirements */
 	if (!object->video->height) object->video->height = pCodecCtx->height;
 	if (!object->video->width) object->video->width = pCodecCtx->width;
-	/* create RGB24 converter context SWS_BILINEAR */
+	/* create RGB32 converter context */
 	object->rgb32fmt = sws_getContext(pCodecCtx->width, pCodecCtx->height,
 		pCodecCtx->pix_fmt, object->video->width, object->video->height,
 		AV_PIX_FMT_RGB32, SWS_BICUBIC, NULL, NULL, NULL);
@@ -228,7 +227,7 @@ void capture_core(my1video_capture_t* object, char *doname)
 	}
 	/* create RGB buffer - allocate the actual pixel buffer */
 	size = av_image_get_buffer_size(AV_PIX_FMT_RGB32,object->video->width,
-		object->video->height,4); /* 4-byte alignment! */
+		object->video->height,32); /* byte alignment! */
 	object->pixbuf = (uint8_t *)av_malloc(size*sizeof(uint8_t));
 	av_image_fill_arrays(object->buffer->data,object->buffer->linesize,
 		object->pixbuf,AV_PIX_FMT_RGB32,
@@ -342,95 +341,60 @@ void display_init(my1video_display_t* object)
 		exit(-1);
 	}
 	object->screen = 0x0;
-	object->overlay = 0x0;
-	object->yuv12fmt = 0x0;
-	object->pixbuf = 0x0;
-	object->buffer = 0x0;
+	object->view.x = 0;
+	object->view.y = 0;
+	object->view.h = -1;
+	object->view.w = -1;
+	object->video = 0x0;
 }
 /*----------------------------------------------------------------------------*/
 void display_free(my1video_display_t* object)
 {
-	if (object->yuv12fmt) sws_freeContext(object->yuv12fmt);
-	if (object->pixbuf) av_free(object->pixbuf);
-	if (object->buffer) av_free(object->buffer);
 	SDL_Quit();
 }
 /*----------------------------------------------------------------------------*/
 void display_make(my1video_display_t* object)
 {
-	int size;
-	if(object->overlay) return;
 	if (!object->video) return;
-	/* create buffer frame */
-	object->buffer = av_frame_alloc();
-	if (object->buffer==0x0)
+	/* create/resize screen */
+	if (object->view.h!=object->video->height||
+		object->view.w!=object->video->width)
 	{
-		printf("Cannot allocate memory for display frame!\n");
-		exit(-1);
+		int h = object->video->height;
+		int w = object->video->width;
+		object->view.h = h;
+		object->view.w = w;
+		object->screen = SDL_SetVideoMode(w,h,32,SDL_ANYFORMAT);
+		if (!object->screen)
+		{
+			printf("Unable to set video mode: %s\n", SDL_GetError());
+			exit(-1);
+		}
 	}
-	/* create RGB buffer - allocate the actual pixel buffer */
-	size = av_image_get_buffer_size(AV_PIX_FMT_RGB32,object->video->width,
-		object->video->height,4); /* 4-byte alignment! */
-	object->pixbuf = (uint8_t *)av_malloc(size*sizeof(uint8_t));
-	av_image_fill_arrays(object->buffer->data,object->buffer->linesize,
-		object->pixbuf,AV_PIX_FMT_RGB32,
-		object->video->width,object->video->height,1);
-	/* create format converter */
-	if (!object->yuv12fmt)
-	{
-		object->yuv12fmt = sws_getContext(object->video->width,
-			object->video->height, AV_PIX_FMT_RGB32,
-			object->video->width, object->video->height,
-			AV_PIX_FMT_YUV420P, SWS_BICUBIC, NULL, NULL, NULL);
-	}
-	if (!object->yuv12fmt)
-	{
-		printf("Cannot initialize the display conversion context!\n");
-		exit(-1);
-	}
-	/* save the size info here */
-	object->view.x = 0;
-	object->view.y = 0;
-	object->view.h = object->video->height;
-	object->view.w = object->video->width;
-	/* create display screen & overlay */
-	object->screen = SDL_SetVideoMode(object->video->width,
-		object->video->height, 0, 0);
-	if (!object->screen)
-	{
-		printf("SDL: could not set video mode - exiting\n");
-		exit(-1);
-	}
-	/* overlay in Y V U format! */
-	object->overlay = SDL_CreateYUVOverlay(object->video->width,
-		object->video->height,SDL_YV12_OVERLAY,object->screen);
-	/* assign ffmpeg object (AVPicture) to SDL object (overlay) */
-	object->pict.data[0] = object->overlay->pixels[0];
-	object->pict.data[1] = object->overlay->pixels[2]; /* switched... YVU? */
-	object->pict.data[2] = object->overlay->pixels[1];
-	/* linesize for each channel! */
-	object->pict.linesize[0] = object->overlay->pitches[0];
-	object->pict.linesize[1] = object->overlay->pitches[2];
-	object->pict.linesize[2] = object->overlay->pitches[1];
-}
-/*----------------------------------------------------------------------------*/
-void display_buff(my1video_display_t* object)
-{
-	if (!object->overlay) return;
-	if (!object->video) return;
-	image_set_frame(object->video->frame,object->buffer);
-	SDL_LockYUVOverlay(object->overlay);
-	sws_scale(object->yuv12fmt,
-		(const uint8_t**) object->buffer->data, object->buffer->linesize,
-		0, object->video->height,
-		object->pict.data, object->pict.linesize);
-	SDL_UnlockYUVOverlay(object->overlay);
 }
 /*----------------------------------------------------------------------------*/
 void display_view(my1video_display_t* object)
 {
+	SDL_Surface *buffer;
+	my1image_t *image;
 	if (!object->video) return;
-	SDL_DisplayYUVOverlay(object->overlay, &object->view); /* blit op? */
+	/* get current video frame */
+	image = object->video->frame;
+	/* if in grayscale, convert to colormode grayscale? */
+	if (image->mask!=IMASK_COLOR24) image_colormode(image);
+	/* create the temp surface from the raw RGB data */
+	buffer = SDL_CreateRGBSurfaceFrom(image->data,image->width,
+		image->height,32,image->width*4,0,0,0,0);
+	if(!buffer)
+	{
+		printf("Unable to load image to SDL: %s\n", SDL_GetError());
+		exit(-1);
+	}
+	/* copy to main surface */
+	SDL_BlitSurface(buffer,0x0,object->screen,0x0);
+	SDL_Flip(object->screen);
+	/* cleanup! */
+	SDL_FreeSurface(buffer);
 }
 /*----------------------------------------------------------------------------*/
 void display_name(my1video_display_t* object,const char *name,const char *icon)

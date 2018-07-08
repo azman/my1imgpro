@@ -48,7 +48,7 @@ int main(int argc, char* argv[])
 	my1video_display_t cDisplay;
 	SDL_Event event;
 	my1image_filter_t grayfilter;
-	int loop, filter = 1, errorcount = 0;
+	int loop, filter = 0, errorcount = 0;
 	char *pfilename = 0x0, *pdevice = 0x0;
 
 	/* print tool info */
@@ -111,6 +111,7 @@ int main(int argc, char* argv[])
 	else if (pdevice)
 		capture_live(&cCapture,pdevice);
 	display_make(&cDisplay);
+	display_name(&cDisplay, "MY1 Video Test", "my1video_test");
 
 	printf("Press 'h' for hotkeys.\n");
 	printf("Starting main capture loop.\n");
@@ -123,7 +124,7 @@ int main(int argc, char* argv[])
 			if (filter) video_filter(&cMain);
 			if (cMain.count>=0)
 				printf("Video frame index: %d/%d\n", cMain.index, cMain.count);
-			display_buff(&cDisplay);
+			display_make(&cDisplay);
 			display_view(&cDisplay);
 		}
 		if (SDL_PollEvent(&event))
