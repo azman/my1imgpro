@@ -39,8 +39,8 @@ void capture_stop(my1video_capture_t* object);
 typedef struct _my1video_display_t
 {
 	SDL_Surface *screen;
-	SDL_Rect view;
 	my1video_t *video; /* pure pointer to video object */
+	int h,w; /* current screen size! */
 }
 my1video_display_t;
 /*----------------------------------------------------------------------------*/

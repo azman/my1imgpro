@@ -310,8 +310,6 @@ void capture_grab(my1video_capture_t* object)
 				object->video->height,object->video->width);
 		image_get_frame(&object->video->image,object->buffer);
 		object->video->frame = &object->video->image;
-		object->video->height = object->video->frame->height;
-		object->video->width = object->video->frame->width;
 		object->video->newframe = 0x1;
 	}
 	if (object->video->stepit) object->video->update = 0x0;
@@ -343,11 +341,9 @@ void display_init(my1video_display_t* object)
 		exit(-1);
 	}
 	object->screen = 0x0;
-	object->view.x = 0;
-	object->view.y = 0;
-	object->view.h = -1;
-	object->view.w = -1;
 	object->video = 0x0;
+	object->h = -1;
+	object->w = -1;
 }
 /*----------------------------------------------------------------------------*/
 void display_free(my1video_display_t* object)
@@ -357,16 +353,16 @@ void display_free(my1video_display_t* object)
 /*----------------------------------------------------------------------------*/
 void display_make(my1video_display_t* object)
 {
-	if (!object->video) return;
+	my1image_t *image;
+	if (!object->video||!object->video->frame) return;
+	/* get current video frame */
+	image = object->video->frame;
 	/* create/resize screen */
-	if (object->view.h!=object->video->height||
-		object->view.w!=object->video->width)
+	if (object->h!=image->height||object->w!=image->width)
 	{
-		int h = object->video->height;
-		int w = object->video->width;
-		object->view.h = h;
-		object->view.w = w;
-		object->screen = SDL_SetVideoMode(w,h,32,SDL_ANYFORMAT);
+		object->h = image->height;
+		object->w = image->width;
+		object->screen = SDL_SetVideoMode(object->w,object->h,32,SDL_ANYFORMAT);
 		if (!object->screen)
 		{
 			printf("Unable to set video mode: %s\n", SDL_GetError());

@@ -18,7 +18,7 @@ typedef struct _my1video_t
 	my1image_filter_t *filter; /* video/image filter */
 	int count; /* frame count in video file (-1 for live?) */
 	int index; /* frame index for video file */
-	int width, height; /* for current frame */
+	int width, height; /* set to desired size */
 	vbyte looping; /* loop option */
 	vbyte update; /* flag to activate frame grabber */
 	vbyte stepit; /* frame step option */
