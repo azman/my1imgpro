@@ -4,15 +4,21 @@
 /*----------------------------------------------------------------------------*/
 #include "my1image_util.h"
 /*----------------------------------------------------------------------------*/
+#ifndef MY1NUM_USE_DOUBLE
+#define DATATYPE int
+#else
+#define DATATYPE double
+#endif
+/*----------------------------------------------------------------------------*/
 typedef struct _my1num_t
 {
-	double real, imag;
+	DATATYPE real, imag;
 }
 my1num_t;
 /*----------------------------------------------------------------------------*/
 typedef struct _my1pol_t
 {
-	double value, phase; /* polar values */
+	DATATYPE value, phase; /* polar values */
 }
 my1pol_t;
 /*----------------------------------------------------------------------------*/
@@ -34,7 +40,7 @@ void matrix_init(my1matrix_t* mat);
 void matrix_free(my1matrix_t* mat);
 my1num_t* matrix_size(my1matrix_t* mat, int height, int width);
 void matrix_copy(my1matrix_t* dst, my1matrix_t* src);
-void matrix_fill(my1matrix_t* mat, double real, double imag);
+void matrix_fill(my1matrix_t* mat, DATATYPE real, DATATYPE imag);
 my1num_t* matrix_get_row(my1matrix_t* mat, int row);
 void image_get_matrix(my1image_t *img,my1matrix_t *mat,my1image_region_t *reg);
 void image_set_matrix(my1image_t *img,my1matrix_t *mat,my1image_region_t *reg);

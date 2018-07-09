@@ -7,36 +7,38 @@
 void number_get_polar(my1num_t* num, my1pol_t* pol)
 {
 	pol->value = sqrt((num->real*num->real)+(num->imag*num->imag));
-	if (num->real==(double)0) pol->phase = 0.0;
-	else pol->phase = atan(num->imag/num->real);
+	if (num->real==(DATATYPE)0) pol->phase = (DATATYPE)0;
+	else pol->phase = (DATATYPE) atan((double)num->imag/num->real);
 }
 /*----------------------------------------------------------------------------*/
 void number_set_polar(my1num_t* num, my1pol_t* pol)
 {
-	num->real = pol->value*cos(pol->phase);
-	num->imag = pol->value*sin(pol->phase);
+	num->real = (DATATYPE)(pol->value*cos((double)pol->phase));
+	num->imag = (DATATYPE)(pol->value*sin((double)pol->phase));
 }
 /*----------------------------------------------------------------------------*/
 void number_multiply(my1num_t* dst, my1num_t* src1, my1num_t* src2)
 {
-	dst->real = (src1->real*src2->real) - (src1->imag*src2->imag);
-	dst->imag = (src1->real*src2->imag) + (src1->imag*src2->real);
+	dst->real = (DATATYPE)((src1->real*src2->real)-(src1->imag*src2->imag));
+	dst->imag = (DATATYPE)((src1->real*src2->imag)+(src1->imag*src2->real));
 }
 /*----------------------------------------------------------------------------*/
 void number_divide(my1num_t* dst, my1num_t* src1, my1num_t* src2)
 {
 	/* get denominator */
-	double temp = (src2->real*src2->real) + (src2->imag*src2->imag);
+	DATATYPE temp = (DATATYPE)(src2->real*src2->real)+(src2->imag*src2->imag);
 	/* temp should not be zero! */
-	if (temp!=(double)0)
+	if (temp!=(DATATYPE)0)
 	{
-		dst->real = ((src1->real*src2->real)+(src1->imag*src2->imag))/temp;
-		dst->imag = ((src1->imag*src2->real)+(src1->real*src2->imag))/temp;
+		dst->real = (DATATYPE)(((src1->real*src2->real)+
+			(src1->imag*src2->imag))/temp);
+		dst->imag = (DATATYPE)(((src1->imag*src2->real)+
+			(src1->real*src2->imag))/temp);
 	}
 	else
 	{
-		dst->real = (double)0;
-		dst->imag = (double)0;
+		dst->real = (DATATYPE)0;
+		dst->imag = (DATATYPE)0;
 	}
 }
 /*----------------------------------------------------------------------------*/
@@ -74,8 +76,6 @@ my1num_t* matrix_size(my1matrix_t* mat, int height, int width)
 					{
 						int new = irow*width+icol;
 						mat->data[new] = mat->data[old];
-						/**mat->data[new].real = mat->data[old].real;*/
-						/**mat->data[new].imag = mat->data[old].imag;*/
 					}
 				}
 			}
@@ -98,12 +98,10 @@ void matrix_copy(my1matrix_t* dst, my1matrix_t* src)
 	dst->height = src->height;
 	/** copy values */
 	for (icol=0;icol<dst->length;icol++)
-	{
 		dst->data[icol] = src->data[icol];
-	}
 }
 /*----------------------------------------------------------------------------*/
-void matrix_fill(my1matrix_t* mat, double real, double imag)
+void matrix_fill(my1matrix_t* mat, DATATYPE real, DATATYPE imag)
 {
 	int loop;
 	for (loop=0;loop<mat->length;loop++)
@@ -135,8 +133,8 @@ void image_get_matrix(my1image_t *img,my1matrix_t *mat,my1image_region_t *reg)
 		my1num_t* pMat = matrix_get_row(mat,iloop);
 		for (jloop=0;jloop<col;jloop++)
 		{
-			pMat[jloop].real = (double) pImg[jloop+xoff];
-			pMat[jloop].imag = (double) 0;
+			pMat[jloop].real = (DATATYPE) pImg[jloop+xoff];
+			pMat[jloop].imag = (DATATYPE) 0;
 		}
 	}
 }
@@ -159,7 +157,7 @@ void image_set_matrix(my1image_t *img,my1matrix_t *mat,my1image_region_t *reg)
 		for (jloop=0;jloop<col;jloop++)
 		{
 			int temp = (int) pMat[jloop].real;
-			if (pMat[jloop].imag!=(double)0)
+			if (pMat[jloop].imag!=(DATATYPE)0)
 			{
 				my1pol_t buff;
 				number_get_polar(&pMat[jloop],&buff);
@@ -176,10 +174,10 @@ void matrix_identity(my1matrix_t *mat)
 	/* use lower-sized dimension for non-square matrix! */
 	if(mat->height<mat->width) size = mat->height;
 	/* clear everything first! */
-	matrix_fill(mat,(double)0,(double)0);
+	matrix_fill(mat,(DATATYPE)0,(DATATYPE)0);
 	/* create ones on main diagonal */
 	for(loop=0;loop<size;loop++)
-		matrix_get_row(mat,loop)[loop].real = (double)1;
+		matrix_get_row(mat,loop)[loop].real = (DATATYPE)1;
 }
 /*----------------------------------------------------------------------------*/
 void matrix_transpose(my1matrix_t *mat, my1matrix_t *res)
@@ -227,8 +225,8 @@ void matrix_mul(my1matrix_t *res, my1matrix_t *ma1, my1matrix_t *ma2)
 		my1vector_t pr = matrix_get_row(res,iloop);
 		for(jloop=0;jloop<col;jloop++)
 		{
-			pr[jloop].real = (double)0;
-			pr[jloop].imag = (double)0;
+			pr[jloop].real = (DATATYPE)0;
+			pr[jloop].imag = (DATATYPE)0;
 			for(kloop=0;kloop<idx;kloop++)
 			{
 				number_multiply(&temp,&p1[kloop],
