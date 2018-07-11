@@ -283,14 +283,8 @@ void image_grayscale(my1image_t *image)
 	int loop;
 	if (image->mask==IMASK_COLOR24)
 	{
-		cbyte r, g, b;
 		for(loop=0;loop<image->length;loop++)
-		{
-			decode_rgb(image->data[loop],&r,&g,&b);
-			image->data[loop] = (((unsigned int)r+g+b)/3)&0xFF;
-			/** consider luminosity? */
-			/*0.21 R + 0.71 G + 0.07 B*/
-		}
+			image->data[loop] = color2gray(image->data[loop]);
 		image->mask = IMASK_GRAY;
 	}
 }
@@ -301,10 +295,7 @@ void image_colormode(my1image_t *image)
 	if (image->mask!=IMASK_COLOR24)
 	{
 		for(loop=0;loop<image->length;loop++)
-		{
-			int temp = image->data[loop];
-			image->data[loop] = encode_rgb(temp,temp,temp);
-		}
+			image->data[loop] = gray2color(image->data[loop]);
 		image->mask = IMASK_COLOR24;
 	}
 }
@@ -321,23 +312,18 @@ void decode_rgb(int data, cbyte *r, cbyte *g, cbyte *b)
 	*b = (data&0xff);
 }
 /*----------------------------------------------------------------------------*/
-int pixel_gray(int data, int mask)
+int color2gray(int data)
 {
-	int temp = data;
-	if (mask==IMASK_COLOR)
-	{
-		cbyte r, g, b;
-		decode_rgb(data,&r,&g,&b);
-		temp = (((int)g<<1)+(int)r+(int)b)>>2; /* average: (g+g+r+b)/4 */
-	}
-	return temp;
+	cbyte r, g, b;
+	decode_rgb(data,&r,&g,&b);
+	/** consider luminosity? */
+	/*0.21 R + 0.71 G + 0.07 B*/
+	/** go for speed? */
+	return (((int)g<<1)+(int)r+(int)b)>>2; /* average: (g+g+r+b)/4 */
 }
 /*----------------------------------------------------------------------------*/
-int pixel_color(int data, int mask)
+int gray2color(int data)
 {
-	int temp = data;
-	if (mask!=IMASK_COLOR)
-		temp = encode_rgb(data,data,data);
-	return temp;
+	return encode_rgb(data,data,data);
 }
 /*----------------------------------------------------------------------------*/

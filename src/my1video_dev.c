@@ -7,21 +7,6 @@
 /*----------------------------------------------------------------------------*/
 void image_get_frame(my1image_t* image, AVFrame* frame)
 {
-	int index, count;
-	vrgb temp;
-	image->mask = IMASK_COLOR24; /* rgb encoded int */
-	for (index=0,count=0;index<image->length;index++)
-	{
-		temp.b = frame->data[0][count++];
-		temp.g = frame->data[0][count++];
-		temp.r = frame->data[0][count++];
-		count++; /* ignore alpha */
-		image->data[index] = encode_vrgb(temp);
-	}
-}
-/*----------------------------------------------------------------------------*/
-void image_set_frame(my1image_t* image, AVFrame* frame)
-{
 	int index,count;
 	vrgb temp;
 	for (index=0,count=0;index<image->length;index++)
@@ -36,6 +21,21 @@ void image_set_frame(my1image_t* image, AVFrame* frame)
 		frame->data[0][count++] = temp.g;
 		frame->data[0][count++] = temp.r;
 		count++; /* ignore alpha */
+	}
+}
+/*----------------------------------------------------------------------------*/
+void image_set_frame(my1image_t* image, AVFrame* frame)
+{
+	int index, count;
+	vrgb temp;
+	image->mask = IMASK_COLOR24; /* rgb encoded int */
+	for (index=0,count=0;index<image->length;index++)
+	{
+		temp.b = frame->data[0][count++];
+		temp.g = frame->data[0][count++];
+		temp.r = frame->data[0][count++];
+		count++; /* ignore alpha */
+		image->data[index] = encode_vrgb(temp);
 	}
 }
 /*----------------------------------------------------------------------------*/
@@ -308,7 +308,7 @@ void capture_grab(my1video_capture_t* object)
 		if(!object->video->image.data)
 			image_make(&object->video->image,
 				object->video->height,object->video->width);
-		image_get_frame(&object->video->image,object->buffer);
+		image_set_frame(&object->video->image,object->buffer);
 		object->video->frame = &object->video->image;
 		object->video->newframe = 0x1;
 	}

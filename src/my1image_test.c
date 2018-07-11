@@ -59,12 +59,12 @@ int main(int argc, char* argv[])
 	printf("  => by azman@my1matrix.org\n\n");
 
 	/* initialize filters */
-	filter_init(&ifilter_laplace1, image_laplace);
-	filter_init(&ifilter_laplace2, frame_laplace);
-	filter_init(&ifilter_sobelx, image_sobel_x);
-	filter_init(&ifilter_sobely, image_sobel_y);
-	filter_init(&ifilter_sobel, image_sobel);
-	filter_init(&ifilter_gauss, image_gauss);
+	filter_init(&ifilter_laplace1, filter_laplace_1);
+	filter_init(&ifilter_laplace2, filter_laplace_2);
+	filter_init(&ifilter_sobelx, filter_sobel_x);
+	filter_init(&ifilter_sobely, filter_sobel_y);
+	filter_init(&ifilter_sobel, filter_sobel);
+	filter_init(&ifilter_gauss, filter_gauss);
 
 	/* check program arguments */
 	if(argc>1)

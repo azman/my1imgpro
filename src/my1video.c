@@ -134,16 +134,3 @@ vrgb gray2vrgb(int grayvalue)
 	return cpix;
 }
 /*----------------------------------------------------------------------------*/
-int color2gray(int rgbcode)
-{
-	int b = (rgbcode&0xff);
-	int g = (rgbcode&0xff00)>>8;
-	int r = (rgbcode&0xff0000)>>16;
-	return (b+g+r)/3;
-}
-/*----------------------------------------------------------------------------*/
-int gray2color(int grayvalue)
-{
-	return ((grayvalue&0xff)<<16|(grayvalue&0xff)<<8|(grayvalue&0xff));
-}
-/*----------------------------------------------------------------------------*/

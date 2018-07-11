@@ -57,8 +57,8 @@ void image_colormode(my1image_t *image);
 int encode_rgb(cbyte r, cbyte g, cbyte b);
 void decode_rgb(int data, cbyte *r, cbyte *g, cbyte *b);
 /* enforce gray/color value */
-int pixel_gray(int data, int mask);
-int pixel_color(int data, int mask);
+int color2gray(int data);
+int gray2color(int data);
 /*----------------------------------------------------------------------------*/
 #endif
 /*----------------------------------------------------------------------------*/

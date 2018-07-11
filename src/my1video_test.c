@@ -1,6 +1,6 @@
 /*----------------------------------------------------------------------------*/
 #include "my1video_dev.h"
-#include "my1image_fpo.h"
+#include "my1image_work.h"
 /*----------------------------------------------------------------------------*/
 #include <stdio.h>
 #include <ctype.h>
@@ -30,42 +30,6 @@ static char showkeys[] =
 	"\th       - show this message\n"
 	"\t---------------------------\n"
 };
-/*----------------------------------------------------------------------------*/
-my1image_t* fgrayfilter(my1image_t* image, my1image_t* check, void* userdata)
-{
-	int loop;
-	if (image->mask!=IMASK_COLOR24) return image;
-	if (!check->data) image_make(check,image->height,image->width);
-	for (loop=0;loop<image->length;loop++)
-		check->data[loop] = color2gray(image->data[loop]);
-	check->mask = IMASK_GRAY;
-	return check;
-}
-/*----------------------------------------------------------------------------*/
-my1image_t* flaplacefilter(my1image_t* img, my1image_t* res, void* userdata)
-{
-	my1frame_t buff1, buff2;
-	float coeff[] = { 0.0,-1.0,0.0, -1.0,4.0,-1.0, 0.0,-1.0,0.0 };
-	my1frame_kernel_t kernel;
-	if (!frame_kernel_init(&kernel,3))
-		return img;
-	frame_kernel_make(&kernel,coeff);
-	frame_init(&buff1);
-	frame_init(&buff2);
-	if(frame_make(&buff1,img->height,img->width)&&
-		frame_make(&buff2,img->height,img->width))
-	{
-		frame_get_image(&buff1,img,1);
-		frame_correlate(&buff1,&buff2,&kernel);
-		if(!res->data) image_make(res,img->height,img->width);
-		frame_set_image(&buff2,res,1);
-		res->mask = IMASK_GRAY;
-	}
-	frame_free(&buff1);
-	frame_free(&buff2);
-	frame_kernel_free(&kernel);
-	return res;
-}
 /*----------------------------------------------------------------------------*/
 int main(int argc, char* argv[])
 {
@@ -131,9 +95,9 @@ int main(int argc, char* argv[])
 	display_init(&cDisplay);
 	cCapture.video = &cMain;
 	cDisplay.video = &cMain;
-	filter_init(&grayfilter,fgrayfilter);
-	filter_init(&edgefilter,flaplacefilter);
-	filter_init(&morefilter,flaplacefilter);
+	filter_init(&grayfilter,filter_gray);
+	filter_init(&edgefilter,filter_laplace_2);
+	filter_init(&morefilter,filter_laplace_2);
 	pfilter = filter_insert(pfilter,&grayfilter);
 	pfilter = filter_insert(pfilter,&edgefilter);
 	pfilter = filter_insert(pfilter,&morefilter);

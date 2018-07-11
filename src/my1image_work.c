@@ -5,7 +5,44 @@
 /*----------------------------------------------------------------------------*/
 #include <math.h>
 /*----------------------------------------------------------------------------*/
-my1image_t* frame_laplace(my1image_t* img, my1image_t* res, void* userdata)
+my1image_t* filter_gray(my1image_t* img, my1image_t* res, void* userdata)
+{
+	int loop;
+	image_make(res,img->height,img->width);
+	if (img->mask==IMASK_COLOR)
+	{
+		for(loop=0;loop<img->length;loop++)
+			res->data[loop] = color2gray(img->data[loop]);
+	}
+	else
+	{
+		for (loop=0;loop<img->length;loop++)
+			res->data[loop] = img->data[loop];
+	}
+	res->mask = IMASK_GRAY;
+	return res;
+}
+/*----------------------------------------------------------------------------*/
+my1image_t* image_mask_this(my1image_t* img, my1image_t* res,
+	int mask_size, int data_size, int* pdata)
+{
+	my1image_mask_t mask;
+	if (!image_mask_init(&mask,mask_size))
+		return img;
+	image_mask_make(&mask,data_size,pdata);
+	image_make(res,img->height,img->width);
+	image_correlation(img,res,&mask);
+	image_mask_free(&mask);
+	return res;
+}
+/*----------------------------------------------------------------------------*/
+my1image_t* filter_laplace_1(my1image_t* img, my1image_t* res, void* userdata)
+{
+	int coeff[] = { 0,-1,0, -1,4,-1, 0,-1,0 };
+	return image_mask_this(img,res,3,9,coeff);
+}
+/*----------------------------------------------------------------------------*/
+my1image_t* filter_laplace_2(my1image_t* img, my1image_t* res, void* userdata)
 {
 	my1frame_t buff1, buff2;
 	float coeff[] = { 0.0,-1.0,0.0, -1.0,4.0,-1.0, 0.0,-1.0,0.0 };
@@ -29,32 +66,13 @@ my1image_t* frame_laplace(my1image_t* img, my1image_t* res, void* userdata)
 	return res;
 }
 /*----------------------------------------------------------------------------*/
-my1image_t* image_mask_this(my1image_t* img, my1image_t* res,
-	int mask_size, int data_size, int* pdata)
-{
-	my1image_mask_t mask;
-	if (!image_mask_init(&mask,mask_size))
-		return img;
-	image_mask_make(&mask,data_size,pdata);
-	image_make(res,img->height,img->width);
-	image_correlation(img,res,&mask);
-	image_mask_free(&mask);
-	return res;
-}
-/*----------------------------------------------------------------------------*/
-my1image_t* image_laplace(my1image_t* img, my1image_t* res, void* userdata)
-{
-	int coeff[] = { 0,-1,0, -1,4,-1, 0,-1,0 };
-	return image_mask_this(img,res,3,9,coeff);
-}
-/*----------------------------------------------------------------------------*/
-my1image_t* image_sobel_x(my1image_t* img, my1image_t* res, void* userdata)
+my1image_t* filter_sobel_x(my1image_t* img, my1image_t* res, void* userdata)
 {
 	int coeff[] = { -1,0,1, -2,0,2, -1,0,1 };
 	return image_mask_this(img,res,3,9,coeff);
 }
 /*----------------------------------------------------------------------------*/
-my1image_t* image_sobel_y(my1image_t* img, my1image_t* res, void* userdata)
+my1image_t* filter_sobel_y(my1image_t* img, my1image_t* res, void* userdata)
 {
 	int coeff[] = { -1,-2,-1, 0,0,0, 1,2,1 };
 	return image_mask_this(img,res,3,9,coeff);
@@ -66,7 +84,7 @@ int iabs(int value)
 	return value;
 }
 /*----------------------------------------------------------------------------*/
-my1image_t* image_sobel(my1image_t* img, my1image_t* res, void* userdata)
+my1image_t* filter_sobel(my1image_t* img, my1image_t* res, void* userdata)
 {
 	my1image_t buff1, buff2, *pphase = (my1image_t*) userdata;
 	int irow, icol, x, y;
@@ -82,8 +100,8 @@ my1image_t* image_sobel(my1image_t* img, my1image_t* res, void* userdata)
 		return img;
 	}
 	/* calculate directional edge */
-	image_sobel_x(img,&buff1,0x0);
-	image_sobel_y(img,&buff2,0x0);
+	filter_sobel_x(img,&buff1,0x0);
+	filter_sobel_y(img,&buff2,0x0);
 	/* prepare resulting image structure */
 	image_make(res,img->height,img->width);
 	if (pphase) image_make(pphase,img->height,img->width);
@@ -106,12 +124,12 @@ my1image_t* image_sobel(my1image_t* img, my1image_t* res, void* userdata)
 	return res;
 }
 /*----------------------------------------------------------------------------*/
-my1image_t* image_gauss(my1image_t* img, my1image_t* res, void* userdata)
+my1image_t* filter_gauss(my1image_t* img, my1image_t* res, void* userdata)
 {
 	int coeff[] = { 1,4,7,4,1, 4,16,26,16,4,
 		7,26,41,26,7, 4,16,26,16,4, 1,4,7,4,1};
 	image_mask_this(img,res,5,25,coeff);
-	image_scale(res,(1.0/273.0));
+	image_scale(res,(1.0/273.0)); /* normalize? */
 	return res;
 }
 /*----------------------------------------------------------------------------*/

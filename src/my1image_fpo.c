@@ -77,9 +77,16 @@ void frame_set_image(my1frame_t *frame, my1image_t *image, int align)
 {
 	int iloop;
 	if (align==1) image_limit(image); /* 0 - 255 => 0.0 - 1.0 */
-	for (iloop=0;iloop<image->length;iloop++)
-		frame->data[iloop] = (float)
-			pixel_gray(image->data[iloop],image->mask)/WHITE;
+	if (image->mask==IMASK_COLOR)
+	{
+		for (iloop=0;iloop<image->length;iloop++)
+			frame->data[iloop] = (float)color2gray(image->data[iloop])/WHITE;
+	}
+	else
+	{
+		for (iloop=0;iloop<image->length;iloop++)
+			frame->data[iloop] = (float)image->data[iloop]/WHITE;
+	}
 }
 /*----------------------------------------------------------------------------*/
 float* frame_kernel_init(my1frame_kernel_t *kernel, int size)
