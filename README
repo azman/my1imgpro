@@ -9,8 +9,7 @@ This is a simple image processing library (meant to support work on vision
 
 This software consists of several small modules:
   * my1image      - basic image structure, pixel/image operations, color option
-  * my1image_bmp  - bitmap file load/save functions (only gray & 24-bit RGB)
-  * my1image_pnm  - netpbm file load/save functions (only P1/P2/P3 supported)
+  * my1image_file - file load/save functions (BMP & PNM only)
   * my1image_util - basic region/mask@filter/histogram structure & utility
   * my1image_math - math-related function(s), matrix structure & operations
   * my1image_fpo  - floating-point grayscale structure & utility
@@ -27,6 +26,6 @@ grayscale processing, my1image_t structure can support color image using
 RGB-encoded integer (assuming int is at least 32-bit).
 
 Only 2 image file formats supported: BMP (gray & 24-bit RGB only) and
-NetPBM@PNM (Portable Any Map: bit - *.pbm, gray - *.pgm, pix - *.ppm).
+NetPBM@PNM Portable Any Map (P1[bit|*.pbm]/P2[gray|*.pgm]/P3[pix|*.ppm] only).
 
 See LICENSE for licensing details.

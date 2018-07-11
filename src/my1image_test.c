@@ -5,7 +5,10 @@
 #include <SDL/SDL.h>
 #include "my1image_file.h"
 #include "my1image_util.h"
+#include "my1image_math.h"
 #include "my1image_work.h"
+/*----------------------------------------------------------------------------*/
+#define _PI_ 3.14159265
 /*----------------------------------------------------------------------------*/
 #ifndef MY1APP_PROGNAME
 #define MY1APP_PROGNAME "my1image_test"
@@ -288,6 +291,7 @@ int main(int argc, char* argv[])
 	printf("# Sobel<Y> Image\n");
 	printf("# <S>obel Image\n");
 	printf("# G<a>uss Image\n");
+	printf("# <R>otate 90CW Image\n");
 	printf("# Fill Image All <B>lack\n");
 	printf("# Fill Image All <W>hite\n");
 	printf("# <Q>uit\n");
@@ -403,6 +407,17 @@ int main(int argc, char* argv[])
 					ifilter_gauss.next = 0x0;
 					image_filter(image,&ifilter_gauss);
 					image_copy(image,&ifilter_gauss.buffer);
+					next = 1;
+				}
+				else if(event.key.keysym.sym == SDLK_r)
+				{
+					my1image_t buff;
+					image_init(&buff);
+					image_make(&buff,image->height,image->width);
+					image_grayscale(image); /* need this! */
+					image_rotate(image,&buff,_PI_,BLACK);
+					image_copy(image,&buff);
+					image_free(&buff);
 					next = 1;
 				}
 				else if(event.key.keysym.sym == SDLK_b)

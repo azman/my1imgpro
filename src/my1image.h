@@ -17,8 +17,8 @@ my1image_t;
 /*----------------------------------------------------------------------------*/
 /* management functions */
 void image_init(my1image_t *image);
-int* image_make(my1image_t *image, int height, int width);
 void image_free(my1image_t *image);
+int* image_make(my1image_t *image, int height, int width);
 void image_copy(my1image_t *dst, my1image_t *src);
 void image_fill(my1image_t *image, int value);
 int image_get_pixel(my1image_t *image, int row, int col); /* col(x),row(y) */
@@ -56,6 +56,9 @@ void image_colormode(my1image_t *image);
 /* rgb conversion utility */
 int encode_rgb(cbyte r, cbyte g, cbyte b);
 void decode_rgb(int data, cbyte *r, cbyte *g, cbyte *b);
+/* enforce gray/color value */
+int pixel_gray(int data, int mask);
+int pixel_color(int data, int mask);
 /*----------------------------------------------------------------------------*/
 #endif
 /*----------------------------------------------------------------------------*/

@@ -3,15 +3,15 @@
 /*----------------------------------------------------------------------------*/
 #include <stdlib.h> /* for malloc and free? */
 /*----------------------------------------------------------------------------*/
-void image_get_region(my1image_t *img, my1image_t *sub, my1image_region_t *reg)
+void image_get_region(my1image_t *img, my1image_t *sub, my1region_t *reg)
 {
 	int iloop, jloop, xoff = 0, yoff = 0;
 	int row = img->height, col = img->width;
 	if (reg)
 	{
-		xoff = reg->xset;
 		yoff = reg->yset;
 		row = reg->height;
+		xoff = reg->xset;
 		col = reg->width;
 	}
 	for (iloop=0;iloop<row;iloop++)
@@ -23,15 +23,15 @@ void image_get_region(my1image_t *img, my1image_t *sub, my1image_region_t *reg)
 	}
 }
 /*----------------------------------------------------------------------------*/
-void image_set_region(my1image_t *img, my1image_t *sub, my1image_region_t *reg)
+void image_set_region(my1image_t *img, my1image_t *sub, my1region_t *reg)
 {
 	int iloop, jloop, xoff = 0, yoff = 0;
 	int row = img->height, col = img->width;
 	if (reg)
 	{
-		xoff = reg->xset;
 		yoff = reg->yset;
 		row = reg->height;
+		xoff = reg->xset;
 		col = reg->width;
 	}
 	for (iloop=0;iloop<row;iloop++)
@@ -43,22 +43,22 @@ void image_set_region(my1image_t *img, my1image_t *sub, my1image_region_t *reg)
 	}
 }
 /*----------------------------------------------------------------------------*/
-void image_region_fill(my1image_t *img, int val, my1image_region_t *reg)
+void image_fill_region(my1image_t *img, int val, my1region_t *reg)
 {
 	int iloop, jloop, xoff = 0, yoff = 0;
 	int row = img->height, col = img->width;
 	if (reg)
 	{
-		xoff = reg->xset;
 		yoff = reg->yset;
 		row = reg->height;
+		xoff = reg->xset;
 		col = reg->width;
 	}
 	for (iloop=0;iloop<row;iloop++)
 	{
-		int* pImage = image_row_data(img,iloop+yoff);
+		int* pImg = image_row_data(img,iloop+yoff);
 		for (jloop=0;jloop<col;jloop++)
-			pImage[jloop+xoff] = val;
+			pImg[jloop+xoff] = val;
 	}
 }
 /*----------------------------------------------------------------------------*/
@@ -82,14 +82,15 @@ void image_mask_free(my1image_mask_t *mask)
 	mask->factor = 0x0;
 }
 /*----------------------------------------------------------------------------*/
-void image_mask_make(my1image_mask_t *mask, int *pval)
+void image_mask_make(my1image_mask_t *mask, int size, int *pval)
 {
-	int index;
-	for (index=0;index<mask->length;index++)
-		mask->factor[index] = pval[index];
+	int loop, temp = mask->length;
+	if (size<mask->length) temp = size;
+	for (loop=0;loop<temp;loop++)
+		mask->factor[loop] = pval[loop];
 }
 /*----------------------------------------------------------------------------*/
-int validpixel(my1image_t *image, int row, int col)
+int image_get_valid(my1image_t *image, int row, int col)
 {
 	if (row<0) row = 0;
 	else if (row>=image->height) row = image->height-1;
@@ -98,14 +99,14 @@ int validpixel(my1image_t *image, int row, int col)
 	return image->data[row*image->width+col];
 }
 /*----------------------------------------------------------------------------*/
-void image_correlation(my1image_t *dst, my1image_t *src, my1image_mask_t *mask)
+void image_correlation(my1image_t *img, my1image_t *res, my1mask_t *mask)
 {
 	int irow, icol, mrow, mcol;
 	int index, value;
 	/* main loop */
-	for (irow=0;irow<dst->height;irow++)
+	for (irow=0;irow<img->height;irow++)
 	{
-		for (icol=0;icol<dst->width;icol++)
+		for (icol=0;icol<img->width;icol++)
 		{
 			value = 0; index = 0;
 			for (mrow=-mask->origin;mrow<=mask->origin;mrow++)
@@ -114,22 +115,22 @@ void image_correlation(my1image_t *dst, my1image_t *src, my1image_mask_t *mask)
 				{
 					/* cross-correlation */
 					value += mask->factor[index++] *
-						validpixel(src,irow+mrow,icol+mcol);
+						image_get_valid(res,irow+mrow,icol+mcol);
 				}
 			}
-			image_set_pixel(dst,irow,icol,value);
+			image_set_pixel(img,irow,icol,value);
 		}
 	}
 }
 /*----------------------------------------------------------------------------*/
-void image_convolution(my1image_t *dst, my1image_t *src, my1image_mask_t *mask)
+void image_convolution(my1image_t *img, my1image_t *res, my1mask_t *mask)
 {
 	int irow, icol, mrow, mcol;
 	int index, value;
 	/* main loop */
-	for (irow=0;irow<dst->height;irow++)
+	for (irow=0;irow<img->height;irow++)
 	{
-		for (icol=0;icol<dst->width;icol++)
+		for (icol=0;icol<img->width;icol++)
 		{
 			value = 0; index = 0;
 			for (mrow=-mask->origin;mrow<=mask->origin;mrow++)
@@ -138,10 +139,10 @@ void image_convolution(my1image_t *dst, my1image_t *src, my1image_mask_t *mask)
 				{
 					/* convolution */
 					value += mask->factor[index++] *
-						validpixel(src,irow-mrow,icol-mcol);
+						image_get_valid(res,irow-mrow,icol-mcol);
 				}
 			}
-			image_set_pixel(dst,irow,icol,value);
+			image_set_pixel(img,irow,icol,value);
 		}
 	}
 }
@@ -163,8 +164,7 @@ void filter_free(my1image_filter_t* pfilter)
 	pfilter->next = 0x0;
 }
 /*----------------------------------------------------------------------------*/
-my1image_filter_t* filter_insert(my1image_filter_t* pstack,
-	my1image_filter_t* pcheck)
+my1filter_t* filter_insert(my1filter_t* pstack, my1filter_t* pcheck)
 {
 	my1image_filter_t *pthis = pstack;
 	if (!pstack) return pcheck;
@@ -173,7 +173,7 @@ my1image_filter_t* filter_insert(my1image_filter_t* pstack,
 	return pstack;
 }
 /*----------------------------------------------------------------------------*/
-my1image_t* image_filter(my1image_t* image, my1image_filter_t* pfilter)
+my1image_t* image_filter(my1image_t* image, my1filter_t* pfilter)
 {
 	my1image_t *pcheck = image;
 	while (pfilter)
@@ -185,7 +185,7 @@ my1image_t* image_filter(my1image_t* image, my1image_filter_t* pfilter)
 	return pcheck;
 }
 /*----------------------------------------------------------------------------*/
-void image_get_histogram(my1image_t *image, my1image_histogram_t *hist)
+void image_get_histogram(my1image_t *image, my1histogram_t *hist)
 {
 	int loop, temp;
 	/* clear histogram */
@@ -210,7 +210,7 @@ void image_get_histogram(my1image_t *image, my1image_histogram_t *hist)
 	}
 }
 /*----------------------------------------------------------------------------*/
-void image_smooth_histogram(my1image_t *image, my1image_histogram_t *hist)
+void image_smooth_histogram(my1image_t *image, my1histogram_t *hist)
 {
 	int loop;
 	float alpha = (float) WHITE/image->length;

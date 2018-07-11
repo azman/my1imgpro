@@ -42,8 +42,8 @@ my1num_t* matrix_size(my1matrix_t* mat, int height, int width);
 void matrix_copy(my1matrix_t* dst, my1matrix_t* src);
 void matrix_fill(my1matrix_t* mat, DATATYPE real, DATATYPE imag);
 my1num_t* matrix_get_row(my1matrix_t* mat, int row);
-void image_get_matrix(my1image_t *img,my1matrix_t *mat,my1image_region_t *reg);
-void image_set_matrix(my1image_t *img,my1matrix_t *mat,my1image_region_t *reg);
+void image_get_matrix(my1image_t *img, my1matrix_t *mat, my1region_t *reg);
+void image_set_matrix(my1image_t *img, my1matrix_t *mat, my1region_t *reg);
 /*----------------------------------------------------------------------------*/
 /* matrix operations */
 void matrix_identity(my1matrix_t *mat); /* must be square! */
@@ -55,7 +55,7 @@ void matrix_dot(my1matrix_t *res, my1matrix_t *ma1, my1matrix_t *ma2);
 void matrix_div(my1matrix_t *res, my1matrix_t *ma1, my1matrix_t *ma2);
 /*----------------------------------------------------------------------------*/
 /* here because it needs math lib! */
-void image_rotate(my1image_t *image, my1image_t *check, int radian, int vin);
+void image_rotate(my1image_t *image, my1image_t *check, double radian, int vin);
 /*----------------------------------------------------------------------------*/
 #endif
 /*----------------------------------------------------------------------------*/

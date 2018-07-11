@@ -12,6 +12,13 @@ void image_init(my1image_t *image)
 	image->data = 0x0;
 }
 /*----------------------------------------------------------------------------*/
+void image_free(my1image_t *image)
+{
+	if (image->data) free((void*)image->data);
+	image->data = 0x0;
+	image->length = 0;
+}
+/*----------------------------------------------------------------------------*/
 int* image_make(my1image_t *image, int height, int width)
 {
 	int length = height*width;
@@ -28,13 +35,6 @@ int* image_make(my1image_t *image, int height, int width)
 		}
 	}
 	return temp;
-}
-/*----------------------------------------------------------------------------*/
-void image_free(my1image_t *image)
-{
-	if (image->data) free((void*)image->data);
-	image->data = 0x0;
-	image->length = 0;
 }
 /*----------------------------------------------------------------------------*/
 void image_copy(my1image_t *dst, my1image_t *src)
@@ -319,5 +319,25 @@ void decode_rgb(int data, cbyte *r, cbyte *g, cbyte *b)
 	*r = (data&0xff0000)>>16;
 	*g = (data&0xff00)>>8;
 	*b = (data&0xff);
+}
+/*----------------------------------------------------------------------------*/
+int pixel_gray(int data, int mask)
+{
+	int temp = data;
+	if (mask==IMASK_COLOR)
+	{
+		cbyte r, g, b;
+		decode_rgb(data,&r,&g,&b);
+		temp = (((int)g<<1)+(int)r+(int)b)>>2; /* average: (g+g+r+b)/4 */
+	}
+	return temp;
+}
+/*----------------------------------------------------------------------------*/
+int pixel_color(int data, int mask)
+{
+	int temp = data;
+	if (mask!=IMASK_COLOR)
+		temp = encode_rgb(data,data,data);
+	return temp;
 }
 /*----------------------------------------------------------------------------*/

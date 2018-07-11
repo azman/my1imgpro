@@ -44,25 +44,24 @@ typedef my1image_filter_t my1filter_t;
 typedef my1image_histogram_t my1histogram_t;
 /*----------------------------------------------------------------------------*/
 /* region@sub-image management functions */
-void image_get_region(my1image_t *img, my1image_t *sub,my1image_region_t *reg);
-void image_set_region(my1image_t *img, my1image_t *sub,my1image_region_t *reg);
-void image_put_region(my1image_t *img, int val, my1image_region_t *reg);
+void image_get_region(my1image_t *img, my1image_t *sub, my1region_t *reg);
+void image_set_region(my1image_t *img, my1image_t *sub, my1region_t *reg);
+void image_fill_region(my1image_t *img, int val, my1region_t *reg);
 /* mask management functions */
 int* image_mask_init(my1image_mask_t *mask, int size);
 void image_mask_free(my1image_mask_t *mask);
-void image_mask_make(my1image_mask_t *mask, int *pval);
+void image_mask_make(my1image_mask_t *mask, int size, int *pval);
 /* linear filter : cross-correlation & convolution */
-void image_correlation(my1image_t *dst, my1image_t *src, my1image_mask_t *mask);
-void image_convolution(my1image_t *dst, my1image_t *src, my1image_mask_t *mask);
+void image_correlation(my1image_t *img, my1image_t *res, my1mask_t *mask);
+void image_convolution(my1image_t *img, my1image_t *res, my1mask_t *mask);
 /* generic filter */
 void filter_init(my1image_filter_t* pfilter, pfilter_t filter);
 void filter_free(my1image_filter_t* pfilter);
-my1image_filter_t* filter_insert(my1image_filter_t* pstack,
-	my1image_filter_t* pcheck);
-my1image_t* image_filter(my1image_t* image, my1image_filter_t* pfilter);
+my1filter_t* filter_insert(my1filter_t* pstack, my1filter_t* pcheck);
+my1image_t* image_filter(my1image_t* image, my1filter_t* pfilter);
 /* grayscale histogram utility */
-void image_get_histogram(my1image_t *image, my1image_histogram_t *hist);
-void image_smooth_histogram(my1image_t *image, my1image_histogram_t *hist);
+void image_get_histogram(my1image_t *image, my1histogram_t *hist);
+void image_smooth_histogram(my1image_t *image, my1histogram_t *hist);
 /*----------------------------------------------------------------------------*/
 #endif
 /*----------------------------------------------------------------------------*/
