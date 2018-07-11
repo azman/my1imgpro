@@ -15,13 +15,17 @@ void image_init(my1image_t *image)
 int* image_make(my1image_t *image, int height, int width)
 {
 	int length = height*width;
-	int *temp = (int*) realloc(image->data,length*sizeof(int));
-	if (temp)
+	int *temp = image->data;
+	if (!temp||image->height!=height||image->width!=width)
 	{
-		image->data = temp;
-		image->height = height;
-		image->width = width;
-		image->length = length;
+		temp = (int*) realloc(image->data,length*sizeof(int));
+		if (temp)
+		{
+			image->data = temp;
+			image->height = height;
+			image->width = width;
+			image->length = length;
+		}
 	}
 	return temp;
 }
@@ -199,7 +203,7 @@ void image_sub(my1image_t *image1, my1image_t *image2, my1image_t *result)
 	}
 }
 /*----------------------------------------------------------------------------*/
-void image_pan(my1image_t *image, my1image_t *result, int shx, int shy, int vin)
+void image_pan(my1image_t *image, my1image_t *check, int shx, int shy, int vin)
 {
 	int iloop, jloop;
 	int calcx, calcy, calcv;
@@ -214,11 +218,11 @@ void image_pan(my1image_t *image, my1image_t *result, int shx, int shy, int vin)
 			if (calcx>=0&&calcx<col&&calcy>=0&&calcy<row)
 			{
 				calcv = image_get_pixel(image,calcy,calcx);
-				image_set_pixel(result,iloop,jloop,calcv);
+				image_set_pixel(check,iloop,jloop,calcv);
 			}
 			else
 			{
-				image_set_pixel(result,iloop,jloop,vin);
+				image_set_pixel(check,iloop,jloop,vin);
 			}
 		}
 	}

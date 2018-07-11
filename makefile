@@ -2,7 +2,7 @@
 # - using libav & SDL for interfacing & display
 
 TESTIMG = my1image_test
-OBJSIMG = my1image.o my1image_bmp.o my1image_pnm.o
+OBJSIMG = my1image.o my1image_file.o
 OBJSIMG += my1image_util.o my1image_math.o
 OBJSIMG += my1image_fpo.o my1image_work.o $(TESTIMG).o
 TESTVIS = my1video_test

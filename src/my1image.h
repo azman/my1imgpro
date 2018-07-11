@@ -38,9 +38,11 @@ void image_normalize(my1image_t *image); /* get max value, rescale */
 /* image functions */
 void image_add(my1image_t *image1, my1image_t *image2, my1image_t *result);
 void image_sub(my1image_t *image1, my1image_t *image2, my1image_t *result);
-void image_pan(my1image_t *image, my1image_t *result, int shx, int shy, int vin);
+void image_pan(my1image_t *image, my1image_t *check,
+	int shx, int shy, int vin); /* pan-x,pan-y,value-in */
 /*----------------------------------------------------------------------------*/
 #define IMASK_COLOR24 0x00FFFFFF
+#define IMASK_COLOR IMASK_COLOR24
 #define IMASK_GRAY 0x00
 /*----------------------------------------------------------------------------*/
 typedef unsigned char cbyte; /** color byte */

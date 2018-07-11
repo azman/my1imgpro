@@ -3,8 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <SDL/SDL.h>
-#include "my1image_bmp.h"
-#include "my1image_pnm.h"
+#include "my1image_file.h"
 #include "my1image_util.h"
 #include "my1image_work.h"
 /*----------------------------------------------------------------------------*/
@@ -25,91 +24,6 @@ void print_image_info(my1image_t* image)
 {
 	printf("Size: %d x %d, ",image->width,image->height);
 	printf("Mask: %08X\n",image->mask);
-}
-/*----------------------------------------------------------------------------*/
-int load_image(my1image_t* image, char *pfilename)
-{
-	char filename[80];
-	int bmp = 0, pnm = 0;
-	/** request filename if not given */
-	if(!pfilename)
-	{
-		pfilename = filename;
-		printf("Enter image filename: ");
-		scanf("%s",filename);
-	}
-	/** try to open multiple type - maybe check extension? */
-	do
-	{
-		if(!(bmp=image_load_bmp(pfilename,image))) break;
-		if(!(pnm=image_load_pnm(pfilename,image))) break;
-		printf("Cannot load input file '%s'! [%d][%d]\n",
-			pfilename,bmp,pnm);
-	}
-	while(0);
-	return pnm;
-}
-/*----------------------------------------------------------------------------*/
-int save_image(my1image_t* image, char *pfilename)
-{
-	char filename[80];
-	int bmp = 0, pnm = 0, size;
-	/** request filename if not given */
-	if(!pfilename)
-	{
-		pfilename = filename;
-		printf("Enter image filename: ");
-		scanf("%s",filename);
-	}
-	/** check extension for format? */
-	{
-		char *ptest;
-		size = strlen(pfilename);
-		ptest = &pfilename[size-4];
-		if(strcmp(ptest,".bmp")==0)
-		{
-			if((bmp=image_save_bmp(pfilename,image))<0)
-				printf("Cannot write BMP file '%s'! [%d]\n", pfilename, bmp);
-		}
-		else /* default is pnm! */
-		{
-			if((pnm=image_save_pnm(pfilename,image))<0)
-				printf("Cannot write PNM file '%s'! [%d]\n", pfilename, pnm);
-		}
-		if(!bmp&&!pnm) printf("Image written to '%s'.\n", pfilename);
-	}
-	return pnm;
-}
-/*----------------------------------------------------------------------------*/
-int cdata_image(my1image_t* image, char *pfilename)
-{
-	char filename[80];
-	int loop;
-	/** request filename if not given */
-	if(!pfilename)
-	{
-		pfilename = filename;
-		printf("Enter C data filename: ");
-		scanf("%s",filename);
-	}
-	/** write it? */
-	{
-		FILE *cfile = fopen(pfilename,"wt");
-		if(!cfile) return -1; /* cannot open file */
-		fprintf(cfile,"unsigned char image[%d] = {",image->length);
-		/* write data! */
-		for(loop=0;loop<image->length;loop++)
-		{
-			if(loop%16==0)
-				fprintf(cfile,"\n");
-			fprintf(cfile,"0x%02X",image->data[loop]);
-			if(loop<image->length-1)
-				fprintf(cfile,",");
-		}
-		fprintf(cfile,"};");
-		fclose(cfile);
-	}
-	return 0;
 }
 /*----------------------------------------------------------------------------*/
 void about(void)
@@ -247,7 +161,7 @@ int main(int argc, char* argv[])
 	/** check input filename */
 	if(!pname)
 	{
-		printf("No filename given! Aborting!\n");
+		printf("No filename given! Aborting!\n\n");
 		return ERROR_NOFILE;
 	}
 
@@ -256,8 +170,43 @@ int main(int argc, char* argv[])
 	image_init(&nextimage);
 
 	/* try to open file */
-	if((error|=load_image(&currimage,pname))<0)
+	if((error|=image_load(&currimage,pname))<0)
+	{
+		switch (error)
+		{
+			case BMP_ERROR_FILEOPEN:
+			case PNM_ERROR_FILEOPEN:
+				printf("Error opening file");
+				break;
+			case BMP_ERROR_VALIDBMP:
+			case PNM_ERROR_VALIDPNM:
+			case FILE_ERROR_FORMAT:
+				printf("Unsupported file format (%d)",error);
+				break;
+			case BMP_ERROR_RGBNGRAY:
+				printf("Unsupported BMP format");
+				break;
+			case PNM_ERROR_NOSUPPORT:
+				printf("Unsupported PNM format");
+				break;
+			case BMP_ERROR_FILESIZE:
+			case PNM_ERROR_FILESIZE:
+				printf("Invalid file size");
+				break;
+			case BMP_ERROR_MEMALLOC:
+			case PNM_ERROR_MEMALLOC:
+				printf("Unable to allocate memory");
+				break;
+			case BMP_ERROR_DIBINVAL:
+			case BMP_ERROR_COMPRESS:
+				printf("Invalid BMP format");
+				break;
+			default:
+				printf("Unknown error opening file (%d)",error);
+		}
+		printf(": '%s'!\n\n",pname);
 		return error;
+	}
 	image_make(&nextimage,currimage.height,currimage.width);
 	image_copy(&nextimage,&currimage);
 	image = &nextimage;
@@ -285,7 +234,19 @@ int main(int argc, char* argv[])
 	if(psave)
 	{
 		printf("Saving image data to %s...\n",psave);
-		error |= save_image(image,psave);
+		if ((error|=image_save(image,psave))<0)
+		{
+			switch (error)
+			{
+				case BMP_ERROR_FILEOPEN:
+				case PNM_ERROR_FILEOPEN:
+					printf("Error writing file");
+					break;
+				default:
+					printf("Unknown error opening file");
+			}
+			printf(":'%s'!\n",psave);
+		}
 		view = 0;
 	}
 
@@ -293,7 +254,12 @@ int main(int argc, char* argv[])
 	if(pdata)
 	{
 		printf("Saving C data to %s...\n",pdata);
-		error |= cdata_image(image,pdata);
+		switch (image_cdat(image,pdata))
+		{
+			case FILE_ERROR_OPEN:
+				printf("Error writing c file:'%s'!\n",pdata);
+				return error|FILE_ERROR_OPEN;
+		}
 	}
 
 	/* we are done if no request for ui? */
