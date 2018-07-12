@@ -293,6 +293,8 @@ int main(int argc, char* argv[])
 	printf("# Sobel<Y> Image\n");
 	printf("# <S>obel Image\n");
 	printf("# G<a>uss Image\n");
+	printf("# <N>ormalize Image\n");
+	printf("# <T>hreshold Image\n");
 	printf("# <R>otate 90CW Image\n");
 	printf("# Fill Image All <B>lack\n");
 	printf("# Fill Image All <W>hite\n");
@@ -410,6 +412,18 @@ int main(int argc, char* argv[])
 					pfilter = filter_insert(0x0,&ifilter_gray);
 					pfilter = filter_insert(pfilter,&ifilter_gauss);
 					image = image_filter(image,pfilter);
+					next = 1;
+				}
+				else if(event.key.keysym.sym == SDLK_n)
+				{
+					image_grayscale(image); /* need this! */
+					image_normalize(image);
+					next = 1;
+				}
+				else if(event.key.keysym.sym == SDLK_t)
+				{
+					image_grayscale(image); /* need this! */
+					image_binary(image,WHITE/3);
 					next = 1;
 				}
 				else if(event.key.keysym.sym == SDLK_r)
