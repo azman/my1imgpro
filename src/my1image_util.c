@@ -147,42 +147,92 @@ void image_convolution(my1image_t *img, my1image_t *res, my1mask_t *mask)
 	}
 }
 /*----------------------------------------------------------------------------*/
-void filter_init(my1image_filter_t* pfilter, pfilter_t filter)
+void buffer_init(my1image_buffer_t* ibuff)
+{
+	ibuff->region.xset = 0;
+	ibuff->region.yset = 0;
+	ibuff->region.width = 0;
+	ibuff->region.height = 0;
+	ibuff->curr = &ibuff->main;
+	ibuff->next = &ibuff->buff;
+	ibuff->temp = 0x0; /* not necessary */
+	image_init(ibuff->curr);
+	image_init(ibuff->next);
+}
+/*----------------------------------------------------------------------------*/
+void buffer_free(my1image_buffer_t* ibuff)
+{
+	image_free(ibuff->curr);
+	image_free(ibuff->next);
+}
+/*----------------------------------------------------------------------------*/
+void buffer_size(my1image_buffer_t* ibuff, int height, int width)
+{
+	image_make(ibuff->curr,height,width);
+	image_make(ibuff->next,height,width);
+}
+/*----------------------------------------------------------------------------*/
+void buffer_swap(my1image_buffer_t* ibuff)
+{
+	ibuff->temp = ibuff->curr;
+	ibuff->curr = ibuff->next;
+	ibuff->next = ibuff->temp;
+}
+/*----------------------------------------------------------------------------*/
+void filter_init(my1image_filter_t* pfilter,
+	pfilter_t filter, my1buffer_t *buffer)
 {
 	pfilter->userdata = 0x0;
-	image_init(&pfilter->buffer);
+	pfilter->buffer = buffer;
+	pfilter->docopy = 0x0;
 	pfilter->filter = filter;
 	pfilter->next = 0x0;
+	pfilter->last = 0x0;
 }
 /*----------------------------------------------------------------------------*/
 void filter_free(my1image_filter_t* pfilter)
 {
-	image_free((void*)&pfilter->buffer);
 	pfilter->filter = 0x0;
 	if (pfilter->next)
 		filter_free(pfilter->next);
 	pfilter->next = 0x0;
+	pfilter->last = 0x0;
 }
 /*----------------------------------------------------------------------------*/
 my1filter_t* filter_insert(my1filter_t* pstack, my1filter_t* pcheck)
 {
-	my1image_filter_t *pthis = pstack;
-	if (!pstack) return pcheck;
-	while (pthis->next) pthis = pthis->next;
-	pthis->next = pcheck;
+	pcheck->next = 0x0;
+	pcheck->last = 0x0;
+	if (!pstack)
+	{
+		pcheck->last = pcheck;
+		return pcheck;
+	}
+	pstack->last->next = pcheck;
+	pstack->last = pcheck;
 	return pstack;
 }
 /*----------------------------------------------------------------------------*/
 my1image_t* image_filter(my1image_t* image, my1filter_t* pfilter)
 {
-	my1image_t *pcheck = image;
 	while (pfilter)
 	{
-		if (pfilter->filter)
-			pcheck = pfilter->filter(pcheck,&pfilter->buffer,pfilter->userdata);
+		if (pfilter->filter&&pfilter->buffer)
+		{
+			my1image_buffer_t *pbuff = pfilter->buffer;
+			pfilter->filter(pbuff->curr,pbuff->next,pfilter->userdata);
+			buffer_swap(pbuff);
+			image = pbuff->curr;
+			/* in case we need a copy of this stage output! */
+			if (pfilter->docopy)
+			{
+				image_make(pfilter->docopy,image->height,image->width);
+				image_copy(pfilter->docopy,image);
+			}
+		}
 		pfilter = pfilter->next;
 	}
-	return pcheck;
+	return image;
 }
 /*----------------------------------------------------------------------------*/
 void image_get_histogram(my1image_t *image, my1histogram_t *hist)

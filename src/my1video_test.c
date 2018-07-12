@@ -95,9 +95,9 @@ int main(int argc, char* argv[])
 	display_init(&cDisplay);
 	cCapture.video = &cMain;
 	cDisplay.video = &cMain;
-	filter_init(&grayfilter,filter_gray);
-	filter_init(&edgefilter,filter_laplace_2);
-	filter_init(&morefilter,filter_laplace_2);
+	filter_init(&grayfilter,filter_gray,0x0);
+	filter_init(&edgefilter,filter_laplace_2,0x0);
+	filter_init(&morefilter,filter_laplace_2,0x0);
 	pfilter = filter_insert(pfilter,&grayfilter);
 	pfilter = filter_insert(pfilter,&edgefilter);
 	pfilter = filter_insert(pfilter,&morefilter);

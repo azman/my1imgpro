@@ -7,6 +7,7 @@ void video_init(my1video_t *video)
 	video->vdata.viewdata = &video->image;
 	video->vdata.userdata = 0x0;
 	video->frame = 0x0; /* frame is pure pointer! */
+	buffer_init(&video->vbuff);
 	video->filter = 0x0;
 	video->count = -1; video->index = -1;
 	video->width = 0; video->height = 0;
@@ -17,13 +18,7 @@ void video_init(my1video_t *video)
 void video_free(my1video_t *video)
 {
 	image_free(&video->image);
-	/* clean up ALL filter buffer?? */
-	my1image_filter_t *pfilter = video->filter;
-	while (pfilter)
-	{
-		image_free(&pfilter->buffer);
-		pfilter = pfilter->next;
-	}
+	buffer_free(&video->vbuff);
 }
 /*----------------------------------------------------------------------------*/
 void video_play(my1video_t *video)
@@ -88,6 +83,9 @@ void video_filter_init(my1video_t *video, my1vpass_t *vpass)
 	my1vpass_t* ptask = vpass;
 	while (ptask)
 	{
+		/* allow filters to use external buffer */
+		if (!ptask->buffer)
+			ptask->buffer = &video->vbuff;
 		ptask->userdata = (void*) &video->vdata;
 		ptask = ptask->next;
 	}

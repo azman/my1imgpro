@@ -33,6 +33,7 @@ my1image_t* image_mask_this(my1image_t* img, my1image_t* res,
 	image_make(res,img->height,img->width);
 	image_correlation(img,res,&mask);
 	image_mask_free(&mask);
+	res->mask = IMASK_GRAY;
 	return res;
 }
 /*----------------------------------------------------------------------------*/
@@ -104,7 +105,11 @@ my1image_t* filter_sobel(my1image_t* img, my1image_t* res, void* userdata)
 	filter_sobel_y(img,&buff2,0x0);
 	/* prepare resulting image structure */
 	image_make(res,img->height,img->width);
-	if (pphase) image_make(pphase,img->height,img->width);
+	if (pphase)
+	{
+		image_make(pphase,img->height,img->width);
+		pphase->mask = IMASK_GRAY;
+	}
 	/* calculate magnitude & phase for 3x3 neighbourhood */
 	for (irow=0;irow<img->height;irow++)
 	{
@@ -117,6 +122,7 @@ my1image_t* filter_sobel(my1image_t* img, my1image_t* res, void* userdata)
 			image_set_pixel(pphase,irow,icol,(int)atan2(y,x));
 		}
 	}
+	res->mask = IMASK_GRAY;
 	/* clean-up */
 	image_free(&buff1);
 	image_free(&buff2);

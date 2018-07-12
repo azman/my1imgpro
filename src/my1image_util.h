@@ -22,12 +22,21 @@ my1image_mask_t;
 /*----------------------------------------------------------------------------*/
 typedef my1image_t* (*pfilter_t)(my1image_t* curr,my1image_t* next,void* user);
 /*----------------------------------------------------------------------------*/
+typedef struct _my1image_buffer_t
+{
+	/* double buffer image - with region! */
+	my1image_region_t region;
+	my1image_t main, buff, *curr, *next, *temp;
+}
+my1image_buffer_t;
+/*----------------------------------------------------------------------------*/
 typedef struct _my1image_filter_t
 {
 	void *userdata;
-	my1image_t buffer;
+	my1image_buffer_t *buffer;
+	my1image_t *docopy; /* if supplied, copy to this struct! */
 	pfilter_t filter;
-	struct _my1image_filter_t *next; /* linked list */
+	struct _my1image_filter_t *next, *last; /* linked list */
 }
 my1image_filter_t;
 /*----------------------------------------------------------------------------*/
@@ -40,6 +49,7 @@ my1image_histogram_t;
 /*----------------------------------------------------------------------------*/
 typedef my1image_region_t my1region_t;
 typedef my1image_mask_t my1mask_t;
+typedef my1image_buffer_t my1buffer_t;
 typedef my1image_filter_t my1filter_t;
 typedef my1image_histogram_t my1histogram_t;
 /*----------------------------------------------------------------------------*/
@@ -54,8 +64,14 @@ void image_mask_make(my1image_mask_t *mask, int size, int *pval);
 /* linear filter : cross-correlation & convolution */
 void image_correlation(my1image_t *img, my1image_t *res, my1mask_t *mask);
 void image_convolution(my1image_t *img, my1image_t *res, my1mask_t *mask);
+/* double buffered image for processing */
+void buffer_init(my1image_buffer_t* ibuff);
+void buffer_free(my1image_buffer_t* ibuff);
+void buffer_size(my1image_buffer_t* ibuff, int height, int width);
+void buffer_swap(my1image_buffer_t* ibuff);
 /* generic filter */
-void filter_init(my1image_filter_t* pfilter, pfilter_t filter);
+void filter_init(my1image_filter_t* pfilter,
+	pfilter_t filter, my1buffer_t *pbuffer);
 void filter_free(my1image_filter_t* pfilter);
 my1filter_t* filter_insert(my1filter_t* pstack, my1filter_t* pcheck);
 my1image_t* image_filter(my1image_t* image, my1filter_t* pfilter);

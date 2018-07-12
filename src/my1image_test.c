@@ -46,11 +46,12 @@ int main(int argc, char* argv[])
 	int loop, error = 0;
 	int gray = 0, view = 0, help = 0, next = 1, temp;
 	char *psave = 0x0, *pname = 0x0, *pdata = 0x0;
-	my1image_t currimage, nextimage, *image;
+	my1image_t currimage, *image;
 	SDL_Surface *screen;
 	SDL_Surface *buffer;
 	SDL_Event event;
-	my1image_filter_t ifilter_laplace1,ifilter_laplace2,
+	my1image_buffer_t work;
+	my1image_filter_t ifilter_gray, ifilter_laplace1, ifilter_laplace2,
 		ifilter_sobelx, ifilter_sobely, ifilter_sobel, ifilter_gauss;
 	my1image_filter_t *pfilter = 0x0;
 
@@ -58,13 +59,15 @@ int main(int argc, char* argv[])
 	printf("\n%s - %s (%s)\n",MY1APP_PROGNAME,MY1APP_PROGINFO,MY1APP_PROGVERS);
 	printf("  => by azman@my1matrix.org\n\n");
 
-	/* initialize filters */
-	filter_init(&ifilter_laplace1, filter_laplace_1);
-	filter_init(&ifilter_laplace2, filter_laplace_2);
-	filter_init(&ifilter_sobelx, filter_sobel_x);
-	filter_init(&ifilter_sobely, filter_sobel_y);
-	filter_init(&ifilter_sobel, filter_sobel);
-	filter_init(&ifilter_gauss, filter_gauss);
+	/* initialize buffer & filters */
+	buffer_init(&work);
+	filter_init(&ifilter_gray, filter_gray, &work);
+	filter_init(&ifilter_laplace1, filter_laplace_1, &work);
+	filter_init(&ifilter_laplace2, filter_laplace_2, &work);
+	filter_init(&ifilter_sobelx, filter_sobel_x, &work);
+	filter_init(&ifilter_sobely, filter_sobel_y, &work);
+	filter_init(&ifilter_sobel, filter_sobel, &work);
+	filter_init(&ifilter_gauss, filter_gauss, &work);
 
 	/* check program arguments */
 	if(argc>1)
@@ -170,7 +173,6 @@ int main(int argc, char* argv[])
 
 	/* initialize image */
 	image_init(&currimage);
-	image_init(&nextimage);
 
 	/* try to open file */
 	if((error|=image_load(&currimage,pname))<0)
@@ -210,9 +212,9 @@ int main(int argc, char* argv[])
 		printf(": '%s'!\n\n",pname);
 		return error;
 	}
-	image_make(&nextimage,currimage.height,currimage.width);
-	image_copy(&nextimage,&currimage);
-	image = &nextimage;
+	image_make(work.curr,currimage.height,currimage.width);
+	image_copy(work.curr,&currimage);
+	image = work.curr;
 
 	/* display basic info */
 	printf("Input image: %s\n",pname);
@@ -338,17 +340,18 @@ int main(int argc, char* argv[])
 				}
 				else if(event.key.keysym.sym == SDLK_o)
 				{
-					image_copy(&nextimage,&currimage);
+					image_copy(image,&currimage);
 					next = 1;
 				}
 				else if(event.key.keysym.sym == SDLK_g)
 				{
-					image_grayscale(image);
+					pfilter = filter_insert(0x0,&ifilter_gray);
+					image = image_filter(image,pfilter);
 					next = 1;
 				}
 				else if(event.key.keysym.sym == SDLK_i)
 				{
-					if (image->mask)
+					if (image->mask==IMASK_COLOR)
 					{
 						cbyte r, g, b;
 						for(loop=0;loop<image->length;loop++)
@@ -363,61 +366,52 @@ int main(int argc, char* argv[])
 				}
 				else if(event.key.keysym.sym == SDLK_1)
 				{
-					image_grayscale(image); /* need this! */
-					ifilter_laplace1.next = 0x0;
-					image_filter(image,&ifilter_laplace1);
-					image_copy(image,&ifilter_laplace1.buffer);
+					pfilter = filter_insert(0x0,&ifilter_gray);
+					pfilter = filter_insert(pfilter,&ifilter_laplace1);
+					image = image_filter(image,pfilter);
 					next = 1;
 				}
 				else if(event.key.keysym.sym == SDLK_2)
 				{
-					image_grayscale(image); /* need this! */
-					ifilter_laplace2.next = 0x0;
-					image_filter(image,&ifilter_laplace2);
-					image_copy(image,&ifilter_laplace2.buffer);
+					pfilter = filter_insert(0x0,&ifilter_gray);
+					pfilter = filter_insert(pfilter,&ifilter_laplace2);
+					image = image_filter(image,pfilter);
 					next = 1;
 				}
 				else if(event.key.keysym.sym == SDLK_x)
 				{
-					image_grayscale(image); /* need this! */
-					ifilter_sobelx.next = 0x0;
-					image_filter(image,&ifilter_sobelx);
-					image_copy(image,&ifilter_sobelx.buffer);
+					pfilter = filter_insert(0x0,&ifilter_gray);
+					pfilter = filter_insert(pfilter,&ifilter_sobelx);
+					image = image_filter(image,pfilter);
 					next = 1;
 				}
 				else if(event.key.keysym.sym == SDLK_y)
 				{
-					image_grayscale(image); /* need this! */
-					ifilter_sobely.next = 0x0;
-					image_filter(image,&ifilter_sobely);
-					image_copy(image,&ifilter_sobelx.buffer);
+					pfilter = filter_insert(0x0,&ifilter_gray);
+					pfilter = filter_insert(pfilter,&ifilter_sobely);
+					image = image_filter(image,pfilter);
 					next = 1;
 				}
 				else if(event.key.keysym.sym == SDLK_s)
 				{
-					image_grayscale(image); /* need this! */
-					ifilter_sobel.next = 0x0;
-					image_filter(image,&ifilter_sobel);
-					image_copy(image,&ifilter_sobel.buffer);
+					pfilter = filter_insert(0x0,&ifilter_gray);
+					pfilter = filter_insert(pfilter,&ifilter_sobel);
+					image = image_filter(image,pfilter);
 					next = 1;
 				}
 				else if(event.key.keysym.sym == SDLK_a)
 				{
-					image_grayscale(image); /* need this! */
-					ifilter_gauss.next = 0x0;
-					image_filter(image,&ifilter_gauss);
-					image_copy(image,&ifilter_gauss.buffer);
+					pfilter = filter_insert(0x0,&ifilter_gray);
+					pfilter = filter_insert(pfilter,&ifilter_gauss);
+					image = image_filter(image,pfilter);
 					next = 1;
 				}
 				else if(event.key.keysym.sym == SDLK_r)
 				{
-					my1image_t buff;
-					image_init(&buff);
-					image_make(&buff,image->height,image->width);
+					image_make(work.next,image->height,image->width);
 					image_grayscale(image); /* need this! */
-					image_rotate(image,&buff,_PI_,BLACK);
-					image_copy(image,&buff);
-					image_free(&buff);
+					image_rotate(image,work.next,_PI_,BLACK);
+					buffer_swap(&work);
 					next = 1;
 				}
 				else if(event.key.keysym.sym == SDLK_b)
@@ -443,7 +437,7 @@ int main(int argc, char* argv[])
 	/* cleanup */
 	SDL_Quit();
 	image_free(&currimage);
-	image_free(&nextimage);
+	buffer_free(&work);
 	filter_free(&ifilter_laplace1);
 	filter_free(&ifilter_laplace2);
 	filter_free(&ifilter_sobelx);
