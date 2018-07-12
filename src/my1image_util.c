@@ -115,10 +115,10 @@ void image_correlation(my1image_t *img, my1image_t *res, my1mask_t *mask)
 				{
 					/* cross-correlation */
 					value += mask->factor[index++] *
-						image_get_valid(res,irow+mrow,icol+mcol);
+						image_get_valid(img,irow+mrow,icol+mcol);
 				}
 			}
-			image_set_pixel(img,irow,icol,value);
+			image_set_pixel(res,irow,icol,value);
 		}
 	}
 }
@@ -139,10 +139,10 @@ void image_convolution(my1image_t *img, my1image_t *res, my1mask_t *mask)
 				{
 					/* convolution */
 					value += mask->factor[index++] *
-						image_get_valid(res,irow-mrow,icol-mcol);
+						image_get_valid(img,irow-mrow,icol-mcol);
 				}
 			}
-			image_set_pixel(img,irow,icol,value);
+			image_set_pixel(res,irow,icol,value);
 		}
 	}
 }

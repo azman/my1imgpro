@@ -44,7 +44,7 @@ void about(void)
 int main(int argc, char* argv[])
 {
 	int loop, error = 0;
-	int gray = 0, view = 0, help = 0, next = 1, temp;
+	int gray = 0, view = 0, help = 0, next = 1, temp, sizex = 0, sizey = 0;
 	char *psave = 0x0, *pname = 0x0, *pdata = 0x0;
 	my1image_t currimage, *image;
 	SDL_Surface *screen;
@@ -302,13 +302,19 @@ int main(int argc, char* argv[])
 	{
 		if (next)
 		{
-			/* setup main surface */
-			screen = SDL_SetVideoMode(image->width,
-				image->height,32,SDL_ANYFORMAT);
-			if(!screen)
+			if (sizex!=image->width||sizey!=image->height)
 			{
-				printf("Unable to set video mode: %s\n", SDL_GetError());
-				return ERROR_GENERAL;
+				/* setup main surface */
+				screen = SDL_SetVideoMode(image->width,
+					image->height,32,SDL_ANYFORMAT);
+				if(!screen)
+				{
+					printf("Unable to set video mode: %s\n", SDL_GetError());
+					return ERROR_GENERAL;
+				}
+				sizex = image->width;
+				sizey = image->height;
+				SDL_WM_SetCaption("MY1 Image Tool",0x0);
 			}
 			/* if in grayscale, convert to colormode grayscale? */
 			if (image->mask!=IMASK_COLOR24) image_colormode(image);

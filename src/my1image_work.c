@@ -40,7 +40,9 @@ my1image_t* image_mask_this(my1image_t* img, my1image_t* res,
 my1image_t* filter_laplace_1(my1image_t* img, my1image_t* res, void* userdata)
 {
 	int coeff[] = { 0,-1,0, -1,4,-1, 0,-1,0 };
-	return image_mask_this(img,res,3,9,coeff);
+	image_mask_this(img,res,3,9,coeff);
+	image_limit(res);
+	return res;
 }
 /*----------------------------------------------------------------------------*/
 my1image_t* filter_laplace_2(my1image_t* img, my1image_t* res, void* userdata)
@@ -70,19 +72,17 @@ my1image_t* filter_laplace_2(my1image_t* img, my1image_t* res, void* userdata)
 my1image_t* filter_sobel_x(my1image_t* img, my1image_t* res, void* userdata)
 {
 	int coeff[] = { -1,0,1, -2,0,2, -1,0,1 };
-	return image_mask_this(img,res,3,9,coeff);
+	image_mask_this(img,res,3,9,coeff);
+	image_limit(res);
+	return res;
 }
 /*----------------------------------------------------------------------------*/
 my1image_t* filter_sobel_y(my1image_t* img, my1image_t* res, void* userdata)
 {
 	int coeff[] = { -1,-2,-1, 0,0,0, 1,2,1 };
-	return image_mask_this(img,res,3,9,coeff);
-}
-/*----------------------------------------------------------------------------*/
-int iabs(int value)
-{
-	if (value<0) value = -value;
-	return value;
+	image_mask_this(img,res,3,9,coeff);
+	image_limit(res);
+	return res;
 }
 /*----------------------------------------------------------------------------*/
 my1image_t* filter_sobel(my1image_t* img, my1image_t* res, void* userdata)
@@ -122,6 +122,7 @@ my1image_t* filter_sobel(my1image_t* img, my1image_t* res, void* userdata)
 			image_set_pixel(pphase,irow,icol,(int)atan2(y,x));
 		}
 	}
+	image_limit(res);
 	res->mask = IMASK_GRAY;
 	/* clean-up */
 	image_free(&buff1);
@@ -132,10 +133,9 @@ my1image_t* filter_sobel(my1image_t* img, my1image_t* res, void* userdata)
 /*----------------------------------------------------------------------------*/
 my1image_t* filter_gauss(my1image_t* img, my1image_t* res, void* userdata)
 {
-	int coeff[] = { 1,4,7,4,1, 4,16,26,16,4,
-		7,26,41,26,7, 4,16,26,16,4, 1,4,7,4,1};
-	image_mask_this(img,res,5,25,coeff);
-	image_scale(res,(1.0/273.0)); /* normalize? */
+	int coeff[] = { 1,2,1, 2,4,2, 1,2,1};
+	image_mask_this(img,res,3,9,coeff);
+	image_scale(res,(float)1/16); /* normalize? */
 	return res;
 }
 /*----------------------------------------------------------------------------*/
