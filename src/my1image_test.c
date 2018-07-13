@@ -38,7 +38,9 @@ void about(void)
 	printf("  --cdata <filename> : save to C source file\n");
 	printf("  --gray  : force grayscale format\n");
 	printf("  --view  : show image (with user interface options)\n");
-	printf("  --help  : show this message - overrides ALL above options\n\n");
+	printf("  --help  : show this message - overrides ALL above options\n");
+	printf("Filters available:\n");
+	printf("  laplace1, laplace2, sobelx, sobely, sobel, gauss\n");
 }
 /*----------------------------------------------------------------------------*/
 int main(int argc, char* argv[])
@@ -120,33 +122,39 @@ int main(int argc, char* argv[])
 				/* then check for command! */
 				if(!strcmp(argv[loop],"laplace1"))
 				{
+					if (!pfilter)
+						pfilter = filter_insert(pfilter,&ifilter_gray);
 					pfilter = filter_insert(pfilter,&ifilter_laplace1);
-					gray = 1;
 				}
 				else if(!strcmp(argv[loop],"sobelx"))
 				{
+					if (!pfilter)
+						pfilter = filter_insert(pfilter,&ifilter_gray);
 					pfilter = filter_insert(pfilter,&ifilter_sobelx);
-					gray = 1;
 				}
 				else if(!strcmp(argv[loop],"sobely"))
 				{
+					if (!pfilter)
+						pfilter = filter_insert(pfilter,&ifilter_gray);
 					pfilter = filter_insert(pfilter,&ifilter_sobely);
-					gray = 1;
 				}
 				else if(!strcmp(argv[loop],"sobel"))
 				{
+					if (!pfilter)
+						pfilter = filter_insert(pfilter,&ifilter_gray);
 					pfilter = filter_insert(pfilter,&ifilter_sobel);
-					gray = 1;
 				}
 				else if(!strcmp(argv[loop],"laplace2"))
 				{
+					if (!pfilter)
+						pfilter = filter_insert(pfilter,&ifilter_gray);
 					pfilter = filter_insert(pfilter,&ifilter_laplace2);
-					gray = 1;
 				}
 				else if(!strcmp(argv[loop],"gauss"))
 				{
+					if (!pfilter)
+						pfilter = filter_insert(pfilter,&ifilter_gray);
 					pfilter = filter_insert(pfilter,&ifilter_gauss);
-					gray = 1;
 				}
 				else
 				{

@@ -220,7 +220,7 @@ my1image_t* image_filter(my1image_t* image, my1filter_t* pfilter)
 		if (pfilter->filter&&pfilter->buffer)
 		{
 			my1image_buffer_t *pbuff = pfilter->buffer;
-			pfilter->filter(pbuff->curr,pbuff->next,pfilter->userdata);
+			pfilter->filter(image,pbuff->next,pfilter->userdata);
 			buffer_swap(pbuff);
 			image = pbuff->curr;
 			/* in case we need a copy of this stage output! */
