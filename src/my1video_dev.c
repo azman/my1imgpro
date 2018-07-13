@@ -305,9 +305,8 @@ void capture_grab(my1video_capture_t* object)
 	if (object->ready) /* create video internal copy if valid frame */
 	{
 		capture_form_frame(object); /* get frame in rgb format */
-		if(!object->video->image.data)
-			image_make(&object->video->image,
-				object->video->height,object->video->width);
+		image_make(&object->video->image,
+			object->video->height,object->video->width);
 		image_set_frame(&object->video->image,object->buffer);
 		object->video->frame = &object->video->image;
 		object->video->newframe = 0x1;

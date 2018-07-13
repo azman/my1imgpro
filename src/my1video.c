@@ -84,8 +84,7 @@ void video_filter_init(my1video_t *video, my1vpass_t *vpass)
 	while (ptask)
 	{
 		/* allow filters to use external buffer */
-		if (!ptask->buffer)
-			ptask->buffer = &video->vbuff;
+		if (!ptask->buffer) ptask->buffer = &video->vbuff;
 		ptask->userdata = (void*) &video->vdata;
 		ptask = ptask->next;
 	}
