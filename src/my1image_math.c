@@ -277,8 +277,8 @@ void image_rotate(my1image_t *image, my1image_t *check, double radian, int vin)
 			calcx = jloop - midx;
 			calcy = (col-iloop) - midy;
 			/* get virtual rotated index */
-			tempx = (calcx*cos(radian))+(calcy*sin(radian));
-			tempy = (calcy*cos(radian))-(calcx*sin(radian));
+			tempx = (calcx*cos(radian))-(calcy*sin(radian));
+			tempy = (calcy*cos(radian))+(calcx*sin(radian));
 			/* calculate actual coord */
 			calcx = (int)tempx + midx;
 			calcy = col - ((int)tempy+midy);

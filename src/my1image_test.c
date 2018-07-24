@@ -8,10 +8,9 @@
 #include "my1image_math.h"
 #include "my1image_work.h"
 /*----------------------------------------------------------------------------*/
-#include <gtk/gtk.h>
-#include <gdk/gdkkeysyms.h>
-/*----------------------------------------------------------------------------*/
 #define _PI_ 3.14159265
+#define _FULL_PI_ (_PI_*2)
+#define _HALF_PI_ (_PI_/2)
 /*----------------------------------------------------------------------------*/
 #ifndef MY1APP_PROGNAME
 #define MY1APP_PROGNAME "my1image_test"
@@ -25,6 +24,9 @@
 /*----------------------------------------------------------------------------*/
 #define ERROR_GENERAL 0
 #define ERROR_NOFILE -1
+/*----------------------------------------------------------------------------*/
+#include <gtk/gtk.h>
+#include <gdk/gdkkeysyms.h>
 /*----------------------------------------------------------------------------*/
 typedef struct _my1image_test_t
 {
@@ -91,8 +93,11 @@ gint on_key_press(GtkWidget *widget, GdkEventKey *kevent, gpointer data)
 
 	if(kevent->type == GDK_KEY_PRESS)
 	{
-		g_message("%d, %c;", kevent->keyval, kevent->keyval);
-		if(kevent->keyval == GDK_KEY_Escape)
+		/*
+		 * g_message("%d, %c", kevent->keyval, kevent->keyval);
+		 */
+		if(kevent->keyval == GDK_KEY_Escape||
+			kevent->keyval == GDK_KEY_q)
 		{
 			gtk_main_quit();
 			return TRUE;
@@ -181,7 +186,7 @@ gint on_key_press(GtkWidget *widget, GdkEventKey *kevent, gpointer data)
 		{
 			image_make(q->work.next,q->image->height,q->image->width);
 			image_grayscale(q->image);
-			image_rotate(q->image,q->work.next,_PI_,BLACK);
+			image_rotate(q->image,q->work.next,_HALF_PI_,BLACK);
 			buffer_swap(&q->work);
 			next = 1;
 		}
@@ -216,11 +221,12 @@ int main(int argc, char* argv[])
 	int gray = 0, view = 0, help = 0;
 	char *psave = 0x0, *pname = 0x0, *pdata = 0x0;
 	my1image_test_t q;
-	GtkWidget *window, *dodraw;
-	//GdkPixbuf *pixbuf;
+	GtkWidget *window = 0x0, *dodraw = 0x0;
+	GdkPixbuf *pixbuf;
 
 	/* print tool info */
-	printf("\n%s - %s (%s)\n",MY1APP_PROGNAME,MY1APP_PROGINFO,MY1APP_PROGVERS);
+	printf("\n%s - %s (%s)\n",
+		MY1APP_PROGNAME,MY1APP_PROGINFO,MY1APP_PROGVERS);
 	printf("  => by azman@my1matrix.org\n\n");
 
 	/* initialize buffer & filters */
@@ -232,7 +238,7 @@ int main(int argc, char* argv[])
 	filter_init(&q.ifilter_sobely, filter_sobel_y, &q.work);
 	filter_init(&q.ifilter_sobel, filter_sobel, &q.work);
 	filter_init(&q.ifilter_gauss, filter_gauss, &q.work);
-	q.sizex = 0; q.sizey = 0;
+	q.sizex = 0; q.sizey = 0; q.pfilter = 0x0;
 
 	/* check program arguments */
 	if(argc>1)
@@ -255,7 +261,7 @@ int main(int argc, char* argv[])
 					if(loop<argc)
 						pdata = argv[loop];
 					else
-						printf("Cannot get C data file name - NOT writing!\n");
+						printf("Cannot get C file name - NOT writing!\n");
 				}
 				else if(!strcmp(argv[loop],"--gray"))
 				{
@@ -465,16 +471,15 @@ int main(int argc, char* argv[])
 	printf("# Fill Image All <W>hite\n");
 	printf("# <Q>uit\n");
 
-	/* initialize window */
+	/* initialize gui */
 	gtk_init(&argc,&argv);
 	window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
 	gtk_window_set_title(GTK_WINDOW(window), "MY1 Image Tool");
 	gtk_window_set_default_size(GTK_WINDOW(window),
 		q.image->width,q.image->height);
 	gtk_window_set_position(GTK_WINDOW(window), GTK_WIN_POS_CENTER);
-	//pixbuf = gdk_pixbuf_new_from_file("icon.png",0x0);
-	//if (pixbuf)
-	//	gtk_window_set_icon(GTK_WINDOW(window),pixbuf);
+	pixbuf = gdk_pixbuf_new_from_file("icon.png",0x0);
+	if (pixbuf) gtk_window_set_icon(GTK_WINDOW(window),pixbuf);
 	/* deprecated in gtk3 in favor of cairo? */
 	dodraw = gtk_drawing_area_new(); q.dodraw = dodraw;
 	gtk_widget_set_size_request(dodraw,q.image->width,q.image->height);
@@ -482,7 +487,7 @@ int main(int argc, char* argv[])
 	gtk_signal_connect(GTK_OBJECT(dodraw),"expose-event",
 		GTK_SIGNAL_FUNC(on_draw_expose),(gpointer)q.image);
 	gtk_widget_show_all(window);
-	g_signal_connect(G_OBJECT(dodraw),"key_press_event",
+	g_signal_connect(G_OBJECT(window),"key_press_event",
 		G_CALLBACK(on_key_press),(gpointer)&q);
 	g_signal_connect(window,"destroy",G_CALLBACK(gtk_main_quit),0x0);
 	/* initial draw? */
@@ -490,7 +495,7 @@ int main(int argc, char* argv[])
 	/* main loop */
 	gtk_main();
 	/* cleanup */
-	//if (pixbuf) g_object_unref(pixbuf);
+	if (pixbuf) g_object_unref(pixbuf);
 	image_free(&q.currimage);
 	buffer_free(&q.work);
 	filter_free(&q.ifilter_laplace1);
