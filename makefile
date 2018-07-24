@@ -11,9 +11,11 @@ OBJSVIS += my1video.o my1video_dev.o $(TESTVIS).o
 
 CFLAGS += -Wall
 LFLAGS += -lm
+GFLAGS += $(shell pkg-config --libs gtk+-2.0)
 OFLAGS += -lavcodec -lavutil -lavformat -lSDL -lswscale -lavdevice
 VFLAGS = -DMY1APP_PROGVERS=\"$(shell date +%Y%m%d)\"
 DFLAGS =
+TFLAGS += $(shell pkg-config --cflags gtk+-2.0)
 
 RM = rm -f
 CC = gcc -c
@@ -37,10 +39,13 @@ new: clean main
 debug: new
 
 ${TESTIMG}: $(OBJSIMG)
-	$(LD) $(CFLAGS) $(DFLAGS) -o $@ $+ $(LFLAGS) $(OFLAGS)
+	$(LD) $(CFLAGS) $(DFLAGS) -o $@ $+ $(LFLAGS) $(GFLAGS)
 
 ${TESTVIS}: $(OBJSVIS)
 	$(LD) $(CFLAGS) $(DFLAGS) -o $@ $+ $(LFLAGS) $(OFLAGS)
+
+${TESTIMG}.o: src/${TESTIMG}.c
+	$(CC) $(CFLAGS) $(DFLAGS) $(VFLAGS) -o $@ $< $(TFLAGS)
 
 %.o: src/%.c src/%.h
 	$(CC) $(CFLAGS) $(DFLAGS) $(VFLAGS) -o $@ $<

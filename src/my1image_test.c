@@ -2,11 +2,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <SDL/SDL.h>
+/*----------------------------------------------------------------------------*/
 #include "my1image_file.h"
 #include "my1image_util.h"
 #include "my1image_math.h"
 #include "my1image_work.h"
+/*----------------------------------------------------------------------------*/
+#include <gtk/gtk.h>
+#include <gdk/gdkkeysyms.h>
 /*----------------------------------------------------------------------------*/
 #define _PI_ 3.14159265
 /*----------------------------------------------------------------------------*/
@@ -22,6 +25,18 @@
 /*----------------------------------------------------------------------------*/
 #define ERROR_GENERAL 0
 #define ERROR_NOFILE -1
+/*----------------------------------------------------------------------------*/
+typedef struct _my1image_test_t
+{
+	int sizex, sizey;
+	my1image_t currimage, *image;
+	my1image_buffer_t work;
+	my1image_filter_t ifilter_gray, ifilter_laplace1, ifilter_laplace2,
+		ifilter_sobelx, ifilter_sobely, ifilter_sobel, ifilter_gauss;
+	my1image_filter_t *pfilter;
+	GtkWidget *dodraw;
+}
+my1image_test_t;
 /*----------------------------------------------------------------------------*/
 void print_image_info(my1image_t* image)
 {
@@ -43,33 +58,181 @@ void about(void)
 	printf("  laplace1, laplace2, sobelx, sobely, sobel, gauss\n");
 }
 /*----------------------------------------------------------------------------*/
+gboolean on_draw_expose(GtkWidget *widget, GdkEventExpose *event,
+	gpointer user_data)
+{
+	my1image_t* image = (my1image_t*) user_data;
+	gdk_draw_rgb_32_image(widget->window,
+		widget->style->fg_gc[GTK_STATE_NORMAL],
+		0, 0, image->width, image->height,
+		GDK_RGB_DITHER_NONE, (const guchar*)image->data, image->width*4);
+	return TRUE;
+}
+/*----------------------------------------------------------------------------*/
+void check_size(my1image_test_t* q)
+{
+	if (q->sizex!=q->image->width||q->sizey!=q->image->height)
+	{
+		gtk_widget_set_size_request(q->dodraw,
+			q->image->width,q->image->height);
+		q->sizex = q->image->width;
+		q->sizey = q->image->height;
+	}
+	/* if in grayscale, convert to colormode grayscale? */
+	if (q->image->mask!=IMASK_COLOR24) image_colormode(q->image);
+	/* queue drawing */
+	gtk_widget_queue_draw(q->dodraw);
+}
+/*----------------------------------------------------------------------------*/
+gint on_key_press(GtkWidget *widget, GdkEventKey *kevent, gpointer data)
+{
+	int next = 0, loop, temp;
+	my1image_test_t *q = (my1image_test_t*) data;
+
+	if(kevent->type == GDK_KEY_PRESS)
+	{
+		g_message("%d, %c;", kevent->keyval, kevent->keyval);
+		if(kevent->keyval == GDK_KEY_Escape)
+		{
+			gtk_main_quit();
+			return TRUE;
+		}
+		else if(kevent->keyval == GDK_KEY_o)
+		{
+			image_copy(q->image,&q->currimage);
+			next = 1;
+		}
+		else if(kevent->keyval == GDK_KEY_g)
+		{
+			q->pfilter = filter_insert(0x0,&q->ifilter_gray);
+			q->image = image_filter(q->image,q->pfilter);
+			next = 1;
+		}
+		else if(kevent->keyval == GDK_KEY_i)
+		{
+			if (q->image->mask==IMASK_COLOR)
+			{
+				cbyte r, g, b;
+				for(loop=0;loop<q->image->length;loop++)
+				{
+					decode_rgb(q->image->data[loop],&r,&g,&b);
+					r = WHITE - r; g = WHITE - g; b = WHITE - b;
+					q->image->data[loop] = encode_rgb(r,g,b);
+				}
+			}
+			else image_invert(q->image);
+			next = 1;
+		}
+		else if(kevent->keyval == GDK_KEY_1)
+		{
+			q->pfilter = filter_insert(0x0,&q->ifilter_gray);
+			q->pfilter = filter_insert(q->pfilter,&q->ifilter_laplace1);
+			q->image = image_filter(q->image,q->pfilter);
+			next = 1;
+		}
+		else if(kevent->keyval == GDK_KEY_2)
+		{
+			q->pfilter = filter_insert(0x0,&q->ifilter_gray);
+			q->pfilter = filter_insert(q->pfilter,&q->ifilter_laplace2);
+			q->image = image_filter(q->image,q->pfilter);
+			next = 1;
+		}
+		else if(kevent->keyval == GDK_KEY_x)
+		{
+			q->pfilter = filter_insert(0x0,&q->ifilter_gray);
+			q->pfilter = filter_insert(q->pfilter,&q->ifilter_sobelx);
+			q->image = image_filter(q->image,q->pfilter);
+			next = 1;
+		}
+		else if(kevent->keyval == GDK_KEY_y)
+		{
+			q->pfilter = filter_insert(0x0,&q->ifilter_gray);
+			q->pfilter = filter_insert(q->pfilter,&q->ifilter_sobely);
+			q->image = image_filter(q->image,q->pfilter);
+			next = 1;
+		}
+		else if(kevent->keyval == GDK_KEY_s)
+		{
+			q->pfilter = filter_insert(0x0,&q->ifilter_gray);
+			q->pfilter = filter_insert(q->pfilter,&q->ifilter_sobel);
+			q->image = image_filter(q->image,q->pfilter);
+			next = 1;
+		}
+		else if(kevent->keyval == GDK_KEY_a)
+		{
+			q->pfilter = filter_insert(0x0,&q->ifilter_gray);
+			q->pfilter = filter_insert(q->pfilter,&q->ifilter_gauss);
+			q->image = image_filter(q->image,q->pfilter);
+			next = 1;
+		}
+		else if(kevent->keyval == GDK_KEY_n)
+		{
+			image_grayscale(q->image);
+			image_normalize(q->image);
+			next = 1;
+		}
+		else if(kevent->keyval == GDK_KEY_t)
+		{
+			image_grayscale(q->image);
+			image_binary(q->image,WHITE/3);
+			next = 1;
+		}
+		else if(kevent->keyval == GDK_KEY_r)
+		{
+			image_make(q->work.next,q->image->height,q->image->width);
+			image_grayscale(q->image);
+			image_rotate(q->image,q->work.next,_PI_,BLACK);
+			buffer_swap(&q->work);
+			next = 1;
+		}
+		else if(kevent->keyval == GDK_KEY_b)
+		{
+			temp = BLACK;
+			if (q->image->mask)
+				temp = encode_rgb(temp,temp,temp);
+			image_fill(q->image,temp);
+			next = 1;
+		}
+		else if(kevent->keyval == GDK_KEY_w)
+		{
+			temp = WHITE;
+			if (q->image->mask)
+				temp = encode_rgb(temp,temp,temp);
+			image_fill(q->image,temp);
+			next = 1;
+		}
+		if (next)
+		{
+			check_size(q);
+			return TRUE;
+		}
+	}
+	return FALSE;
+}
+/*----------------------------------------------------------------------------*/
 int main(int argc, char* argv[])
 {
 	int loop, error = 0;
-	int gray = 0, view = 0, help = 0, next = 1, temp, sizex = 0, sizey = 0;
+	int gray = 0, view = 0, help = 0;
 	char *psave = 0x0, *pname = 0x0, *pdata = 0x0;
-	my1image_t currimage, *image;
-	SDL_Surface *screen;
-	SDL_Surface *buffer;
-	SDL_Event event;
-	my1image_buffer_t work;
-	my1image_filter_t ifilter_gray, ifilter_laplace1, ifilter_laplace2,
-		ifilter_sobelx, ifilter_sobely, ifilter_sobel, ifilter_gauss;
-	my1image_filter_t *pfilter = 0x0;
+	my1image_test_t q;
+	GtkWidget *window, *dodraw;
+	//GdkPixbuf *pixbuf;
 
 	/* print tool info */
 	printf("\n%s - %s (%s)\n",MY1APP_PROGNAME,MY1APP_PROGINFO,MY1APP_PROGVERS);
 	printf("  => by azman@my1matrix.org\n\n");
 
 	/* initialize buffer & filters */
-	buffer_init(&work);
-	filter_init(&ifilter_gray, filter_gray, &work);
-	filter_init(&ifilter_laplace1, filter_laplace_1, &work);
-	filter_init(&ifilter_laplace2, filter_laplace_2, &work);
-	filter_init(&ifilter_sobelx, filter_sobel_x, &work);
-	filter_init(&ifilter_sobely, filter_sobel_y, &work);
-	filter_init(&ifilter_sobel, filter_sobel, &work);
-	filter_init(&ifilter_gauss, filter_gauss, &work);
+	buffer_init(&q.work);
+	filter_init(&q.ifilter_gray, filter_gray, &q.work);
+	filter_init(&q.ifilter_laplace1, filter_laplace_1, &q.work);
+	filter_init(&q.ifilter_laplace2, filter_laplace_2, &q.work);
+	filter_init(&q.ifilter_sobelx, filter_sobel_x, &q.work);
+	filter_init(&q.ifilter_sobely, filter_sobel_y, &q.work);
+	filter_init(&q.ifilter_sobel, filter_sobel, &q.work);
+	filter_init(&q.ifilter_gauss, filter_gauss, &q.work);
+	q.sizex = 0; q.sizey = 0;
 
 	/* check program arguments */
 	if(argc>1)
@@ -122,39 +285,39 @@ int main(int argc, char* argv[])
 				/* then check for command! */
 				if(!strcmp(argv[loop],"laplace1"))
 				{
-					if (!pfilter)
-						pfilter = filter_insert(pfilter,&ifilter_gray);
-					pfilter = filter_insert(pfilter,&ifilter_laplace1);
+					if (!q.pfilter)
+						q.pfilter = filter_insert(q.pfilter,&q.ifilter_gray);
+					q.pfilter = filter_insert(q.pfilter,&q.ifilter_laplace1);
 				}
 				else if(!strcmp(argv[loop],"sobelx"))
 				{
-					if (!pfilter)
-						pfilter = filter_insert(pfilter,&ifilter_gray);
-					pfilter = filter_insert(pfilter,&ifilter_sobelx);
+					if (!q.pfilter)
+						q.pfilter = filter_insert(q.pfilter,&q.ifilter_gray);
+					q.pfilter = filter_insert(q.pfilter,&q.ifilter_sobelx);
 				}
 				else if(!strcmp(argv[loop],"sobely"))
 				{
-					if (!pfilter)
-						pfilter = filter_insert(pfilter,&ifilter_gray);
-					pfilter = filter_insert(pfilter,&ifilter_sobely);
+					if (!q.pfilter)
+						q.pfilter = filter_insert(q.pfilter,&q.ifilter_gray);
+					q.pfilter = filter_insert(q.pfilter,&q.ifilter_sobely);
 				}
 				else if(!strcmp(argv[loop],"sobel"))
 				{
-					if (!pfilter)
-						pfilter = filter_insert(pfilter,&ifilter_gray);
-					pfilter = filter_insert(pfilter,&ifilter_sobel);
+					if (!q.pfilter)
+						q.pfilter = filter_insert(q.pfilter,&q.ifilter_gray);
+					q.pfilter = filter_insert(q.pfilter,&q.ifilter_sobel);
 				}
 				else if(!strcmp(argv[loop],"laplace2"))
 				{
-					if (!pfilter)
-						pfilter = filter_insert(pfilter,&ifilter_gray);
-					pfilter = filter_insert(pfilter,&ifilter_laplace2);
+					if (!q.pfilter)
+						q.pfilter = filter_insert(q.pfilter,&q.ifilter_gray);
+					q.pfilter = filter_insert(q.pfilter,&q.ifilter_laplace2);
 				}
 				else if(!strcmp(argv[loop],"gauss"))
 				{
-					if (!pfilter)
-						pfilter = filter_insert(pfilter,&ifilter_gray);
-					pfilter = filter_insert(pfilter,&ifilter_gauss);
+					if (!q.pfilter)
+						q.pfilter = filter_insert(q.pfilter,&q.ifilter_gray);
+					q.pfilter = filter_insert(q.pfilter,&q.ifilter_gauss);
 				}
 				else
 				{
@@ -180,10 +343,10 @@ int main(int argc, char* argv[])
 	}
 
 	/* initialize image */
-	image_init(&currimage);
+	image_init(&q.currimage);
 
 	/* try to open file */
-	if((error|=image_load(&currimage,pname))<0)
+	if((error|=image_load(&q.currimage,pname))<0)
 	{
 		switch (error)
 		{
@@ -220,34 +383,34 @@ int main(int argc, char* argv[])
 		printf(": '%s'!\n\n",pname);
 		return error;
 	}
-	image_make(work.curr,currimage.height,currimage.width);
-	image_copy(work.curr,&currimage);
-	image = work.curr;
+	image_make(q.work.curr,q.currimage.height,q.currimage.width);
+	image_copy(q.work.curr,&q.currimage);
+	q.image = q.work.curr;
 
 	/* display basic info */
 	printf("Input image: %s\n",pname);
-	print_image_info(image);
+	print_image_info(q.image);
 
 	/* convert grayscale if requested/required */
-	if(gray) image_grayscale(image);
+	if(gray) image_grayscale(q.image);
 
 	/* run image filter */
-	if (pfilter)
+	if (q.pfilter)
 	{
-		image = image_filter(image,pfilter);
-		image_absolute(image);
-		image_cliphi(image,WHITE);
+		q.image = image_filter(q.image,q.pfilter);
+		image_absolute(q.image);
+		image_cliphi(q.image,WHITE);
 	}
 
 	/* display processed info */
 	printf("Check image:\n");
-	print_image_info(image);
+	print_image_info(q.image);
 
 	/** save results if requested */
 	if(psave)
 	{
 		printf("Saving image data to %s...\n",psave);
-		if ((error|=image_save(image,psave))<0)
+		if ((error|=image_save(q.image,psave))<0)
 		{
 			switch (error)
 			{
@@ -267,7 +430,7 @@ int main(int argc, char* argv[])
 	if(pdata)
 	{
 		printf("Saving C data to %s...\n",pdata);
-		switch (image_cdat(image,pdata))
+		switch (image_cdat(q.image,pdata))
 		{
 			case FILE_ERROR_OPEN:
 				printf("Error writing c file:'%s'!\n",pdata);
@@ -282,13 +445,7 @@ int main(int argc, char* argv[])
 		return error;
 	}
 
-	/* user interface section? */
-	if(SDL_Init(SDL_INIT_VIDEO)!=0)
-	{
-		printf("Unable to initialize SDL: %s\n", SDL_GetError());
-		exit(ERROR_GENERAL);
-	}
-
+	/* show menu */
 	printf("\n-----------------------------\n");
 	printf("Image Processing Test Utility\n");
 	printf("-----------------------------\n\n");
@@ -308,170 +465,41 @@ int main(int argc, char* argv[])
 	printf("# Fill Image All <W>hite\n");
 	printf("# <Q>uit\n");
 
-	while(view)
-	{
-		if (next)
-		{
-			if (sizex!=image->width||sizey!=image->height)
-			{
-				/* setup main surface */
-				screen = SDL_SetVideoMode(image->width,
-					image->height,32,SDL_ANYFORMAT);
-				if(!screen)
-				{
-					printf("Unable to set video mode: %s\n", SDL_GetError());
-					return ERROR_GENERAL;
-				}
-				sizex = image->width;
-				sizey = image->height;
-				SDL_WM_SetCaption("MY1 Image Tool",0x0);
-			}
-			/* if in grayscale, convert to colormode grayscale? */
-			if (image->mask!=IMASK_COLOR24) image_colormode(image);
-			/* create the temp surface from the raw RGB data */
-			buffer = SDL_CreateRGBSurfaceFrom(image->data,image->width,
-				image->height,32,image->width*4,0,0,0,0);
-			if(!buffer)
-			{
-				printf("Unable to load image to SDL: %s\n", SDL_GetError());
-				return ERROR_GENERAL;
-			}
-			/* copy to main surface */
-			SDL_BlitSurface(buffer,0x0,screen,0x0);
-			SDL_Flip(screen);
-			SDL_FreeSurface(buffer);
-			next = 0;
-		}
-		if(SDL_PollEvent(&event))
-		{
-			if(event.type==SDL_QUIT)
-			{
-				view = 0;
-			}
-			else if(event.type==SDL_KEYDOWN)
-			{
-				if(event.key.keysym.sym == SDLK_q)
-				{
-					view = 0;
-				}
-				else if(event.key.keysym.sym == SDLK_o)
-				{
-					image_copy(image,&currimage);
-					next = 1;
-				}
-				else if(event.key.keysym.sym == SDLK_g)
-				{
-					pfilter = filter_insert(0x0,&ifilter_gray);
-					image = image_filter(image,pfilter);
-					next = 1;
-				}
-				else if(event.key.keysym.sym == SDLK_i)
-				{
-					if (image->mask==IMASK_COLOR)
-					{
-						cbyte r, g, b;
-						for(loop=0;loop<image->length;loop++)
-						{
-							decode_rgb(image->data[loop],&r,&g,&b);
-							r = WHITE - r; g = WHITE - g; b = WHITE - b;
-							image->data[loop] = encode_rgb(r,g,b);
-						}
-					}
-					else image_invert(image);
-					next = 1;
-				}
-				else if(event.key.keysym.sym == SDLK_1)
-				{
-					pfilter = filter_insert(0x0,&ifilter_gray);
-					pfilter = filter_insert(pfilter,&ifilter_laplace1);
-					image = image_filter(image,pfilter);
-					next = 1;
-				}
-				else if(event.key.keysym.sym == SDLK_2)
-				{
-					pfilter = filter_insert(0x0,&ifilter_gray);
-					pfilter = filter_insert(pfilter,&ifilter_laplace2);
-					image = image_filter(image,pfilter);
-					next = 1;
-				}
-				else if(event.key.keysym.sym == SDLK_x)
-				{
-					pfilter = filter_insert(0x0,&ifilter_gray);
-					pfilter = filter_insert(pfilter,&ifilter_sobelx);
-					image = image_filter(image,pfilter);
-					next = 1;
-				}
-				else if(event.key.keysym.sym == SDLK_y)
-				{
-					pfilter = filter_insert(0x0,&ifilter_gray);
-					pfilter = filter_insert(pfilter,&ifilter_sobely);
-					image = image_filter(image,pfilter);
-					next = 1;
-				}
-				else if(event.key.keysym.sym == SDLK_s)
-				{
-					pfilter = filter_insert(0x0,&ifilter_gray);
-					pfilter = filter_insert(pfilter,&ifilter_sobel);
-					image = image_filter(image,pfilter);
-					next = 1;
-				}
-				else if(event.key.keysym.sym == SDLK_a)
-				{
-					pfilter = filter_insert(0x0,&ifilter_gray);
-					pfilter = filter_insert(pfilter,&ifilter_gauss);
-					image = image_filter(image,pfilter);
-					next = 1;
-				}
-				else if(event.key.keysym.sym == SDLK_n)
-				{
-					image_grayscale(image); /* need this! */
-					image_normalize(image);
-					next = 1;
-				}
-				else if(event.key.keysym.sym == SDLK_t)
-				{
-					image_grayscale(image); /* need this! */
-					image_binary(image,WHITE/3);
-					next = 1;
-				}
-				else if(event.key.keysym.sym == SDLK_r)
-				{
-					image_make(work.next,image->height,image->width);
-					image_grayscale(image); /* need this! */
-					image_rotate(image,work.next,_PI_,BLACK);
-					buffer_swap(&work);
-					next = 1;
-				}
-				else if(event.key.keysym.sym == SDLK_b)
-				{
-					temp = BLACK;
-					if (image->mask)
-						temp = encode_rgb(temp,temp,temp);
-					image_fill(image,temp);
-					next = 1;
-				}
-				else if(event.key.keysym.sym == SDLK_w)
-				{
-					temp = WHITE;
-					if (image->mask)
-						temp = encode_rgb(temp,temp,temp);
-					image_fill(image,temp);
-					next = 1;
-				}
-			}
-		}
-	}
-	putchar('\n');
+	/* initialize window */
+	gtk_init(&argc,&argv);
+	window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+	gtk_window_set_title(GTK_WINDOW(window), "MY1 Image Tool");
+	gtk_window_set_default_size(GTK_WINDOW(window),
+		q.image->width,q.image->height);
+	gtk_window_set_position(GTK_WINDOW(window), GTK_WIN_POS_CENTER);
+	//pixbuf = gdk_pixbuf_new_from_file("icon.png",0x0);
+	//if (pixbuf)
+	//	gtk_window_set_icon(GTK_WINDOW(window),pixbuf);
+	/* deprecated in gtk3 in favor of cairo? */
+	dodraw = gtk_drawing_area_new(); q.dodraw = dodraw;
+	gtk_widget_set_size_request(dodraw,q.image->width,q.image->height);
+	gtk_container_add(GTK_CONTAINER(window),dodraw);
+	gtk_signal_connect(GTK_OBJECT(dodraw),"expose-event",
+		GTK_SIGNAL_FUNC(on_draw_expose),(gpointer)q.image);
+	gtk_widget_show_all(window);
+	g_signal_connect(G_OBJECT(dodraw),"key_press_event",
+		G_CALLBACK(on_key_press),(gpointer)&q);
+	g_signal_connect(window,"destroy",G_CALLBACK(gtk_main_quit),0x0);
+	/* initial draw? */
+	check_size(&q);
+	/* main loop */
+	gtk_main();
 	/* cleanup */
-	SDL_Quit();
-	image_free(&currimage);
-	buffer_free(&work);
-	filter_free(&ifilter_laplace1);
-	filter_free(&ifilter_laplace2);
-	filter_free(&ifilter_sobelx);
-	filter_free(&ifilter_sobely);
-	filter_free(&ifilter_sobel);
-	filter_free(&ifilter_gauss);
+	//if (pixbuf) g_object_unref(pixbuf);
+	image_free(&q.currimage);
+	buffer_free(&q.work);
+	filter_free(&q.ifilter_laplace1);
+	filter_free(&q.ifilter_laplace2);
+	filter_free(&q.ifilter_sobelx);
+	filter_free(&q.ifilter_sobely);
+	filter_free(&q.ifilter_sobel);
+	filter_free(&q.ifilter_gauss);
+	putchar('\n');
 	return error;
 }
 /*----------------------------------------------------------------------------*/
