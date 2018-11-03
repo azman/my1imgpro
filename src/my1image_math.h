@@ -54,8 +54,5 @@ void matrix_mul(my1matrix_t *res, my1matrix_t *ma1, my1matrix_t *ma2);
 void matrix_dot(my1matrix_t *res, my1matrix_t *ma1, my1matrix_t *ma2);
 void matrix_div(my1matrix_t *res, my1matrix_t *ma1, my1matrix_t *ma2);
 /*----------------------------------------------------------------------------*/
-/* here because it needs math lib! */
-void image_rotate(my1image_t *image, my1image_t *check, double radian, int vin);
-/*----------------------------------------------------------------------------*/
 #endif
 /*----------------------------------------------------------------------------*/

@@ -261,37 +261,3 @@ void matrix_div(my1matrix_t *res, my1matrix_t *ma1, my1matrix_t *ma2)
 	}
 }
 /*----------------------------------------------------------------------------*/
-void image_rotate(my1image_t *image, my1image_t *check, double radian, int vin)
-{
-	int iloop, jloop;
-	int calcx, calcy, calcv;
-	int row = image->height, col = image->width;
-	int midx = col/2, midy = row/2;
-	double tempx, tempy; /* avoid round error */
-	/* calculate new pixel index */
-	for (iloop=0;iloop<row;iloop++)
-	{
-		for (jloop=0;jloop<col;jloop++)
-		{
-			/* get virtual coord - origin at image center */
-			calcx = jloop - midx;
-			calcy = (col-iloop) - midy;
-			/* get virtual rotated index */
-			tempx = (calcx*cos(radian))-(calcy*sin(radian));
-			tempy = (calcy*cos(radian))+(calcx*sin(radian));
-			/* calculate actual coord */
-			calcx = (int)tempx + midx;
-			calcy = col - ((int)tempy+midy);
-			if (calcx>=0&&calcx<col&&calcy>=0&&calcy<row)
-			{
-				calcv = image_get_pixel(image,calcy,calcx);
-				image_set_pixel(check,iloop,jloop,calcv);
-			}
-			else
-			{
-				image_set_pixel(check,iloop,jloop,vin);
-			}
-		}
-	}
-}
-/*----------------------------------------------------------------------------*/

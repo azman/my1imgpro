@@ -228,6 +228,75 @@ void image_pan(my1image_t *image, my1image_t *check, int shx, int shy, int vin)
 	}
 }
 /*----------------------------------------------------------------------------*/
+void image_turn(my1image_t *image, my1image_t *check, int turn)
+{
+	int irow, icol;
+	switch (turn)
+	{
+		case IMAGE_TURN_090:
+		case IMAGE_TURN_270:
+			image_make(check,image->width,image->height);
+			break;
+		case IMAGE_TURN_180:
+		case IMAGE_TURN_000:
+		default:
+			image_make(check,image->height,image->width);
+			break;
+	}
+	for (irow=0;irow<check->height;irow++)
+	{
+		for (icol=0;icol<check->width;icol++)
+		{
+			int trow = irow, tcol = icol;
+			switch (turn)
+			{
+				case IMAGE_TURN_090:
+					trow = icol;
+					tcol = check->height-irow-1;
+					break;
+				case IMAGE_TURN_270:
+					trow = check->width-icol-1;
+					tcol = irow;
+					break;
+				case IMAGE_TURN_180:
+					trow = check->height-irow-1;
+					tcol = check->width-icol-1;
+					break;
+			}
+			image_set_pixel(check,irow,icol,
+				image_get_pixel(image,trow,tcol));
+		}
+	}
+	check->mask = image->mask;
+}
+/*----------------------------------------------------------------------------*/
+void image_flip(my1image_t *image, my1image_t *check, int side)
+{
+	int irow, icol;
+	image_make(check,image->height,image->width);
+	for (irow=0;irow<check->height;irow++)
+	{
+		for (icol=0;icol<check->width;icol++)
+		{
+			int trow = irow, tcol = icol;
+			switch (side)
+			{
+				case IMAGE_FLIP_HORIZONTAL:
+					trow = irow;
+					tcol = check->width-icol-1;
+					break;
+				case IMAGE_FLIP_VERTICAL:
+					trow = check->height-irow-1;
+					tcol = icol;
+					break;
+			}
+			image_set_pixel(check,irow,icol,
+				image_get_pixel(image,trow,tcol));
+		}
+	}
+	check->mask = image->mask;
+}
+/*----------------------------------------------------------------------------*/
 int image_assign_rgb(my1image_t *image, cbyte *rgb)
 {
 	char chkr, chkg, chkb;

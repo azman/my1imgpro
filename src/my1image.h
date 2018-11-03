@@ -41,6 +41,17 @@ void image_sub(my1image_t *image1, my1image_t *image2, my1image_t *result);
 void image_pan(my1image_t *image, my1image_t *check,
 	int shx, int shy, int vin); /* pan-x,pan-y,value-in */
 /*----------------------------------------------------------------------------*/
+#define IMAGE_TURN_000 0
+#define IMAGE_TURN_090 1
+#define IMAGE_TURN_180 2
+#define IMAGE_TURN_270 3
+/*----------------------------------------------------------------------------*/
+#define IMAGE_FLIP_VERTICAL 0
+#define IMAGE_FLIP_HORIZONTAL 1
+/*----------------------------------------------------------------------------*/
+void image_turn(my1image_t *image, my1image_t *check, int turn); /* turn*90 */
+void image_flip(my1image_t *image, my1image_t *check, int side); /* h/v */
+/*----------------------------------------------------------------------------*/
 #define IMASK_COLOR24 0x00FFFFFF
 #define IMASK_COLOR IMASK_COLOR24
 #define IMASK_GRAY 0x00

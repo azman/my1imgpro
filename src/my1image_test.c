@@ -63,7 +63,8 @@ void about(void)
 gboolean on_draw_expose(GtkWidget *widget, GdkEventExpose *event,
 	gpointer user_data)
 {
-	my1image_t* image = (my1image_t*) user_data;
+	my1image_test_t* p = (my1image_test_t*) user_data;
+	my1image_t* image = (my1image_t*) p->image;
 	gdk_draw_rgb_32_image(widget->window,
 		widget->style->fg_gc[GTK_STATE_NORMAL],
 		0, 0, image->width, image->height,
@@ -104,7 +105,9 @@ gint on_key_press(GtkWidget *widget, GdkEventKey *kevent, gpointer data)
 		}
 		else if(kevent->keyval == GDK_KEY_o)
 		{
+			image_make(q->image,q->currimage.height,q->currimage.width);
 			image_copy(q->image,&q->currimage);
+			q->image->mask = q->currimage.mask;
 			next = 1;
 		}
 		else if(kevent->keyval == GDK_KEY_g)
@@ -182,12 +185,25 @@ gint on_key_press(GtkWidget *widget, GdkEventKey *kevent, gpointer data)
 			image_binary(q->image,WHITE/3);
 			next = 1;
 		}
-		else if(kevent->keyval == GDK_KEY_r)
+		else if(kevent->keyval == GDK_KEY_u)
 		{
-			image_make(q->work.next,q->image->height,q->image->width);
-			image_grayscale(q->image);
-			image_rotate(q->image,q->work.next,_HALF_PI_,BLACK);
+			image_turn(q->work.curr,q->work.next,IMAGE_TURN_090);
 			buffer_swap(&q->work);
+			q->image = q->work.curr;
+			next = 1;
+		}
+		else if(kevent->keyval == GDK_KEY_v)
+		{
+			image_flip(q->work.curr,q->work.next,IMAGE_FLIP_VERTICAL);
+			buffer_swap(&q->work);
+			q->image = q->work.curr;
+			next = 1;
+		}
+		else if(kevent->keyval == GDK_KEY_h)
+		{
+			image_flip(q->work.curr,q->work.next,IMAGE_FLIP_HORIZONTAL);
+			buffer_swap(&q->work);
+			q->image = q->work.curr;
 			next = 1;
 		}
 		else if(kevent->keyval == GDK_KEY_b)
@@ -389,7 +405,7 @@ int main(int argc, char* argv[])
 		printf(": '%s'!\n\n",pname);
 		return error;
 	}
-	image_make(q.work.curr,q.currimage.height,q.currimage.width);
+	buffer_size(&q.work,q.currimage.height,q.currimage.width);
 	image_copy(q.work.curr,&q.currimage);
 	q.image = q.work.curr;
 
@@ -466,7 +482,9 @@ int main(int argc, char* argv[])
 	printf("# G<a>uss Image\n");
 	printf("# <N>ormalize Image\n");
 	printf("# <T>hreshold Image\n");
-	printf("# <R>otate 90CW Image\n");
+	printf("# T<u>rn Image 90CCW\n");
+	printf("# Flip Image <V>ertical\n");
+	printf("# Flip Image <H>orizontal\n");
 	printf("# Fill Image All <B>lack\n");
 	printf("# Fill Image All <W>hite\n");
 	printf("# <Q>uit\n");
@@ -478,6 +496,7 @@ int main(int argc, char* argv[])
 	gtk_window_set_default_size(GTK_WINDOW(window),
 		q.image->width,q.image->height);
 	gtk_window_set_position(GTK_WINDOW(window), GTK_WIN_POS_CENTER);
+	gtk_window_set_resizable(GTK_WINDOW(window), FALSE);
 	pixbuf = gdk_pixbuf_new_from_file("icon.png",0x0);
 	if (pixbuf) gtk_window_set_icon(GTK_WINDOW(window),pixbuf);
 	/* deprecated in gtk3 in favor of cairo? */
@@ -485,7 +504,7 @@ int main(int argc, char* argv[])
 	gtk_widget_set_size_request(dodraw,q.image->width,q.image->height);
 	gtk_container_add(GTK_CONTAINER(window),dodraw);
 	gtk_signal_connect(GTK_OBJECT(dodraw),"expose-event",
-		GTK_SIGNAL_FUNC(on_draw_expose),(gpointer)q.image);
+		GTK_SIGNAL_FUNC(on_draw_expose),(gpointer)&q);
 	gtk_widget_show_all(window);
 	g_signal_connect(G_OBJECT(window),"key_press_event",
 		G_CALLBACK(on_key_press),(gpointer)&q);
