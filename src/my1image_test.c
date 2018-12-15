@@ -7,6 +7,7 @@
 #include "my1image_util.h"
 #include "my1image_math.h"
 #include "my1image_work.h"
+#include "my1image_view.h"
 /*----------------------------------------------------------------------------*/
 #define _PI_ 3.14159265
 #define _FULL_PI_ (_PI_*2)
@@ -32,11 +33,11 @@ typedef struct _my1image_test_t
 {
 	int sizex, sizey;
 	my1image_t currimage, *image;
+	my1image_view_t view;
 	my1image_buffer_t work;
 	my1image_filter_t ifilter_gray, ifilter_laplace1, ifilter_laplace2,
 		ifilter_sobelx, ifilter_sobely, ifilter_sobel, ifilter_gauss;
 	my1image_filter_t *pfilter;
-	GtkWidget *dodraw;
 }
 my1image_test_t;
 /*----------------------------------------------------------------------------*/
@@ -64,27 +65,9 @@ gboolean on_draw_expose(GtkWidget *widget, GdkEventExpose *event,
 	gpointer user_data)
 {
 	my1image_test_t* p = (my1image_test_t*) user_data;
-	my1image_t* image = (my1image_t*) p->image;
-	gdk_draw_rgb_32_image(widget->window,
-		widget->style->fg_gc[GTK_STATE_NORMAL],
-		0, 0, image->width, image->height,
-		GDK_RGB_DITHER_NONE, (const guchar*)image->data, image->width*4);
+	p->view.image = p->image;
+	image_view_draw(&p->view);
 	return TRUE;
-}
-/*----------------------------------------------------------------------------*/
-void check_size(my1image_test_t* q)
-{
-	if (q->sizex!=q->image->width||q->sizey!=q->image->height)
-	{
-		gtk_widget_set_size_request(q->dodraw,
-			q->image->width,q->image->height);
-		q->sizex = q->image->width;
-		q->sizey = q->image->height;
-	}
-	/* colormode abgr32 for gdk function */
-	image_color2bgr(q->image);
-	/* queue drawing */
-	gtk_widget_queue_draw(q->dodraw);
 }
 /*----------------------------------------------------------------------------*/
 gint on_key_press(GtkWidget *widget, GdkEventKey *kevent, gpointer data)
@@ -224,7 +207,8 @@ gint on_key_press(GtkWidget *widget, GdkEventKey *kevent, gpointer data)
 		}
 		if (next)
 		{
-			check_size(q);
+			q->view.image = q->image;
+			image_view_draw(&q->view);
 			return TRUE;
 		}
 	}
@@ -237,8 +221,6 @@ int main(int argc, char* argv[])
 	int gray = 0, view = 0, help = 0;
 	char *psave = 0x0, *pname = 0x0, *pdata = 0x0;
 	my1image_test_t q;
-	GtkWidget *window = 0x0, *dodraw = 0x0;
-	GdkPixbuf *pixbuf;
 
 	/* print tool info */
 	printf("\n%s - %s (%s)\n",
@@ -491,30 +473,24 @@ int main(int argc, char* argv[])
 
 	/* initialize gui */
 	gtk_init(&argc,&argv);
-	window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
-	gtk_window_set_title(GTK_WINDOW(window), "MY1 Image Tool");
-	gtk_window_set_default_size(GTK_WINDOW(window),
-		q.image->width,q.image->height);
-	gtk_window_set_position(GTK_WINDOW(window), GTK_WIN_POS_CENTER);
-	gtk_window_set_resizable(GTK_WINDOW(window), FALSE);
-	pixbuf = gdk_pixbuf_new_from_file("icon.png",0x0);
-	if (pixbuf) gtk_window_set_icon(GTK_WINDOW(window),pixbuf);
-	/* deprecated in gtk3 in favor of cairo? */
-	dodraw = gtk_drawing_area_new(); q.dodraw = dodraw;
-	gtk_widget_set_size_request(dodraw,q.image->width,q.image->height);
-	gtk_container_add(GTK_CONTAINER(window),dodraw);
-	gtk_signal_connect(GTK_OBJECT(dodraw),"expose-event",
-		GTK_SIGNAL_FUNC(on_draw_expose),(gpointer)&q);
-	gtk_widget_show_all(window);
-	g_signal_connect(G_OBJECT(window),"key_press_event",
+
+	/* initialize image_view */
+	image_view_init(&q.view);
+	q.view.image = q.image;
+	image_view_make(&q.view);
+	image_view_draw(&q.view);
+
+	/* event handlers */
+	g_signal_connect(G_OBJECT(q.view.window),"key_press_event",
 		G_CALLBACK(on_key_press),(gpointer)&q);
-	g_signal_connect(window,"destroy",G_CALLBACK(gtk_main_quit),0x0);
-	/* initial draw? */
-	check_size(&q);
+	g_signal_connect(q.view.window,"destroy",G_CALLBACK(gtk_main_quit),0x0);
+	gtk_signal_connect(GTK_OBJECT(q.view.canvas),"expose-event",
+		GTK_SIGNAL_FUNC(on_draw_expose),(gpointer)&q);
+
 	/* main loop */
 	gtk_main();
+
 	/* cleanup */
-	if (pixbuf) g_object_unref(pixbuf);
 	image_free(&q.currimage);
 	buffer_free(&q.work);
 	filter_free(&q.ifilter_laplace1);

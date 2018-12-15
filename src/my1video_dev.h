@@ -43,7 +43,7 @@ typedef struct _my1video_display_t
 	GtkWidget *window, *dodraw;
 	GdkPixbuf *pixbuf;
 	my1video_t *video; /* pure pointer to video object */
-	int h,w; /* current screen size! */
+	int h,w; /* current display size! */
 }
 my1video_display_t;
 /*----------------------------------------------------------------------------*/

@@ -26,6 +26,7 @@ my1vdata_t;
 #define VIDEO_FLAG_DO_UPDATE 0x04
 #define VIDEO_FLAG_NEW_FRAME 0x08
 #define VIDEO_FLAG_NO_FILTER 0x10
+#define VIDEO_FLAG_IS_PAUSED 0x20
 /*----------------------------------------------------------------------------*/
 typedef struct _my1video_t
 {
@@ -48,7 +49,6 @@ void video_init(my1video_t *video);
 void video_free(my1video_t *video);
 /* these functions manipulate index/flags only! */
 void video_play(my1video_t *video);
-void video_hold(my1video_t *video);
 void video_stop(my1video_t *video);
 void video_next_frame(my1video_t *video);
 void video_prev_frame(my1video_t *video);

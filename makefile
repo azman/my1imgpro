@@ -2,7 +2,7 @@
 # - using libav & gtk for interfacing & display
 
 TESTIMG = my1image_test
-OBJSIMG = my1image.o my1image_file.o
+OBJSIMG = my1image.o my1image_file.o my1image_view.o
 OBJSIMG += my1image_util.o my1image_math.o
 OBJSIMG += my1image_fpo.o my1image_work.o $(TESTIMG).o
 TESTVIS = my1video_test
@@ -44,20 +44,11 @@ ${TESTIMG}: $(OBJSIMG)
 ${TESTVIS}: $(OBJSVIS)
 	$(LD) $(CFLAGS) $(DFLAGS) -o $@ $+ $(LFLAGS) $(OFLAGS)
 
-${TESTIMG}.o: src/${TESTIMG}.c
-	$(CC) $(CFLAGS) $(DFLAGS) $(VFLAGS) -o $@ $< $(TFLAGS)
-
-${TESTVIS}.o: src/${TESTVIS}.c
-	$(CC) $(CFLAGS) $(DFLAGS) $(VFLAGS) -o $@ $< $(TFLAGS)
-
-my1video_dev.o: src/my1video_dev.c
-	$(CC) $(CFLAGS) $(DFLAGS) $(VFLAGS) -o $@ $< $(TFLAGS)
-
 %.o: src/%.c src/%.h
-	$(CC) $(CFLAGS) $(DFLAGS) $(VFLAGS) -o $@ $<
+	$(CC) $(CFLAGS) $(DFLAGS) $(TFLAGS) -o $@ $<
 
 %.o: src/%.c
-	$(CC) $(CFLAGS) $(DFLAGS) $(VFLAGS) -o $@ $<
+	$(CC) $(CFLAGS) $(DFLAGS) $(TFLAGS) $(VFLAGS) -o $@ $<
 
 clean:
 	-$(RM) $(TESTIMG) $(OBJSIMG) $(TESTVIS) $(OBJSVIS) *.o

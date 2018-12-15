@@ -64,8 +64,16 @@ gboolean on_timer_callback(gpointer data)
 	}
 	else if(keyval == GDK_KEY_space)
 	{
-		printf("Pause.\n");
-		video_hold(video);
+		if (video->flags&VIDEO_FLAG_IS_PAUSED)
+		{
+			video->flags &= ~VIDEO_FLAG_IS_PAUSED;
+			printf("Continue.\n");
+		}
+		else
+		{
+			video->flags |= VIDEO_FLAG_IS_PAUSED;
+			printf("Paused.\n");
+		}
 	}
 	else if(keyval == GDK_KEY_f)
 	{
@@ -81,10 +89,15 @@ gboolean on_timer_callback(gpointer data)
 	else if(keyval == GDK_KEY_l)
 	{
 		if (video->flags&VIDEO_FLAG_LOOP)
+		{
 			video->flags &= ~VIDEO_FLAG_LOOP;
+			printf("Looping OFF.\n");
+		}
 		else
+		{
 			video->flags |= VIDEO_FLAG_LOOP;
-		printf("Looping=%04x.\n",video->flags&VIDEO_FLAG_LOOP);
+			printf("Looping ON.\n");
+		}
 	}
 	else if(keyval == GDK_KEY_h)
 	{
@@ -93,10 +106,15 @@ gboolean on_timer_callback(gpointer data)
 	else if(keyval == GDK_KEY_z)
 	{
 		if (video->flags&VIDEO_FLAG_NO_FILTER)
+		{
 			video->flags &= ~VIDEO_FLAG_NO_FILTER;
+			printf("Filter ON.\n");
+		}
 		else
+		{
 			video->flags |= VIDEO_FLAG_NO_FILTER;
-		printf("NoFilter=%04x.\n",video->flags&VIDEO_FLAG_NO_FILTER);
+			printf("Filter OFF.\n");
+		}
 	}
 	video->inkey = 0;
 	video_post_frame(video);
@@ -225,6 +243,8 @@ int main(int argc, char* argv[])
 
 	/* clean up */
 	g_source_remove (timer);
+	filter_free(&morefilter);
+	filter_free(&edgefilter);
 	filter_free(&grayfilter);
 	display_free(&cDisplay);
 	capture_free(&cCapture);
