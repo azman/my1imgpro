@@ -39,7 +39,7 @@ void image_set_frame(my1image_t* image, AVFrame* frame)
 	}
 }
 /*----------------------------------------------------------------------------*/
-void capture_init(my1video_capture_t* object)
+void capture_init(my1video_capture_t* object, my1video_t* video)
 {
 	avcodec_register_all();
 	av_register_all();
@@ -56,8 +56,9 @@ void capture_init(my1video_capture_t* object)
 	object->frame = 0x0;
 	object->buffer = 0x0;
 	object->ready = 0x0;
-	object->video = 0x0;
+	object->video = video;
 	object->lindex = -1;
+	video->capture = (void*) object;
 }
 /*----------------------------------------------------------------------------*/
 void capture_free(my1video_capture_t* object)
@@ -257,8 +258,8 @@ void capture_file(my1video_capture_t* object, char *filename)
 	/** pCodecCtx->time_base has frame rate (struct with num/denom)! */
 	/* setup config data */
 	object->video->index = 0;
-	object->video->update = 0x1;
-	object->video->stepit = 0x1;
+	object->video->flags |= VIDEO_FLAG_DO_UPDATE;
+	object->video->flags |= VIDEO_FLAG_STEP;
 }
 /*----------------------------------------------------------------------------*/
 void capture_live(my1video_capture_t* object, char *camname)
@@ -273,17 +274,17 @@ void capture_live(my1video_capture_t* object, char *camname)
 	/* create/init device */
 	object->video->count = -1; /* already default! */
 	object->video->index = -1;
-	object->video->update = 0x1;
-	object->video->stepit = 0x0;
+	object->video->flags |= VIDEO_FLAG_DO_UPDATE;
+	object->video->flags &= ~VIDEO_FLAG_STEP;
 }
 /*----------------------------------------------------------------------------*/
 void capture_grab(my1video_capture_t* object)
 {
 	if (!object->fcontext) return;
 	if (!object->video) return;
-	object->video->newframe = 0x0;
+	object->video->flags &= ~VIDEO_FLAG_NEW_FRAME;
 	object->ready = 0x0;
-	if (!object->video->update) return;
+	if (!(object->video->flags&VIDEO_FLAG_DO_UPDATE)) return;
 	if (object->video->count<0) /* flag for livefeed */
 	{
 		object->ready = capture_grab_frame(object);
@@ -308,10 +309,12 @@ void capture_grab(my1video_capture_t* object)
 		image_make(&object->video->image,
 			object->video->height,object->video->width);
 		image_set_frame(&object->video->image,object->buffer);
+		/**object->video->image.mask = IMASK_COLOR24;*/
 		object->video->frame = &object->video->image;
-		object->video->newframe = 0x1;
+		object->video->flags |= VIDEO_FLAG_NEW_FRAME;
 	}
-	if (object->video->stepit) object->video->update = 0x0;
+	if (object->video->flags&VIDEO_FLAG_STEP)
+		object->video->flags &= ~VIDEO_FLAG_DO_UPDATE;
 }
 /*----------------------------------------------------------------------------*/
 void capture_stop(my1video_capture_t* object)
@@ -331,72 +334,96 @@ void capture_stop(my1video_capture_t* object)
 	object->fcontext = 0x0;
 }
 /*----------------------------------------------------------------------------*/
-void display_init(my1video_display_t* object)
+void display_init(my1video_display_t* object, my1video_t* video)
 {
-	/* initialize SDL - audio not needed, actually! */
-	if (SDL_Init(SDL_INIT_VIDEO|SDL_INIT_AUDIO|SDL_INIT_TIMER))
-	{
-		printf("Could not initialize SDL - %s\n", SDL_GetError());
-		exit(-1);
-	}
-	object->screen = 0x0;
-	object->video = 0x0;
+	object->window = 0x0;
+	object->dodraw = 0x0;
+	object->pixbuf = 0x0;
+	object->video = video;
 	object->h = -1;
 	object->w = -1;
+	video->display = (void*) object;
 }
 /*----------------------------------------------------------------------------*/
 void display_free(my1video_display_t* object)
 {
-	SDL_Quit();
+	if (object->pixbuf)
+		g_object_unref(object->pixbuf);
+}
+/*----------------------------------------------------------------------------*/
+void display_draw(my1video_display_t* object)
+{
+	my1image_t* image;
+	GtkWidget* widget;
+	/* must have image frame */
+	if (!object->video||!object->video->frame) return;
+	image = (my1image_t*) object->video->frame;
+	/* colormode abgr32 for gdk function */
+	image_color2bgr(image);
+	/* get widget and draw! */
+	widget = object->dodraw;
+	gdk_draw_rgb_32_image(widget->window,
+		widget->style->fg_gc[GTK_STATE_NORMAL],
+		0, 0, image->width, image->height,
+		GDK_RGB_DITHER_NONE, (const guchar*)image->data, image->width*4);
 }
 /*----------------------------------------------------------------------------*/
 void display_make(my1video_display_t* object)
 {
-	my1image_t *image;
-	if (!object->video||!object->video->frame) return;
-	/* get current video frame */
-	image = object->video->frame;
-	/* create/resize screen */
-	if (object->h!=image->height||object->w!=image->width)
+	/* must have image frame */
+	if (!object->video) return;
+	/* check default size */
+	if (object->w<0||object->h<0)
 	{
-		object->h = image->height;
-		object->w = image->width;
-		object->screen = SDL_SetVideoMode(object->w,object->h,32,SDL_ANYFORMAT);
-		if (!object->screen)
-		{
-			printf("Unable to set video mode: %s\n", SDL_GetError());
-			exit(-1);
-		}
+		object->w = object->video->width;
+		object->h = object->video->height;
 	}
+	/* create window */
+	object->window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+	gtk_window_set_title(GTK_WINDOW(object->window),DEFAULT_TITLE);
+	gtk_window_set_default_size(GTK_WINDOW(object->window),object->w,object->h);
+	gtk_window_set_position(GTK_WINDOW(object->window),GTK_WIN_POS_CENTER);
+	gtk_window_set_resizable(GTK_WINDOW(object->window),FALSE);
+	/* deprecated in gtk3 in favor of cairo? */
+	object->dodraw = gtk_drawing_area_new();
+	gtk_widget_set_size_request(object->dodraw,object->w,object->h);
+	gtk_container_add(GTK_CONTAINER(object->window),object->dodraw);
+	gtk_widget_show_all(object->window);
 }
 /*----------------------------------------------------------------------------*/
 void display_view(my1video_display_t* object)
 {
-	SDL_Surface *buffer;
 	my1image_t *image;
-	if (!object->video) return;
+	/* must have image frame */
+	if (!object->video||!object->video->frame) return;
 	/* get current video frame */
 	image = object->video->frame;
-	/* if in grayscale, convert to colormode grayscale? */
-	if (image->mask!=IMASK_COLOR24) image_colormode(image);
-	/* create the temp surface from the raw RGB data */
-	buffer = SDL_CreateRGBSurfaceFrom(image->data,image->width,
-		image->height,32,image->width*4,0,0,0,0);
-	if(!buffer)
+	/* check the need to resize window */
+	if (object->w!=image->width||object->h!=image->height)
 	{
-		printf("Unable to load image to SDL: %s\n", SDL_GetError());
-		exit(-1);
+		gtk_widget_set_size_request(object->dodraw,image->width,image->height);
+		object->w = image->width;
+		object->h = image->height;
 	}
-	/* copy to main surface */
-	SDL_BlitSurface(buffer,0x0,object->screen,0x0);
-	SDL_Flip(object->screen);
-	/* cleanup! */
-	SDL_FreeSurface(buffer);
+	/* queue drawing */
+	/**gtk_widget_queue_draw(object->dodraw);*/
+	display_draw(object);
 }
 /*----------------------------------------------------------------------------*/
 void display_name(my1video_display_t* object,const char *name,const char *icon)
 {
 	if (!object->video) return;
-	SDL_WM_SetCaption(name,icon);
+	/* set title */
+	gtk_window_set_title(GTK_WINDOW(object->window),name);
+	/* remove existing pixbuf */
+	if (object->pixbuf)
+		g_object_unref(object->pixbuf);
+	/* read new? */
+	if (icon)
+	{
+		object->pixbuf = gdk_pixbuf_new_from_file(icon,0x0);
+		if (object->pixbuf)
+			gtk_window_set_icon(GTK_WINDOW(object->window),object->pixbuf);
+	}
 }
 /*----------------------------------------------------------------------------*/

@@ -1,5 +1,5 @@
 # makefile for my1imgpro (basic image/vision processing library)
-# - using libav & SDL for interfacing & display
+# - using libav & gtk for interfacing & display
 
 TESTIMG = my1image_test
 OBJSIMG = my1image.o my1image_file.o
@@ -12,7 +12,7 @@ OBJSVIS += my1video.o my1video_dev.o $(TESTVIS).o
 CFLAGS += -Wall
 LFLAGS += -lm
 GFLAGS += $(shell pkg-config --libs gtk+-2.0)
-OFLAGS += -lavcodec -lavutil -lavformat -lSDL -lswscale -lavdevice
+OFLAGS += $(GFLAGS) -lavcodec -lavutil -lavformat -lswscale -lavdevice
 VFLAGS = -DMY1APP_PROGVERS=\"$(shell date +%Y%m%d)\"
 DFLAGS =
 TFLAGS += $(shell pkg-config --cflags gtk+-2.0)
@@ -45,6 +45,12 @@ ${TESTVIS}: $(OBJSVIS)
 	$(LD) $(CFLAGS) $(DFLAGS) -o $@ $+ $(LFLAGS) $(OFLAGS)
 
 ${TESTIMG}.o: src/${TESTIMG}.c
+	$(CC) $(CFLAGS) $(DFLAGS) $(VFLAGS) -o $@ $< $(TFLAGS)
+
+${TESTVIS}.o: src/${TESTVIS}.c
+	$(CC) $(CFLAGS) $(DFLAGS) $(VFLAGS) -o $@ $< $(TFLAGS)
+
+my1video_dev.o: src/my1video_dev.c
 	$(CC) $(CFLAGS) $(DFLAGS) $(VFLAGS) -o $@ $< $(TFLAGS)
 
 %.o: src/%.c src/%.h

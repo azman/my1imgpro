@@ -5,7 +5,9 @@
 #include "my1video.h"
 /*----------------------------------------------------------------------------*/
 #include <libavformat/avformat.h>
-#include <SDL/SDL.h>
+#include <gtk/gtk.h>
+/*----------------------------------------------------------------------------*/
+#define DEFAULT_TITLE "MY1 Video Tool"
 /*----------------------------------------------------------------------------*/
 typedef struct SwsContext AVswsContext;
 /*----------------------------------------------------------------------------*/
@@ -29,7 +31,7 @@ my1video_capture_t;
 /*----------------------------------------------------------------------------*/
 void image_get_frame(my1image_t* image, AVFrame* frame);
 void image_set_frame(my1image_t* image, AVFrame* frame);
-void capture_init(my1video_capture_t* object);
+void capture_init(my1video_capture_t* object, my1video_t* video);
 void capture_free(my1video_capture_t* object);
 void capture_file(my1video_capture_t* object, char *filename);
 void capture_live(my1video_capture_t* object, char *camname);
@@ -38,16 +40,18 @@ void capture_stop(my1video_capture_t* object);
 /*----------------------------------------------------------------------------*/
 typedef struct _my1video_display_t
 {
-	SDL_Surface *screen;
+	GtkWidget *window, *dodraw;
+	GdkPixbuf *pixbuf;
 	my1video_t *video; /* pure pointer to video object */
 	int h,w; /* current screen size! */
 }
 my1video_display_t;
 /*----------------------------------------------------------------------------*/
-void display_init(my1video_display_t* object);
+void display_init(my1video_display_t* object, my1video_t* video);
 void display_free(my1video_display_t* object);
 void display_make(my1video_display_t* object);
 void display_view(my1video_display_t* object);
+void display_draw(my1video_display_t* object);
 void display_name(my1video_display_t* object,
 	const char *name,const char *icon);
 /*----------------------------------------------------------------------------*/

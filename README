@@ -14,12 +14,12 @@ This software consists of several small modules:
   * my1image_math - math-related function(s), matrix structure & operations
   * my1image_fpo  - floating-point grayscale structure & utility
   * my1image_work - sample image processing filters
-  * my1image_test - main test program for my1image & friends (SDL for viewing!)
+  * my1image_test - main test program for my1image & friends (gtk for viewing!)
   * my1video      - video structure based on basic image structure
-  * my1video_dev  - sample video processing (using libav and SDL)
+  * my1video_dev  - sample video processing (using libav and gtk)
   * my1video_test - main test program for my1video & my1video_dev
 
-The test programs (and my1video_dev) require SDL and libav libraries.
+The test programs (and my1video_dev) require gtk and libav libraries.
 
 Regarding the image structure, although my1imgpro library is meant for 8-bit
 grayscale processing, my1image_t structure can support color image using

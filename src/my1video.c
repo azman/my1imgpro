@@ -11,8 +11,15 @@ void video_init(my1video_t *video)
 	video->filter = 0x0;
 	video->count = -1; video->index = -1;
 	video->width = 0; video->height = 0;
-	video->looping = 0x1; video->update = 0x0;
-	video->stepit = 0x1; video->newframe = 0x0;
+	video->flags = 0; /* reset flags */
+	video->flags |= VIDEO_FLAG_LOOP; /* loop it! */
+	video->flags |= VIDEO_FLAG_STEP; /* step it! */
+	video->flags &= ~VIDEO_FLAG_NO_FILTER; /* do not filter initially */
+	video->flags &= ~VIDEO_FLAG_DO_UPDATE; /* do not update initially */
+	video->flags &= ~VIDEO_FLAG_NEW_FRAME; /* no new frame */
+	video->inkey = 0;
+	video->capture = 0x0;
+	video->display = 0x0;
 }
 /*----------------------------------------------------------------------------*/
 void video_free(my1video_t *video)
@@ -23,45 +30,45 @@ void video_free(my1video_t *video)
 /*----------------------------------------------------------------------------*/
 void video_play(my1video_t *video)
 {
-	video->update = 0x1;
-	video->stepit = 0x0;
+	video->flags |= VIDEO_FLAG_DO_UPDATE;
+	video->flags &= ~VIDEO_FLAG_STEP;
 }
 /*----------------------------------------------------------------------------*/
 void video_hold(my1video_t *video)
 {
-	video->update = 0x0;
-	video->stepit = 0x0;
+	video->flags &= ~VIDEO_FLAG_DO_UPDATE;
+	video->flags &= ~VIDEO_FLAG_STEP;
 }
 /*----------------------------------------------------------------------------*/
 void video_stop(my1video_t *video)
 {
-	video->update = 0x0;
-	video->stepit = 0x0;
+	video->flags &= ~VIDEO_FLAG_DO_UPDATE;
+	video->flags &= ~VIDEO_FLAG_STEP;
 	if (video->index>0)
 	{
 		video->index = 0;
-		/* get 1st frame */
-		video->update = 0x1;
-		video->stepit = 0x1;
+		/* get 1st frame and step on */
+		video->flags |= VIDEO_FLAG_DO_UPDATE;
+		video->flags |= VIDEO_FLAG_STEP;
 	}
 }
 /*----------------------------------------------------------------------------*/
 void video_next_frame(my1video_t *video)
 {
-	video->stepit = 0x1;
+	video->flags |= VIDEO_FLAG_STEP;
 	if (video->index<video->count)
 	{
-		video->update = 0x1;
+		video->flags |= VIDEO_FLAG_DO_UPDATE;
 		video->index++;
 		if (video->index==video->count)
 		{
-			if (video->looping)
+			if (video->flags&VIDEO_FLAG_LOOP)
 			{
 				video->index = 0;
 			}
 			else
 			{
-				video->update = 0x0;
+				video->flags &= ~VIDEO_FLAG_DO_UPDATE;
 				video->index--;
 			}
 		}
@@ -70,10 +77,10 @@ void video_next_frame(my1video_t *video)
 /*----------------------------------------------------------------------------*/
 void video_prev_frame(my1video_t *video)
 {
-	video->stepit = 0x1;
+	video->flags |= VIDEO_FLAG_STEP;
 	if (video->index>0)
 	{
-		video->update = 0x1;
+		video->flags |= VIDEO_FLAG_DO_UPDATE;
 		video->index--;
 	}
 }
@@ -93,15 +100,16 @@ void video_filter_init(my1video_t *video, my1vpass_t *vpass)
 /*----------------------------------------------------------------------------*/
 void video_filter(my1video_t *video)
 {
+	if (video->flags&VIDEO_FLAG_NO_FILTER) return;
 	video->frame = image_filter(video->frame,video->filter);
 }
 /*----------------------------------------------------------------------------*/
-void video_post_input(my1video_t *video)
+void video_post_frame(my1video_t *video)
 {
-	if (video->update&&!video->stepit)
+	if ((video->flags&VIDEO_FLAG_DO_UPDATE)&&!(video->flags&VIDEO_FLAG_STEP))
 	{
 		video_next_frame(video);
-		video->stepit = 0x0; /* override step in nextframe */
+		video->flags &= ~VIDEO_FLAG_STEP; /* override step in nextframe */
 	}
 }
 /*----------------------------------------------------------------------------*/
