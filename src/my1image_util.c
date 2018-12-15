@@ -209,6 +209,9 @@ my1filter_t* filter_insert(my1filter_t* pstack, my1filter_t* pcheck)
 		return pcheck;
 	}
 	pstack->last->next = pcheck;
+	/* in case pcheck is another stack, look for last */
+	while (pcheck->next)
+		pcheck = pcheck->next;
 	pstack->last = pcheck;
 	return pstack;
 }
