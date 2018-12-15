@@ -57,7 +57,7 @@ void about(void)
 	printf("  --view  : show image (with user interface options)\n");
 	printf("  --help  : show this message - overrides ALL above options\n");
 	printf("Filters available:\n");
-	printf("  laplace1, laplace2, sobelx, sobely, sobel, gauss\n");
+	printf("  laplace1, laplace2, sobelx, sobely, sobel, gauss\n\n");
 }
 /*----------------------------------------------------------------------------*/
 gboolean on_draw_expose(GtkWidget *widget, GdkEventExpose *event,
@@ -81,8 +81,8 @@ void check_size(my1image_test_t* q)
 		q->sizex = q->image->width;
 		q->sizey = q->image->height;
 	}
-	/* if in grayscale, convert to colormode grayscale? */
-	if (q->image->mask!=IMASK_COLOR24) image_colormode(q->image);
+	/* colormode abgr32 for gdk function */
+	image_color2bgr(q->image);
 	/* queue drawing */
 	gtk_widget_queue_draw(q->dodraw);
 }

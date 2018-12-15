@@ -369,6 +369,34 @@ void image_colormode(my1image_t *image)
 	}
 }
 /*----------------------------------------------------------------------------*/
+int encode_bgr(cbyte r, cbyte g, cbyte b)
+{
+	return (((int)b&0xff)<<16) | (((int)g&0xff)<<8) | ((int)r&0xff);
+}
+/*----------------------------------------------------------------------------*/
+void image_color2bgr(my1image_t *image)
+{
+	int loop;
+	if (image->mask==IMASK_COLOR24)
+	{
+		cbyte *that, swap;
+		for(loop=0;loop<image->length;loop++)
+		{
+			that = (cbyte*) &image->data[loop];
+			swap = that[0];
+			that[0] = that[2];
+			that[2] = swap;
+		}
+	}
+	else
+	{
+		for(loop=0;loop<image->length;loop++)
+			image->data[loop] = encode_bgr(image->data[loop],
+				image->data[loop],image->data[loop]);
+		image->mask = IMASK_COLOR24;
+	}
+}
+/*----------------------------------------------------------------------------*/
 int encode_rgb(cbyte r, cbyte g, cbyte b)
 {
 	return (((int)r&0xff)<<16) | (((int)g&0xff)<<8) | ((int)b&0xff);
