@@ -4,13 +4,6 @@
 /*----------------------------------------------------------------------------*/
 #include "my1image.h"
 /*----------------------------------------------------------------------------*/
-typedef struct _my1image_region_t
-{
-	int xset, yset;
-	int width, height;
-}
-my1image_region_t;
-/*----------------------------------------------------------------------------*/
 typedef struct _my1image_mask_t
 {
 	int size; /* square mask - should be odd number */
@@ -20,7 +13,12 @@ typedef struct _my1image_mask_t
 }
 my1image_mask_t;
 /*----------------------------------------------------------------------------*/
-typedef my1image_t* (*pfilter_t)(my1image_t* curr,my1image_t* next,void* user);
+typedef struct _my1image_region_t
+{
+	int xset, yset;
+	int width, height;
+}
+my1image_region_t;
 /*----------------------------------------------------------------------------*/
 typedef struct _my1image_buffer_t
 {
@@ -30,13 +28,18 @@ typedef struct _my1image_buffer_t
 }
 my1image_buffer_t;
 /*----------------------------------------------------------------------------*/
+#define FILTER_NAMESIZE 80
+/*----------------------------------------------------------------------------*/
+typedef my1image_t* (*pfilter_t)(my1image_t* curr,my1image_t* next,void* user);
+/*----------------------------------------------------------------------------*/
 typedef struct _my1image_filter_t
 {
+	char name[FILTER_NAMESIZE];
 	void *userdata;
 	my1image_buffer_t *buffer;
 	my1image_t *docopy; /* if supplied, copy to this struct! */
 	pfilter_t filter;
-	struct _my1image_filter_t *next, *last; /* linked list */
+	struct _my1image_filter_t *next, *last; /* linked list - last in list */
 }
 my1image_filter_t;
 /*----------------------------------------------------------------------------*/
@@ -53,10 +56,6 @@ typedef my1image_buffer_t my1buffer_t;
 typedef my1image_filter_t my1filter_t;
 typedef my1image_histogram_t my1histogram_t;
 /*----------------------------------------------------------------------------*/
-/* region@sub-image management functions */
-void image_get_region(my1image_t *img, my1image_t *sub, my1region_t *reg);
-void image_set_region(my1image_t *img, my1image_t *sub, my1region_t *reg);
-void image_fill_region(my1image_t *img, int val, my1region_t *reg);
 /* mask management functions */
 int* image_mask_init(my1image_mask_t *mask, int size);
 void image_mask_free(my1image_mask_t *mask);
@@ -64,6 +63,10 @@ void image_mask_make(my1image_mask_t *mask, int size, int *pval);
 /* linear filter : cross-correlation & convolution */
 void image_correlation(my1image_t *img, my1image_t *res, my1mask_t *mask);
 void image_convolution(my1image_t *img, my1image_t *res, my1mask_t *mask);
+/* region@sub-image management functions */
+void image_get_region(my1image_t *img, my1image_t *sub, my1region_t *reg);
+void image_set_region(my1image_t *img, my1image_t *sub, my1region_t *reg);
+void image_fill_region(my1image_t *img, int val, my1region_t *reg);
 /* double buffered image for processing */
 void buffer_init(my1image_buffer_t* ibuff);
 void buffer_free(my1image_buffer_t* ibuff);

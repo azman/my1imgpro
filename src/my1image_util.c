@@ -3,65 +3,6 @@
 /*----------------------------------------------------------------------------*/
 #include <stdlib.h> /* for malloc and free? */
 /*----------------------------------------------------------------------------*/
-void image_get_region(my1image_t *img, my1image_t *sub, my1region_t *reg)
-{
-	int iloop, jloop, xoff = 0, yoff = 0;
-	int row = img->height, col = img->width;
-	if (reg)
-	{
-		yoff = reg->yset;
-		row = reg->height;
-		xoff = reg->xset;
-		col = reg->width;
-	}
-	for (iloop=0;iloop<row;iloop++)
-	{
-		int* pImg = image_row_data(img,iloop+yoff);
-		int* pSub = image_row_data(sub,iloop);
-		for (jloop=0;jloop<col;jloop++)
-			pSub[jloop] = pImg[jloop+xoff];
-	}
-}
-/*----------------------------------------------------------------------------*/
-void image_set_region(my1image_t *img, my1image_t *sub, my1region_t *reg)
-{
-	int iloop, jloop, xoff = 0, yoff = 0;
-	int row = img->height, col = img->width;
-	if (reg)
-	{
-		yoff = reg->yset;
-		row = reg->height;
-		xoff = reg->xset;
-		col = reg->width;
-	}
-	for (iloop=0;iloop<row;iloop++)
-	{
-		int* pImg = image_row_data(img,iloop+yoff);
-		int* pSub = image_row_data(sub,iloop);
-		for (jloop=0;jloop<col;jloop++)
-			pImg[jloop+xoff] = pSub[jloop];
-	}
-}
-/*----------------------------------------------------------------------------*/
-void image_fill_region(my1image_t *img, int val, my1region_t *reg)
-{
-	int iloop, jloop, xoff = 0, yoff = 0;
-	int row = img->height, col = img->width;
-	if (reg)
-	{
-		yoff = reg->yset;
-		row = reg->height;
-		xoff = reg->xset;
-		col = reg->width;
-	}
-	for (iloop=0;iloop<row;iloop++)
-	{
-		int* pImg = image_row_data(img,iloop+yoff);
-		for (jloop=0;jloop<col;jloop++)
-			pImg[jloop+xoff] = val;
-	}
-}
-/*----------------------------------------------------------------------------*/
 int* image_mask_init(my1image_mask_t *mask, int size)
 {
 	int length = size*size;
@@ -147,6 +88,65 @@ void image_convolution(my1image_t *img, my1image_t *res, my1mask_t *mask)
 	}
 }
 /*----------------------------------------------------------------------------*/
+void image_get_region(my1image_t *img, my1image_t *sub, my1region_t *reg)
+{
+	int iloop, jloop, xoff = 0, yoff = 0;
+	int row = img->height, col = img->width;
+	if (reg)
+	{
+		yoff = reg->yset;
+		row = reg->height;
+		xoff = reg->xset;
+		col = reg->width;
+	}
+	for (iloop=0;iloop<row;iloop++)
+	{
+		int* pImg = image_row_data(img,iloop+yoff);
+		int* pSub = image_row_data(sub,iloop);
+		for (jloop=0;jloop<col;jloop++)
+			pSub[jloop] = pImg[jloop+xoff];
+	}
+}
+/*----------------------------------------------------------------------------*/
+void image_set_region(my1image_t *img, my1image_t *sub, my1region_t *reg)
+{
+	int iloop, jloop, xoff = 0, yoff = 0;
+	int row = img->height, col = img->width;
+	if (reg)
+	{
+		yoff = reg->yset;
+		row = reg->height;
+		xoff = reg->xset;
+		col = reg->width;
+	}
+	for (iloop=0;iloop<row;iloop++)
+	{
+		int* pImg = image_row_data(img,iloop+yoff);
+		int* pSub = image_row_data(sub,iloop);
+		for (jloop=0;jloop<col;jloop++)
+			pImg[jloop+xoff] = pSub[jloop];
+	}
+}
+/*----------------------------------------------------------------------------*/
+void image_fill_region(my1image_t *img, int val, my1region_t *reg)
+{
+	int iloop, jloop, xoff = 0, yoff = 0;
+	int row = img->height, col = img->width;
+	if (reg)
+	{
+		yoff = reg->yset;
+		row = reg->height;
+		xoff = reg->xset;
+		col = reg->width;
+	}
+	for (iloop=0;iloop<row;iloop++)
+	{
+		int* pImg = image_row_data(img,iloop+yoff);
+		for (jloop=0;jloop<col;jloop++)
+			pImg[jloop+xoff] = val;
+	}
+}
+/*----------------------------------------------------------------------------*/
 void buffer_init(my1image_buffer_t* ibuff)
 {
 	ibuff->region.xset = 0;
@@ -182,6 +182,7 @@ void buffer_swap(my1image_buffer_t* ibuff)
 void filter_init(my1image_filter_t* pfilter,
 	pfilter_t filter, my1buffer_t *buffer)
 {
+	pfilter_name[0] = 0x0; /* anonymous */
 	pfilter->userdata = 0x0;
 	pfilter->buffer = buffer;
 	pfilter->docopy = 0x0;
