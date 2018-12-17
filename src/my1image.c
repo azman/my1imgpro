@@ -164,9 +164,8 @@ void image_scale(my1image_t *image, float value)
 /*----------------------------------------------------------------------------*/
 void image_normalize(my1image_t *image)
 {
-	float scale;
 	int iloop, ilength = image->length;
-	int max = image->data[0], min = image->data[0];
+	int diff, max = image->data[0], min = image->data[0];
 	/* get min max range */
 	for (iloop=1;iloop<ilength;iloop++)
 	{
@@ -174,9 +173,9 @@ void image_normalize(my1image_t *image)
 		else if (min>image->data[iloop]) min = image->data[iloop];
 	}
 	/* normalize to min-max scale! */
-	scale = (float)(max-min)/WHITE;
+	diff = max-min;
 	for (iloop=0;iloop<ilength;iloop++)
-		image->data[iloop] = (int) ((image->data[iloop]-min)/scale);
+		image->data[iloop] = (image->data[iloop]-min)*WHITE/diff;
 }
 /*----------------------------------------------------------------------------*/
 void image_add(my1image_t *image1, my1image_t *image2, my1image_t *result)

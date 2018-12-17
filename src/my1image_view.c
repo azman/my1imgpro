@@ -5,6 +5,7 @@ void image_view_init(my1image_view_t* iview)
 {
 	iview->window = 0x0;
 	iview->canvas = 0x0;
+	iview->domenu = 0x0;
 	iview->width = -1;
 	iview->height = -1;
 	iview->image = 0x0;
