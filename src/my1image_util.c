@@ -182,7 +182,7 @@ void buffer_swap(my1image_buffer_t* ibuff)
 void filter_init(my1image_filter_t* pfilter,
 	pfilter_t filter, my1buffer_t *buffer)
 {
-	pfilter_name[0] = 0x0; /* anonymous */
+	pfilter->name[0] = 0x0; /* anonymous */
 	pfilter->userdata = 0x0;
 	pfilter->buffer = buffer;
 	pfilter->docopy = 0x0;
