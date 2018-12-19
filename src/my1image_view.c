@@ -16,10 +16,12 @@ void image_view_free(my1image_view_t* iview)
 	/** nothing to free */
 }
 /*----------------------------------------------------------------------------*/
-void image_view_make(my1image_view_t* iview)
+void image_view_make(my1image_view_t* iview, my1image_t* that)
 {
 	/* nothing to do if window/canvas already created */
 	if (iview->window||iview->canvas) return;
+	/* check if assigned new image */
+	if (that) iview->image = that;
 	/* must have image */
 	if (!iview->image) return;
 	/* check default size */
@@ -43,8 +45,10 @@ void image_view_make(my1image_view_t* iview)
 	gtk_widget_show_all(iview->window);
 }
 /*----------------------------------------------------------------------------*/
-void image_view_draw(my1image_view_t* iview)
+void image_view_draw(my1image_view_t* iview, my1image_t* that)
 {
+	/* check if assigned new image */
+	if (that) iview->image = that;
 	/* must have image - and canvas! */
 	if (!iview->image||!iview->canvas) return;
 	/* check the need to resize window */
@@ -64,7 +68,7 @@ void image_view_draw(my1image_view_t* iview)
 		(const guchar*)iview->image->data, iview->image->width*4);
 }
 /*----------------------------------------------------------------------------*/
-void image_view_name(my1image_view_t* iview,const char *name)
+void image_view_name(my1image_view_t* iview,const char* name)
 {
 	/* must have window! */
 	if (!iview->window) return;

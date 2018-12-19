@@ -14,11 +14,11 @@ typedef struct _my1image_view_t
 }
 my1image_view_t;
 /*----------------------------------------------------------------------------*/
-void image_view_init(my1image_view_t* object);
-void image_view_free(my1image_view_t* object);
-void image_view_make(my1image_view_t* object);
-void image_view_draw(my1image_view_t* object);
-void image_view_name(my1image_view_t* object, const char *name);
+void image_view_init(my1image_view_t* iview);
+void image_view_free(my1image_view_t* iview);
+void image_view_make(my1image_view_t* iview, my1image_t* that);
+void image_view_draw(my1image_view_t* iview, my1image_t* that);
+void image_view_name(my1image_view_t* iview, const char* name);
 /*----------------------------------------------------------------------------*/
 #endif
 /*----------------------------------------------------------------------------*/

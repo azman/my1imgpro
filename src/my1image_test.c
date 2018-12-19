@@ -31,7 +31,7 @@
 /*----------------------------------------------------------------------------*/
 typedef struct _my1image_test_t
 {
-	int sizex, sizey, check;
+	int check; /* used for key-press value */
 	my1image_t currimage, *image;
 	my1image_view_t view;
 	my1image_buffer_t work;
@@ -40,6 +40,35 @@ typedef struct _my1image_test_t
 	my1image_filter_t *pfilter;
 }
 my1image_test_t;
+/*----------------------------------------------------------------------------*/
+void image_test_init(my1image_test_t* test)
+{
+	image_init(&test->currimage);
+	test->image = 0x0;
+	image_view_init(&test->view);
+	buffer_init(&test->work);
+	filter_init(&test->ifilter_gray,filter_gray,&test->work);
+	filter_init(&test->ifilter_laplace1,filter_laplace_1,&test->work);
+	filter_init(&test->ifilter_laplace2,filter_laplace_2,&test->work);
+	filter_init(&test->ifilter_sobelx,filter_sobel_x,&test->work);
+	filter_init(&test->ifilter_sobely,filter_sobel_y,&test->work);
+	filter_init(&test->ifilter_sobel,filter_sobel,&test->work);
+	filter_init(&test->ifilter_gauss,filter_gauss,&test->work);
+	test->pfilter = 0x0;
+}
+/*----------------------------------------------------------------------------*/
+void image_test_free(my1image_test_t* test)
+{
+	image_free(&test->currimage);
+	image_view_free(&test->view);
+	buffer_free(&test->work);
+	filter_free(&test->ifilter_laplace1);
+	filter_free(&test->ifilter_laplace2);
+	filter_free(&test->ifilter_sobelx);
+	filter_free(&test->ifilter_sobely);
+	filter_free(&test->ifilter_sobel);
+	filter_free(&test->ifilter_gauss);
+}
 /*----------------------------------------------------------------------------*/
 void print_image_info(my1image_t* image)
 {
@@ -54,10 +83,9 @@ void about(void)
 	printf("Options are:\n");
 	printf("  --save <filename>  : save to image file\n");
 	printf("  --cdata <filename> : save to C source file\n");
-	printf("  --gray  : force grayscale format\n");
 	printf("  --view  : show image (with user interface options)\n");
 	printf("  --help  : show this message - overrides ALL above options\n");
-	printf("Filters available:\n");
+	printf("Filters available (grayscale implied):\n");
 	printf("  laplace1, laplace2, sobelx, sobely, sobel, gauss\n\n");
 }
 /*----------------------------------------------------------------------------*/
@@ -65,8 +93,7 @@ gboolean on_draw_expose(GtkWidget *widget, GdkEventExpose *event,
 	gpointer user_data)
 {
 	my1image_test_t* p = (my1image_test_t*) user_data;
-	p->view.image = p->image;
-	image_view_draw(&p->view);
+	image_view_draw(&p->view,p->image);
 	return TRUE;
 }
 /*----------------------------------------------------------------------------*/
@@ -84,11 +111,8 @@ gboolean on_key_press(GtkWidget *widget, GdkEventKey *kevent, gpointer data)
 	my1image_test_t *q = (my1image_test_t*) data;
 	if(kevent->type == GDK_KEY_PRESS)
 	{
-		/*
-		 * g_message("%d, %c", kevent->keyval, kevent->keyval);
-		 */
-		if(kevent->keyval == GDK_KEY_Escape||
-			kevent->keyval == GDK_KEY_q)
+		/** g_message("%d, %c", kevent->keyval, kevent->keyval); */
+		if(kevent->keyval == GDK_KEY_Escape||kevent->keyval == GDK_KEY_q)
 		{
 			gtk_main_quit();
 			return TRUE;
@@ -124,16 +148,14 @@ void on_image_original(my1image_test_t *q)
 	image_make(q->image,q->currimage.height,q->currimage.width);
 	image_copy(q->image,&q->currimage);
 	q->image->mask = q->currimage.mask;
-	q->view.image = q->image;
-	image_view_draw(&q->view);
+	image_view_draw(&q->view,q->image);
 }
 /*----------------------------------------------------------------------------*/
 void on_image_grayscale(my1image_test_t *q)
 {
 	q->pfilter = filter_insert(0x0,&q->ifilter_gray);
 	q->image = image_filter(q->image,q->pfilter);
-	q->view.image = q->image;
-	image_view_draw(&q->view);
+	image_view_draw(&q->view,q->image);
 }
 /*----------------------------------------------------------------------------*/
 void on_image_invert(my1image_test_t *q)
@@ -150,8 +172,7 @@ void on_image_invert(my1image_test_t *q)
 		}
 	}
 	else image_invert(q->image);
-	q->view.image = q->image;
-	image_view_draw(&q->view);
+	image_view_draw(&q->view,q->image);
 }
 /*----------------------------------------------------------------------------*/
 void on_image_laplace1(my1image_test_t *q)
@@ -159,8 +180,7 @@ void on_image_laplace1(my1image_test_t *q)
 	q->pfilter = filter_insert(0x0,&q->ifilter_gray);
 	q->pfilter = filter_insert(q->pfilter,&q->ifilter_laplace1);
 	q->image = image_filter(q->image,q->pfilter);
-	q->view.image = q->image;
-	image_view_draw(&q->view);
+	image_view_draw(&q->view,q->image);
 }
 /*----------------------------------------------------------------------------*/
 void on_image_laplace2(my1image_test_t *q)
@@ -168,8 +188,7 @@ void on_image_laplace2(my1image_test_t *q)
 	q->pfilter = filter_insert(0x0,&q->ifilter_gray);
 	q->pfilter = filter_insert(q->pfilter,&q->ifilter_laplace2);
 	q->image = image_filter(q->image,q->pfilter);
-	q->view.image = q->image;
-	image_view_draw(&q->view);
+	image_view_draw(&q->view,q->image);
 }
 /*----------------------------------------------------------------------------*/
 void on_image_sobelx(my1image_test_t *q)
@@ -177,8 +196,7 @@ void on_image_sobelx(my1image_test_t *q)
 	q->pfilter = filter_insert(0x0,&q->ifilter_gray);
 	q->pfilter = filter_insert(q->pfilter,&q->ifilter_sobelx);
 	q->image = image_filter(q->image,q->pfilter);
-	q->view.image = q->image;
-	image_view_draw(&q->view);
+	image_view_draw(&q->view,q->image);
 }
 /*----------------------------------------------------------------------------*/
 void on_image_sobely(my1image_test_t *q)
@@ -186,8 +204,7 @@ void on_image_sobely(my1image_test_t *q)
 	q->pfilter = filter_insert(0x0,&q->ifilter_gray);
 	q->pfilter = filter_insert(q->pfilter,&q->ifilter_sobely);
 	q->image = image_filter(q->image,q->pfilter);
-	q->view.image = q->image;
-	image_view_draw(&q->view);
+	image_view_draw(&q->view,q->image);
 }
 /*----------------------------------------------------------------------------*/
 void on_image_sobel(my1image_test_t *q)
@@ -195,8 +212,7 @@ void on_image_sobel(my1image_test_t *q)
 	q->pfilter = filter_insert(0x0,&q->ifilter_gray);
 	q->pfilter = filter_insert(q->pfilter,&q->ifilter_sobel);
 	q->image = image_filter(q->image,q->pfilter);
-	q->view.image = q->image;
-	image_view_draw(&q->view);
+	image_view_draw(&q->view,q->image);
 }
 /*----------------------------------------------------------------------------*/
 void on_image_gaussian(my1image_test_t *q)
@@ -204,16 +220,14 @@ void on_image_gaussian(my1image_test_t *q)
 	q->pfilter = filter_insert(0x0,&q->ifilter_gray);
 	q->pfilter = filter_insert(q->pfilter,&q->ifilter_gauss);
 	q->image = image_filter(q->image,q->pfilter);
-	q->view.image = q->image;
-	image_view_draw(&q->view);
+	image_view_draw(&q->view,q->image);
 }
 /*----------------------------------------------------------------------------*/
 void on_image_normalize(my1image_test_t *q)
 {
 	image_grayscale(q->image);
 	image_normalize(q->image);
-	q->view.image = q->image;
-	image_view_draw(&q->view);
+	image_view_draw(&q->view,q->image);
 }
 /*----------------------------------------------------------------------------*/
 void on_image_threshold(my1image_test_t *q)
@@ -221,8 +235,7 @@ void on_image_threshold(my1image_test_t *q)
 	/* TODO: make this histogram based! */
 	image_grayscale(q->image);
 	image_binary(q->image,WHITE/10);
-	q->view.image = q->image;
-	image_view_draw(&q->view);
+	image_view_draw(&q->view,q->image);
 }
 /*----------------------------------------------------------------------------*/
 void on_image_rotate_ccw90(my1image_test_t *q)
@@ -230,8 +243,7 @@ void on_image_rotate_ccw90(my1image_test_t *q)
 	image_turn(q->work.curr,q->work.next,IMAGE_TURN_090);
 	buffer_swap(&q->work);
 	q->image = q->work.curr;
-	q->view.image = q->image;
-	image_view_draw(&q->view);
+	image_view_draw(&q->view,q->image);
 }
 /*----------------------------------------------------------------------------*/
 void on_image_flip_v(my1image_test_t *q)
@@ -239,8 +251,7 @@ void on_image_flip_v(my1image_test_t *q)
 	image_flip(q->work.curr,q->work.next,IMAGE_FLIP_VERTICAL);
 	buffer_swap(&q->work);
 	q->image = q->work.curr;
-	q->view.image = q->image;
-	image_view_draw(&q->view);
+	image_view_draw(&q->view,q->image);
 }
 /*----------------------------------------------------------------------------*/
 void on_image_flip_h(my1image_test_t *q)
@@ -248,14 +259,151 @@ void on_image_flip_h(my1image_test_t *q)
 	image_flip(q->work.curr,q->work.next,IMAGE_FLIP_HORIZONTAL);
 	buffer_swap(&q->work);
 	q->image = q->work.curr;
-	q->view.image = q->image;
-	image_view_draw(&q->view);
+	image_view_draw(&q->view,q->image);
+}
+/*----------------------------------------------------------------------------*/
+void image_test_events(my1image_test_t* test)
+{
+	g_signal_connect(G_OBJECT(test->view.window),"destroy",
+		G_CALLBACK(gtk_main_quit),0x0);
+	g_signal_connect(G_OBJECT(test->view.window),"key_press_event",
+		G_CALLBACK(on_key_press),(gpointer)test);
+	g_signal_connect(G_OBJECT(test->view.canvas),"expose-event",
+		G_CALLBACK(on_draw_expose),(gpointer)test);
+}
+/*----------------------------------------------------------------------------*/
+void image_test_menu(my1image_test_t* test)
+{
+	GtkWidget *menu_main, *menu_item, *menu_subs, *menu_temp;
+	/* create popup menu for canvas */
+	menu_main = gtk_menu_new();
+	gtk_widget_add_events(test->view.canvas, GDK_BUTTON_PRESS_MASK);
+	g_signal_connect(GTK_OBJECT(test->view.canvas),"button-press-event",
+		G_CALLBACK(on_mouse_click),(gpointer)menu_main);
+	/* sub menu? */
+	menu_subs = gtk_menu_new();
+	/* original menu */
+	menu_item = gtk_menu_item_new_with_mnemonic("_Original");
+	gtk_menu_shell_append(GTK_MENU_SHELL(menu_subs),menu_item);
+	g_signal_connect_swapped(G_OBJECT(menu_item),"activate",
+		G_CALLBACK(on_image_original),(gpointer)test);
+	gtk_widget_show(menu_item);
+	/* grayscale menu */
+	menu_item = gtk_menu_item_new_with_mnemonic("_Grayscale");
+	gtk_menu_shell_append(GTK_MENU_SHELL(menu_subs),menu_item);
+	g_signal_connect_swapped(G_OBJECT(menu_item),"activate",
+		G_CALLBACK(on_image_grayscale),(gpointer)test);
+	gtk_widget_show(menu_item);
+	/* invert menu */
+	menu_item = gtk_menu_item_new_with_mnemonic("_Invert");
+	gtk_menu_shell_append(GTK_MENU_SHELL(menu_subs),menu_item);
+	g_signal_connect_swapped(G_OBJECT(menu_item),"activate",
+		G_CALLBACK(on_image_invert),(gpointer)test);
+	gtk_widget_show(menu_item);
+	/* normalize menu */
+	menu_item = gtk_menu_item_new_with_mnemonic("_Normalize");
+	gtk_menu_shell_append(GTK_MENU_SHELL(menu_subs),menu_item);
+	g_signal_connect_swapped(G_OBJECT(menu_item),"activate",
+		G_CALLBACK(on_image_normalize),(gpointer)test);
+	gtk_widget_show(menu_item);
+	/* threshold menu */
+	menu_item = gtk_menu_item_new_with_mnemonic("_Threshold");
+	gtk_menu_shell_append(GTK_MENU_SHELL(menu_subs),menu_item);
+	g_signal_connect_swapped(G_OBJECT(menu_item),"activate",
+		G_CALLBACK(on_image_threshold),(gpointer)test);
+	gtk_widget_show(menu_item);
+	/* temp menu to insert as sub-menu */
+	menu_temp = gtk_menu_item_new_with_mnemonic("_Image");
+	gtk_menu_item_set_submenu(GTK_MENU_ITEM(menu_temp),menu_subs);
+	/* add to main menu */
+	gtk_menu_shell_append(GTK_MENU_SHELL(menu_main),menu_temp);
+	gtk_widget_show(menu_temp);
+	/* sub menu? */
+	menu_subs = gtk_menu_new();
+	/* laplace1 menu */
+	menu_item = gtk_menu_item_new_with_mnemonic("Laplace _1");
+	gtk_menu_shell_append(GTK_MENU_SHELL(menu_subs),menu_item);
+	g_signal_connect_swapped(G_OBJECT(menu_item),"activate",
+		G_CALLBACK(on_image_laplace1),(gpointer)test);
+	gtk_widget_show(menu_item);
+	/* laplace2 menu */
+	menu_item = gtk_menu_item_new_with_mnemonic("Laplace _2");
+	gtk_menu_shell_append(GTK_MENU_SHELL(menu_subs),menu_item);
+	g_signal_connect_swapped(G_OBJECT(menu_item),"activate",
+		G_CALLBACK(on_image_laplace2),(gpointer)test);
+	gtk_widget_show(menu_item);
+	/* sobelx menu */
+	menu_item = gtk_menu_item_new_with_mnemonic("Sobel _X");
+	gtk_menu_shell_append(GTK_MENU_SHELL(menu_subs),menu_item);
+	g_signal_connect_swapped(G_OBJECT(menu_item),"activate",
+		G_CALLBACK(on_image_sobelx),(gpointer)test);
+	gtk_widget_show(menu_item);
+	/* sobely menu */
+	menu_item = gtk_menu_item_new_with_mnemonic("Sobel _Y");
+	gtk_menu_shell_append(GTK_MENU_SHELL(menu_subs),menu_item);
+	g_signal_connect_swapped(G_OBJECT(menu_item),"activate",
+		G_CALLBACK(on_image_sobely),(gpointer)test);
+	gtk_widget_show(menu_item);
+	/* sobel menu */
+	menu_item = gtk_menu_item_new_with_mnemonic("_Sobel");
+	gtk_menu_shell_append(GTK_MENU_SHELL(menu_subs),menu_item);
+	g_signal_connect_swapped(G_OBJECT(menu_item),"activate",
+		G_CALLBACK(on_image_sobel),(gpointer)test);
+	gtk_widget_show(menu_item);
+	/* gauss menu */
+	menu_item = gtk_menu_item_new_with_mnemonic("_Gaussian");
+	gtk_menu_shell_append(GTK_MENU_SHELL(menu_subs),menu_item);
+	g_signal_connect_swapped(G_OBJECT(menu_item),"activate",
+		G_CALLBACK(on_image_gaussian),(gpointer)test);
+	gtk_widget_show(menu_item);
+	/* temp menu to insert as sub-menu */
+	menu_temp = gtk_menu_item_new_with_mnemonic("_Filters");
+	gtk_menu_item_set_submenu(GTK_MENU_ITEM(menu_temp),menu_subs);
+	/* add to main menu */
+	gtk_menu_shell_append(GTK_MENU_SHELL(menu_main),menu_temp);
+	gtk_widget_show(menu_temp);
+	/* sub menu? */
+	menu_subs = gtk_menu_new();
+	/* rotate menu */
+	menu_item = gtk_menu_item_new_with_mnemonic("_Rotate CCW90");
+	gtk_menu_shell_append(GTK_MENU_SHELL(menu_subs),menu_item);
+	g_signal_connect_swapped(G_OBJECT(menu_item),"activate",
+		G_CALLBACK(on_image_rotate_ccw90),(gpointer)test);
+	gtk_widget_show(menu_item);
+	/* flip v menu */
+	menu_item = gtk_menu_item_new_with_mnemonic("Flip _Vertical");
+	gtk_menu_shell_append(GTK_MENU_SHELL(menu_subs),menu_item);
+	g_signal_connect_swapped(G_OBJECT(menu_item),"activate",
+		G_CALLBACK(on_image_flip_v),(gpointer)test);
+	gtk_widget_show(menu_item);
+	/* flip h menu */
+	menu_item = gtk_menu_item_new_with_mnemonic("Flip _Horizontal");
+	gtk_menu_shell_append(GTK_MENU_SHELL(menu_subs),menu_item);
+	g_signal_connect_swapped(G_OBJECT(menu_item),"activate",
+		G_CALLBACK(on_image_flip_h),(gpointer)test);
+	gtk_widget_show(menu_item);
+	/* temp menu to insert as sub-menu */
+	menu_temp = gtk_menu_item_new_with_mnemonic("_Orientation");
+	gtk_menu_item_set_submenu(GTK_MENU_ITEM(menu_temp),menu_subs);
+	/* add to main menu */
+	gtk_menu_shell_append(GTK_MENU_SHELL(menu_main),menu_temp);
+	gtk_widget_show(menu_temp);
+	/* quit menu */
+	/**menu_item = gtk_menu_item_new_with_label("Quit");*/
+	menu_item = gtk_menu_item_new_with_mnemonic("_Quit");
+	gtk_menu_shell_append(GTK_MENU_SHELL(menu_main),menu_item);
+	g_signal_connect(G_OBJECT(menu_item),"activate",
+		G_CALLBACK(gtk_main_quit),0x0);
+	gtk_widget_show(menu_item);
+	/* save that menu */
+	test->view.domenu = menu_main;
+	/* show it! */
+	gtk_widget_show(test->view.domenu);
 }
 /*----------------------------------------------------------------------------*/
 int main(int argc, char* argv[])
 {
-	int loop, error = 0;
-	int gray = 0, view = 0, help = 0;
+	int loop, error = 0, view = 0, help = 0;
 	char *psave = 0x0, *pname = 0x0, *pdata = 0x0;
 	my1image_test_t q;
 
@@ -264,16 +412,8 @@ int main(int argc, char* argv[])
 		MY1APP_PROGNAME,MY1APP_PROGINFO,MY1APP_PROGVERS);
 	printf("  => by azman@my1matrix.org\n\n");
 
-	/* initialize buffer & filters */
-	buffer_init(&q.work);
-	filter_init(&q.ifilter_gray, filter_gray, &q.work);
-	filter_init(&q.ifilter_laplace1, filter_laplace_1, &q.work);
-	filter_init(&q.ifilter_laplace2, filter_laplace_2, &q.work);
-	filter_init(&q.ifilter_sobelx, filter_sobel_x, &q.work);
-	filter_init(&q.ifilter_sobely, filter_sobel_y, &q.work);
-	filter_init(&q.ifilter_sobel, filter_sobel, &q.work);
-	filter_init(&q.ifilter_gauss, filter_gauss, &q.work);
-	q.sizex = 0; q.sizey = 0; q.pfilter = 0x0;
+	/* initialize image_test */
+	image_test_init(&q);
 
 	/* check program arguments */
 	if(argc>1)
@@ -297,10 +437,6 @@ int main(int argc, char* argv[])
 						pdata = argv[loop];
 					else
 						printf("Cannot get C file name - NOT writing!\n");
-				}
-				else if(!strcmp(argv[loop],"--gray"))
-				{
-					gray = 1;
 				}
 				else if(!strcmp(argv[loop],"--view"))
 				{
@@ -383,9 +519,6 @@ int main(int argc, char* argv[])
 		return ERROR_NOFILE;
 	}
 
-	/* initialize image */
-	image_init(&q.currimage);
-
 	/* try to open file */
 	if((error|=image_load(&q.currimage,pname))<0)
 	{
@@ -432,10 +565,7 @@ int main(int argc, char* argv[])
 	printf("Input image: %s\n",pname);
 	print_image_info(q.image);
 
-	/* convert grayscale if requested/required */
-	if(gray) image_grayscale(q.image);
-
-	/* run image filter */
+	/* run image filter, if requested */
 	if (q.pfilter)
 	{
 		q.image = image_filter(q.image,q.pfilter);
@@ -479,171 +609,25 @@ int main(int argc, char* argv[])
 		}
 	}
 
-	/* we are done if no request for ui? */
-	if (!view)
+	/* check request for ui */
+	if (view)
 	{
-		putchar('\n');
-		return error;
+		/* initialize gui */
+		gtk_init(&argc,&argv);
+		/* make image_view */
+		image_view_make(&q.view,q.image);
+		image_view_draw(&q.view,q.image);
+		/* event handlers */
+		image_test_events(&q);
+		/* menu stuff */
+		image_test_menu(&q);
+		/* main loop */
+		gtk_main();
 	}
 
-	/* initialize gui */
-	gtk_init(&argc,&argv);
+	/* cleanup image_test */
+	image_test_free(&q);
 
-	/* initialize image_view */
-	image_view_init(&q.view);
-	q.view.image = q.image;
-	image_view_make(&q.view);
-	image_view_draw(&q.view);
-
-	/* event handlers */
-	g_signal_connect(G_OBJECT(q.view.window),"key_press_event",
-		G_CALLBACK(on_key_press),(gpointer)&q);
-	g_signal_connect(G_OBJECT(q.view.window),"destroy",
-		G_CALLBACK(gtk_main_quit),0x0);
-	gtk_signal_connect(GTK_OBJECT(q.view.canvas),"expose-event",
-		G_CALLBACK(on_draw_expose),(gpointer)&q);
-
-	/* menu stuff */
-	{
-		GtkWidget *menu_main, *menu_item, *menu_subs, *menu_temp;
-		/* create popup menu for canvas */
-		menu_main = gtk_menu_new();
-		gtk_widget_add_events(q.view.canvas, GDK_BUTTON_PRESS_MASK);
-		g_signal_connect(GTK_OBJECT(q.view.canvas),"button-press-event",
-			G_CALLBACK(on_mouse_click),(gpointer)menu_main);
-		/* sub menu? */
-		menu_subs = gtk_menu_new();
-		/* original menu */
-		menu_item = gtk_menu_item_new_with_mnemonic("_Original");
-		gtk_menu_shell_append(GTK_MENU_SHELL(menu_subs),menu_item);
-		g_signal_connect_swapped(G_OBJECT(menu_item),"activate",
-			G_CALLBACK(on_image_original),(gpointer)&q);
-		gtk_widget_show(menu_item);
-		/* grayscale menu */
-		menu_item = gtk_menu_item_new_with_mnemonic("_Grayscale");
-		gtk_menu_shell_append(GTK_MENU_SHELL(menu_subs),menu_item);
-		g_signal_connect_swapped(G_OBJECT(menu_item),"activate",
-			G_CALLBACK(on_image_grayscale),(gpointer)&q);
-		gtk_widget_show(menu_item);
-		/* invert menu */
-		menu_item = gtk_menu_item_new_with_mnemonic("_Invert");
-		gtk_menu_shell_append(GTK_MENU_SHELL(menu_subs),menu_item);
-		g_signal_connect_swapped(G_OBJECT(menu_item),"activate",
-			G_CALLBACK(on_image_invert),(gpointer)&q);
-		gtk_widget_show(menu_item);
-		/* normalize menu */
-		menu_item = gtk_menu_item_new_with_mnemonic("_Normalize");
-		gtk_menu_shell_append(GTK_MENU_SHELL(menu_subs),menu_item);
-		g_signal_connect_swapped(G_OBJECT(menu_item),"activate",
-			G_CALLBACK(on_image_normalize),(gpointer)&q);
-		gtk_widget_show(menu_item);
-		/* threshold menu */
-		menu_item = gtk_menu_item_new_with_mnemonic("_Threshold");
-		gtk_menu_shell_append(GTK_MENU_SHELL(menu_subs),menu_item);
-		g_signal_connect_swapped(G_OBJECT(menu_item),"activate",
-			G_CALLBACK(on_image_threshold),(gpointer)&q);
-		gtk_widget_show(menu_item);
-		/* temp menu to insert as sub-menu */
-		menu_temp = gtk_menu_item_new_with_mnemonic("_Image");
-		gtk_menu_item_set_submenu(GTK_MENU_ITEM(menu_temp),menu_subs);
-		/* add to main menu */
-		gtk_menu_shell_append(GTK_MENU_SHELL(menu_main),menu_temp);
-		gtk_widget_show(menu_temp);
-		/* sub menu? */
-		menu_subs = gtk_menu_new();
-		/* laplace1 menu */
-		menu_item = gtk_menu_item_new_with_mnemonic("Laplace _1");
-		gtk_menu_shell_append(GTK_MENU_SHELL(menu_subs),menu_item);
-		g_signal_connect_swapped(G_OBJECT(menu_item),"activate",
-			G_CALLBACK(on_image_laplace1),(gpointer)&q);
-		gtk_widget_show(menu_item);
-		/* laplace2 menu */
-		menu_item = gtk_menu_item_new_with_mnemonic("Laplace _2");
-		gtk_menu_shell_append(GTK_MENU_SHELL(menu_subs),menu_item);
-		g_signal_connect_swapped(G_OBJECT(menu_item),"activate",
-			G_CALLBACK(on_image_laplace2),(gpointer)&q);
-		gtk_widget_show(menu_item);
-		/* sobelx menu */
-		menu_item = gtk_menu_item_new_with_mnemonic("Sobel _X");
-		gtk_menu_shell_append(GTK_MENU_SHELL(menu_subs),menu_item);
-		g_signal_connect_swapped(G_OBJECT(menu_item),"activate",
-			G_CALLBACK(on_image_sobelx),(gpointer)&q);
-		gtk_widget_show(menu_item);
-		/* sobely menu */
-		menu_item = gtk_menu_item_new_with_mnemonic("Sobel _Y");
-		gtk_menu_shell_append(GTK_MENU_SHELL(menu_subs),menu_item);
-		g_signal_connect_swapped(G_OBJECT(menu_item),"activate",
-			G_CALLBACK(on_image_sobely),(gpointer)&q);
-		gtk_widget_show(menu_item);
-		/* sobel menu */
-		menu_item = gtk_menu_item_new_with_mnemonic("_Sobel");
-		gtk_menu_shell_append(GTK_MENU_SHELL(menu_subs),menu_item);
-		g_signal_connect_swapped(G_OBJECT(menu_item),"activate",
-			G_CALLBACK(on_image_sobel),(gpointer)&q);
-		gtk_widget_show(menu_item);
-		/* gauss menu */
-		menu_item = gtk_menu_item_new_with_mnemonic("_Gaussian");
-		gtk_menu_shell_append(GTK_MENU_SHELL(menu_subs),menu_item);
-		g_signal_connect_swapped(G_OBJECT(menu_item),"activate",
-			G_CALLBACK(on_image_gaussian),(gpointer)&q);
-		gtk_widget_show(menu_item);
-		/* temp menu to insert as sub-menu */
-		menu_temp = gtk_menu_item_new_with_mnemonic("_Filters");
-		gtk_menu_item_set_submenu(GTK_MENU_ITEM(menu_temp),menu_subs);
-		/* add to main menu */
-		gtk_menu_shell_append(GTK_MENU_SHELL(menu_main),menu_temp);
-		gtk_widget_show(menu_temp);
-		/* sub menu? */
-		menu_subs = gtk_menu_new();
-		/* rotate menu */
-		menu_item = gtk_menu_item_new_with_mnemonic("_Rotate CCW90");
-		gtk_menu_shell_append(GTK_MENU_SHELL(menu_subs),menu_item);
-		g_signal_connect_swapped(G_OBJECT(menu_item),"activate",
-			G_CALLBACK(on_image_rotate_ccw90),(gpointer)&q);
-		gtk_widget_show(menu_item);
-		/* flip v menu */
-		menu_item = gtk_menu_item_new_with_mnemonic("Flip _Vertical");
-		gtk_menu_shell_append(GTK_MENU_SHELL(menu_subs),menu_item);
-		g_signal_connect_swapped(G_OBJECT(menu_item),"activate",
-			G_CALLBACK(on_image_flip_v),(gpointer)&q);
-		gtk_widget_show(menu_item);
-		/* flip h menu */
-		menu_item = gtk_menu_item_new_with_mnemonic("Flip _Horizontal");
-		gtk_menu_shell_append(GTK_MENU_SHELL(menu_subs),menu_item);
-		g_signal_connect_swapped(G_OBJECT(menu_item),"activate",
-			G_CALLBACK(on_image_flip_h),(gpointer)&q);
-		gtk_widget_show(menu_item);
-		/* temp menu to insert as sub-menu */
-		menu_temp = gtk_menu_item_new_with_mnemonic("_Orientation");
-		gtk_menu_item_set_submenu(GTK_MENU_ITEM(menu_temp),menu_subs);
-		/* add to main menu */
-		gtk_menu_shell_append(GTK_MENU_SHELL(menu_main),menu_temp);
-		gtk_widget_show(menu_temp);
-		/* quit menu */
-		/**menu_item = gtk_menu_item_new_with_label("Quit");*/
-		menu_item = gtk_menu_item_new_with_mnemonic("_Quit");
-		gtk_menu_shell_append(GTK_MENU_SHELL(menu_main),menu_item);
-		g_signal_connect(G_OBJECT(menu_item),"activate",
-			G_CALLBACK(gtk_main_quit),0x0);
-		gtk_widget_show(menu_item);
-		/* save that menu */
-		q.view.domenu = menu_main;
-		/* show it! */
-		gtk_widget_show(menu_main);
-	}
-
-	/* main loop */
-	gtk_main();
-
-	/* cleanup */
-	image_free(&q.currimage);
-	buffer_free(&q.work);
-	filter_free(&q.ifilter_laplace1);
-	filter_free(&q.ifilter_laplace2);
-	filter_free(&q.ifilter_sobelx);
-	filter_free(&q.ifilter_sobely);
-	filter_free(&q.ifilter_sobel);
-	filter_free(&q.ifilter_gauss);
 	putchar('\n');
 	return error;
 }
