@@ -24,21 +24,22 @@ typedef struct _my1image_buffer_t
 {
 	/* double buffer image - with region! */
 	my1image_region_t region;
-	my1image_t main, buff, *curr, *next, *temp;
+	my1image_t main, buff, xtra, *curr, *next, *temp;
 }
 my1image_buffer_t;
 /*----------------------------------------------------------------------------*/
 #define FILTER_NAMESIZE 80
 /*----------------------------------------------------------------------------*/
-typedef my1image_t* (*pfilter_t)(my1image_t* curr,my1image_t* next,void* user);
+typedef my1image_t* (*pfilter_t)(my1image_t* curr, my1image_t* next,
+	void* data);
 /*----------------------------------------------------------------------------*/
 typedef struct _my1image_filter_t
 {
 	char name[FILTER_NAMESIZE];
-	void *userdata;
-	my1image_buffer_t *buffer;
+	void *data; /* pointer to user-defined data - sent to pfilter_t */
+	my1image_buffer_t *buffer; /* external shared buffer */
 	my1image_t *docopy; /* if supplied, copy to this struct! */
-	pfilter_t filter;
+	pfilter_t filter; /* pointer to filter function */
 	struct _my1image_filter_t *next, *last; /* linked list - last in list */
 }
 my1image_filter_t;
@@ -71,6 +72,7 @@ void image_fill_region(my1image_t *img, int val, my1region_t *reg);
 void buffer_init(my1image_buffer_t* ibuff);
 void buffer_free(my1image_buffer_t* ibuff);
 void buffer_size(my1image_buffer_t* ibuff, int height, int width);
+void buffer_size_all(my1image_buffer_t* ibuff, int height, int width);
 void buffer_swap(my1image_buffer_t* ibuff);
 /* generic filter */
 void filter_init(my1image_filter_t* pfilter,

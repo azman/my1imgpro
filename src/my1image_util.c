@@ -156,20 +156,29 @@ void buffer_init(my1image_buffer_t* ibuff)
 	ibuff->curr = &ibuff->main;
 	ibuff->next = &ibuff->buff;
 	ibuff->temp = 0x0; /* not necessary */
-	image_init(ibuff->curr);
-	image_init(ibuff->next);
+	image_init(&ibuff->main);
+	image_init(&ibuff->buff);
+	image_init(&ibuff->xtra);
 }
 /*----------------------------------------------------------------------------*/
 void buffer_free(my1image_buffer_t* ibuff)
 {
-	image_free(ibuff->curr);
-	image_free(ibuff->next);
+	image_free(&ibuff->main);
+	image_free(&ibuff->buff);
+	image_free(&ibuff->xtra);
 }
 /*----------------------------------------------------------------------------*/
 void buffer_size(my1image_buffer_t* ibuff, int height, int width)
 {
-	image_make(ibuff->curr,height,width);
-	image_make(ibuff->next,height,width);
+	image_make(&ibuff->main,height,width);
+	image_make(&ibuff->buff,height,width);
+}
+/*----------------------------------------------------------------------------*/
+void buffer_size_all(my1image_buffer_t* ibuff, int height, int width)
+{
+	image_make(&ibuff->main,height,width);
+	image_make(&ibuff->buff,height,width);
+	image_make(&ibuff->xtra,height,width);
 }
 /*----------------------------------------------------------------------------*/
 void buffer_swap(my1image_buffer_t* ibuff)
@@ -183,7 +192,7 @@ void filter_init(my1image_filter_t* pfilter,
 	pfilter_t filter, my1buffer_t *buffer)
 {
 	pfilter->name[0] = 0x0; /* anonymous */
-	pfilter->userdata = 0x0;
+	pfilter->data = 0x0;
 	pfilter->buffer = buffer;
 	pfilter->docopy = 0x0;
 	pfilter->filter = filter;
@@ -224,7 +233,7 @@ my1image_t* image_filter(my1image_t* image, my1filter_t* pfilter)
 		if (pfilter->filter&&pfilter->buffer)
 		{
 			my1image_buffer_t *pbuff = pfilter->buffer;
-			pfilter->filter(image,pbuff->next,pfilter->userdata);
+			pfilter->filter(image,pbuff->next,pfilter->data);
 			buffer_swap(pbuff);
 			image = pbuff->curr;
 			/* in case we need a copy of this stage output! */
