@@ -373,27 +373,27 @@ int encode_bgr(cbyte r, cbyte g, cbyte b)
 	return (((int)b&0xff)<<16) | (((int)g&0xff)<<8) | ((int)r&0xff);
 }
 /*----------------------------------------------------------------------------*/
-void image_color2bgr(my1image_t *image)
+void image_copy_color2bgr(my1image_t *dst, my1image_t *src)
 {
 	int loop;
-	if (image->mask==IMASK_COLOR24)
+	if (src->mask==IMASK_COLOR24)
 	{
-		cbyte *that, swap;
-		for(loop=0;loop<image->length;loop++)
+		cbyte *that;
+		for(loop=0;loop<src->length;loop++)
 		{
-			that = (cbyte*) &image->data[loop];
-			swap = that[0];
-			that[0] = that[2];
-			that[2] = swap;
+			that = (cbyte*) &src->data[loop];
+			dst->data[loop] = encode_bgr(that[2],that[1],that[0]);
 		}
 	}
 	else
 	{
-		for(loop=0;loop<image->length;loop++)
-			image->data[loop] = encode_bgr(image->data[loop],
-				image->data[loop],image->data[loop]);
-		image->mask = IMASK_COLOR24;
+		for(loop=0;loop<src->length;loop++)
+		{
+			dst->data[loop] = encode_bgr(src->data[loop],
+				src->data[loop],src->data[loop]);
+		}
 	}
+	dst->mask = IMASK_COLOR24;
 }
 /*----------------------------------------------------------------------------*/
 int encode_rgb(cbyte r, cbyte g, cbyte b)

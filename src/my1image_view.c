@@ -9,11 +9,12 @@ void image_view_init(my1image_view_t* iview)
 	iview->width = -1;
 	iview->height = -1;
 	iview->image = 0x0;
+	image_init(&iview->buff);
 }
 /*----------------------------------------------------------------------------*/
 void image_view_free(my1image_view_t* iview)
 {
-	/** nothing to free */
+	image_free(&iview->buff);
 }
 /*----------------------------------------------------------------------------*/
 void image_view_make(my1image_view_t* iview, my1image_t* that)
@@ -29,6 +30,7 @@ void image_view_make(my1image_view_t* iview, my1image_t* that)
 	{
 		iview->width = iview->image->width;
 		iview->height = iview->image->height;
+		image_make(&iview->buff,iview->height,iview->width);
 	}
 	/* create window */
 	iview->window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
@@ -58,14 +60,15 @@ void image_view_draw(my1image_view_t* iview, my1image_t* that)
 			iview->image->width,iview->image->height);
 		iview->width = iview->image->width;
 		iview->height = iview->image->height;
+		image_make(&iview->buff,iview->height,iview->width);
 	}
 	/* colormode abgr32 for gdk function */
-	image_color2bgr(iview->image);
+	image_copy_color2bgr(&iview->buff,iview->image);
 	/* draw! */
 	gdk_draw_rgb_32_image(iview->canvas->window,
 		iview->canvas->style->fg_gc[GTK_STATE_NORMAL],
-		0, 0, iview->image->width, iview->image->height, GDK_RGB_DITHER_NONE,
-		(const guchar*)iview->image->data, iview->image->width*4);
+		0, 0, iview->buff.width, iview->buff.height, GDK_RGB_DITHER_NONE,
+		(const guchar*)iview->buff.data, iview->buff.width*4);
 }
 /*----------------------------------------------------------------------------*/
 void image_view_name(my1image_view_t* iview,const char* name)
