@@ -261,13 +261,15 @@ void image_get_histogram(my1image_t *image, my1histogram_t *hist)
 		hist->count[temp]++;
 	}
 	/* get index for highest count */
-	hist->maxindex = 0;
 	temp = hist->count[0];
+	hist->chkindex = -1;
+	hist->maxindex = 0;
 	for(loop=1;loop<GRAYLEVEL;loop++)
 	{
 		if(hist->count[loop]>temp)
 		{
 			temp = hist->count[loop];
+			hist->chkindex = hist->maxindex;
 			hist->maxindex = loop;
 		}
 	}

@@ -13,6 +13,9 @@
 #define _FULL_PI_ (_PI_*2)
 #define _HALF_PI_ (_PI_/2)
 /*----------------------------------------------------------------------------*/
+#define MAX_WIDTH 640
+#define MAX_HEIGHT 480
+/*----------------------------------------------------------------------------*/
 #ifndef MY1APP_PROGNAME
 #define MY1APP_PROGNAME "my1image_test"
 #endif
@@ -36,7 +39,8 @@ typedef struct _my1image_test_t
 	my1image_view_t view;
 	my1image_buffer_t work;
 	my1image_filter_t ifilter_gray, ifilter_laplace1, ifilter_laplace2,
-		ifilter_sobelx, ifilter_sobely, ifilter_sobel, ifilter_gauss;
+		ifilter_sobelx, ifilter_sobely, ifilter_sobel,
+		ifilter_gauss, ifilter_canny;
 	my1image_filter_t *pfilter;
 }
 my1image_test_t;
@@ -54,6 +58,7 @@ void image_test_init(my1image_test_t* test)
 	filter_init(&test->ifilter_sobely,filter_sobel_y,&test->work);
 	filter_init(&test->ifilter_sobel,filter_sobel,&test->work);
 	filter_init(&test->ifilter_gauss,filter_gauss,&test->work);
+	filter_init(&test->ifilter_canny,filter_canny,&test->work);
 	test->pfilter = 0x0;
 }
 /*----------------------------------------------------------------------------*/
@@ -62,12 +67,14 @@ void image_test_free(my1image_test_t* test)
 	image_free(&test->currimage);
 	image_view_free(&test->view);
 	buffer_free(&test->work);
+	filter_free(&test->ifilter_gray);
 	filter_free(&test->ifilter_laplace1);
 	filter_free(&test->ifilter_laplace2);
 	filter_free(&test->ifilter_sobelx);
 	filter_free(&test->ifilter_sobely);
 	filter_free(&test->ifilter_sobel);
 	filter_free(&test->ifilter_gauss);
+	filter_free(&test->ifilter_canny);
 }
 /*----------------------------------------------------------------------------*/
 void print_image_info(my1image_t* image)
@@ -86,15 +93,7 @@ void about(void)
 	printf("  --view  : show image (with user interface options)\n");
 	printf("  --help  : show this message - overrides ALL above options\n");
 	printf("Filters available (grayscale implied):\n");
-	printf("  laplace1, laplace2, sobelx, sobely, sobel, gauss\n\n");
-}
-/*----------------------------------------------------------------------------*/
-gboolean on_draw_expose(GtkWidget *widget, GdkEventExpose *event,
-	gpointer user_data)
-{
-	my1image_test_t* p = (my1image_test_t*) user_data;
-	image_view_draw(&p->view,p->image);
-	return TRUE;
+	printf("  laplace1, laplace2, sobelx, sobely, sobel, gauss, canny\n\n");
 }
 /*----------------------------------------------------------------------------*/
 void set_menu_position(GtkMenu *menu, gint *x, gint *y,
@@ -149,6 +148,7 @@ void on_image_original(my1image_test_t *q)
 	image_copy(q->image,&q->currimage);
 	q->image->mask = q->currimage.mask;
 	image_view_draw(&q->view,q->image);
+	image_view_stat_time(&q->view,"Original Image restored!",1);
 }
 /*----------------------------------------------------------------------------*/
 void on_image_grayscale(my1image_test_t *q)
@@ -223,6 +223,14 @@ void on_image_gaussian(my1image_test_t *q)
 	image_view_draw(&q->view,q->image);
 }
 /*----------------------------------------------------------------------------*/
+void on_image_canny(my1image_test_t *q)
+{
+	q->pfilter = filter_insert(0x0,&q->ifilter_gray);
+	q->pfilter = filter_insert(q->pfilter,&q->ifilter_canny);
+	q->image = image_filter(q->image,q->pfilter);
+	image_view_draw(&q->view,q->image);
+}
+/*----------------------------------------------------------------------------*/
 void on_image_normalize(my1image_test_t *q)
 {
 	image_grayscale(q->image);
@@ -262,14 +270,17 @@ void on_image_flip_h(my1image_test_t *q)
 	image_view_draw(&q->view,q->image);
 }
 /*----------------------------------------------------------------------------*/
+void on_toggle_histogram(my1image_test_t *q, GtkCheckMenuItem *menu_item)
+{
+	q->view.gohist = !q->view.gohist;
+	gtk_check_menu_item_set_active(menu_item,q->view.gohist?TRUE:FALSE);
+	image_view_show_hist(&q->view);
+}
+/*----------------------------------------------------------------------------*/
 void image_test_events(my1image_test_t* test)
 {
-	g_signal_connect(G_OBJECT(test->view.window),"destroy",
-		G_CALLBACK(gtk_main_quit),0x0);
 	g_signal_connect(G_OBJECT(test->view.window),"key_press_event",
 		G_CALLBACK(on_key_press),(gpointer)test);
-	g_signal_connect(G_OBJECT(test->view.canvas),"expose-event",
-		G_CALLBACK(on_draw_expose),(gpointer)test);
 }
 /*----------------------------------------------------------------------------*/
 void image_test_menu(my1image_test_t* test)
@@ -356,6 +367,12 @@ void image_test_menu(my1image_test_t* test)
 	g_signal_connect_swapped(G_OBJECT(menu_item),"activate",
 		G_CALLBACK(on_image_gaussian),(gpointer)test);
 	gtk_widget_show(menu_item);
+	/* canny menu */
+	menu_item = gtk_menu_item_new_with_mnemonic("_Canny");
+	gtk_menu_shell_append(GTK_MENU_SHELL(menu_subs),menu_item);
+	g_signal_connect_swapped(G_OBJECT(menu_item),"activate",
+		G_CALLBACK(on_image_canny),(gpointer)test);
+	gtk_widget_show(menu_item);
 	/* temp menu to insert as sub-menu */
 	menu_temp = gtk_menu_item_new_with_mnemonic("_Filters");
 	gtk_menu_item_set_submenu(GTK_MENU_ITEM(menu_temp),menu_subs);
@@ -388,8 +405,13 @@ void image_test_menu(my1image_test_t* test)
 	/* add to main menu */
 	gtk_menu_shell_append(GTK_MENU_SHELL(menu_main),menu_temp);
 	gtk_widget_show(menu_temp);
-	/* quit menu */
-	/**menu_item = gtk_menu_item_new_with_label("Quit");*/
+	/* test menu item */
+	menu_item = gtk_check_menu_item_new_with_label("Histogram");
+	gtk_menu_shell_append(GTK_MENU_SHELL(menu_main),menu_item);
+	g_signal_connect_swapped(G_OBJECT(menu_item),"activate",
+		G_CALLBACK(on_toggle_histogram),(gpointer)test);
+	gtk_widget_show(menu_item);
+	/* quit menu item */
 	menu_item = gtk_menu_item_new_with_mnemonic("_Quit");
 	gtk_menu_shell_append(GTK_MENU_SHELL(menu_main),menu_item);
 	g_signal_connect(G_OBJECT(menu_item),"activate",
@@ -496,6 +518,12 @@ int main(int argc, char* argv[])
 						q.pfilter = filter_insert(q.pfilter,&q.ifilter_gray);
 					q.pfilter = filter_insert(q.pfilter,&q.ifilter_gauss);
 				}
+				else if(!strcmp(argv[loop],"canny"))
+				{
+					if (!q.pfilter)
+						q.pfilter = filter_insert(q.pfilter,&q.ifilter_gray);
+					q.pfilter = filter_insert(q.pfilter,&q.ifilter_canny);
+				}
 				else
 				{
 					printf("Unknown parameter %s!\n",argv[loop]);
@@ -557,6 +585,8 @@ int main(int argc, char* argv[])
 		printf(": '%s'!\n\n",pname);
 		return error;
 	}
+
+	/* prepare buffer */
 	buffer_size(&q.work,q.currimage.height,q.currimage.width);
 	image_copy(q.work.curr,&q.currimage);
 	q.image = q.work.curr;
@@ -612,11 +642,22 @@ int main(int argc, char* argv[])
 	/* check request for ui */
 	if (view)
 	{
+		/* check size for gui */
+		image_copy(q.work.curr,&q.currimage);
+		image_size_this(q.work.curr,&q.currimage,MAX_HEIGHT,MAX_WIDTH);
+		buffer_size_all(&q.work,q.currimage.height,q.currimage.width);
+		image_copy(q.work.curr,&q.currimage);
+		q.image = q.work.curr;
+		/* display processed info */
+		printf("View image:\n");
+		print_image_info(q.image);
 		/* initialize gui */
 		gtk_init(&argc,&argv);
 		/* make image_view */
 		image_view_make(&q.view,q.image);
 		image_view_draw(&q.view,q.image);
+		/* allow histogram */
+		image_view_make_hist(&q.view);
 		/* event handlers */
 		image_test_events(&q);
 		/* menu stuff */

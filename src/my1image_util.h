@@ -46,7 +46,7 @@ my1image_filter_t;
 /*----------------------------------------------------------------------------*/
 typedef struct _my1image_histogram_t
 {
-	int maxindex;
+	int maxindex, chkindex; /* find 2 highest peak */
 	int count[GRAYLEVEL]; /* grayscale level count */
 }
 my1image_histogram_t;
