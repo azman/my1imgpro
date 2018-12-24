@@ -7,12 +7,7 @@
 typedef unsigned char vbyte;
 typedef my1image_filter_t my1vpass_t;
 typedef my1image_buffer_t my1vbuff_t;
-/*----------------------------------------------------------------------------*/
-typedef struct
-{
-	vbyte b,g,r,a;
-}
-vrgb;
+typedef my1image_rgb_t vrgb_t;
 /*----------------------------------------------------------------------------*/
 typedef struct _my1vdata_t
 {
@@ -58,10 +53,10 @@ void video_filter(my1video_t *video);
 /* for streaming frames */
 void video_post_frame(my1video_t *video);
 /* color conversion helper functions */
-int encode_vrgb(vrgb colorpix);
-vrgb decode_vrgb(int rgbcode);
-int vrgb2gray(vrgb colorpix);
-vrgb gray2vrgb(int grayvalue);
+int encode_vrgb(vrgb_t colorpix);
+vrgb_t decode_vrgb(int rgbcode);
+int vrgb2gray(vrgb_t colorpix);
+vrgb_t gray2vrgb(int grayvalue);
 int color2gray(int rgbcode);
 int gray2color(int grayvalue);
 /*----------------------------------------------------------------------------*/

@@ -87,7 +87,7 @@ void video_filter_init(my1video_t *video, my1vpass_t *vpass)
 	{
 		/* allow filters to use external buffer */
 		if (!ptask->buffer) ptask->buffer = &video->vbuff;
-		ptask->userdata = (void*) &video->vdata;
+		ptask->data = (void*) &video->vdata;
 		ptask = ptask->next;
 	}
 	video->filter = vpass;
@@ -110,29 +110,31 @@ void video_post_frame(my1video_t *video)
 	}
 }
 /*----------------------------------------------------------------------------*/
-int encode_vrgb(vrgb colorpix)
+int encode_vrgb(vrgb_t colorpix)
 {
 	return encode_rgb(colorpix.r,colorpix.g,colorpix.b);
 }
 /*----------------------------------------------------------------------------*/
-vrgb decode_vrgb(int rgbcode)
+vrgb_t decode_vrgb(int rgbcode)
 {
-	vrgb cpix;
+	vrgb_t cpix;
 	decode_rgb(rgbcode,&cpix.r,&cpix.g,&cpix.b);
 	return cpix;
 }
 /*----------------------------------------------------------------------------*/
-int vrgb2gray(vrgb colorpix)
+int vrgb2gray(vrgb_t colorpix)
 {
-	return ((int)colorpix.b+colorpix.g+colorpix.r)/3;
+	int *buff = (int*) &colorpix;
+	return color2gray(*buff);
 }
 /*----------------------------------------------------------------------------*/
-vrgb gray2vrgb(int grayvalue)
+vrgb_t gray2vrgb(int grayvalue)
 {
-	vrgb cpix;
-	cpix.b = (vbyte) grayvalue;
-	cpix.g = (vbyte) grayvalue;
+	vrgb_t cpix;
+	cpix.a = 0;
 	cpix.r = (vbyte) grayvalue;
+	cpix.g = (vbyte) grayvalue;
+	cpix.b = (vbyte) grayvalue;
 	return cpix;
 }
 /*----------------------------------------------------------------------------*/

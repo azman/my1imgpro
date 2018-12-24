@@ -44,7 +44,7 @@ gboolean on_timer_callback(gpointer data)
 		video_filter(video);
 		if (video->count>=0)
 			printf("Video frame index: %d/%d\n", video->index, video->count);
-		display_view((my1video_display_t*)video->display);
+		display_draw((my1video_display_t*)video->display);
 	}
 	if(keyval == GDK_KEY_Escape||
 		keyval == GDK_KEY_q)
@@ -135,14 +135,6 @@ gint on_key_press(GtkWidget *widget, GdkEventKey *kevent, gpointer data)
 	return FALSE;
 }
 /*----------------------------------------------------------------------------*/
-gboolean on_draw_expose(GtkWidget *widget, GdkEventExpose *event,
-	gpointer user_data)
-{
-	my1video_display_t* object = (my1video_display_t*) user_data;
-	display_draw(object);
-	return TRUE;
-}
-/*----------------------------------------------------------------------------*/
 int main(int argc, char* argv[])
 {
 	my1video_t cMain;
@@ -222,19 +214,20 @@ int main(int argc, char* argv[])
 		capture_file(&cCapture,pfilename);
 	else if (pdevice)
 		capture_live(&cCapture,pdevice);
+
+	printf("[DEBUG]{Video:%p,View:%p}\n",cMain.frame,cDisplay.view.canvas);
 	display_make(&cDisplay);
+	printf("[DEBUG]{Video:%p,View:%p}\n",cMain.frame,cDisplay.view.canvas);
+	display_draw(&cDisplay);
+	printf("[DEBUG]{Video:%p,View:%p}\n",cMain.frame,cDisplay.view.canvas);
 	display_name(&cDisplay, "MY1 Video Test",0x0);
 
 	printf("Press 'h' for hotkeys.\n");
 	printf("Starting main capture loop.\n");
 
 	/* setup signals/timer */
-	gtk_signal_connect(GTK_OBJECT(cDisplay.dodraw),"expose-event",
-		GTK_SIGNAL_FUNC(on_draw_expose),(gpointer)&cDisplay);
-	g_signal_connect(G_OBJECT(cDisplay.window),"key_press_event",
+	g_signal_connect(G_OBJECT(cDisplay.view.window),"key_press_event",
 		G_CALLBACK(on_key_press),(gpointer)&cMain);
-	g_signal_connect(G_OBJECT(cDisplay.window),"destroy",
-		G_CALLBACK(gtk_main_quit),0x0);
 	timer = g_timeout_add (FRAME_NEXT_MS,on_timer_callback,(gpointer)&cMain);
 
 	/* main loop */

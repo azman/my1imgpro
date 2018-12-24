@@ -5,7 +5,7 @@
 #include "my1video.h"
 /*----------------------------------------------------------------------------*/
 #include <libavformat/avformat.h>
-#include <gtk/gtk.h>
+#include "my1image_view.h"
 /*----------------------------------------------------------------------------*/
 #define DEFAULT_TITLE "MY1 Video Tool"
 /*----------------------------------------------------------------------------*/
@@ -40,17 +40,15 @@ void capture_stop(my1video_capture_t* object);
 /*----------------------------------------------------------------------------*/
 typedef struct _my1video_display_t
 {
-	GtkWidget *window, *dodraw;
 	GdkPixbuf *pixbuf;
 	my1video_t *video; /* pure pointer to video object */
-	int h,w; /* current display size! */
+	my1image_view_t view;
 }
 my1video_display_t;
 /*----------------------------------------------------------------------------*/
 void display_init(my1video_display_t* object, my1video_t* video);
 void display_free(my1video_display_t* object);
 void display_make(my1video_display_t* object);
-void display_view(my1video_display_t* object);
 void display_draw(my1video_display_t* object);
 void display_name(my1video_display_t* object,
 	const char *name,const char *icon);

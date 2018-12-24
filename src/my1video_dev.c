@@ -8,7 +8,7 @@
 void image_get_frame(my1image_t* image, AVFrame* frame)
 {
 	int index,count;
-	vrgb temp;
+	vrgb_t temp;
 	for (index=0,count=0;index<image->length;index++)
 	{
 		if (image->mask)
@@ -27,8 +27,7 @@ void image_get_frame(my1image_t* image, AVFrame* frame)
 void image_set_frame(my1image_t* image, AVFrame* frame)
 {
 	int index, count;
-	vrgb temp;
-	image->mask = IMASK_COLOR24; /* rgb encoded int */
+	vrgb_t temp;
 	for (index=0,count=0;index<image->length;index++)
 	{
 		temp.b = frame->data[0][count++];
@@ -246,10 +245,25 @@ void capture_file(my1video_capture_t* object, char *filename)
 	if (!object->fcontext) return;
 	/* count frame? */
 	object->video->count = 0;
-	while (capture_grab_frame(object)) { object->video->count++; }
-	if (!object->video->count)
+	/* grab a 'sample' frame */
+	if (capture_grab_frame(object))
 	{
-		printf("Cannot get frame count in '%s'?\n",filename);
+		capture_form_frame(object); /* get frame in rgb format */
+		image_make(&object->video->image,
+			object->video->height,object->video->width);
+		/* capture_form_frame always convert rgb? */
+		object->video->image.mask = IMASK_COLOR24;
+		image_set_frame(&object->video->image,object->buffer);
+		object->video->frame = &object->video->image;
+		do
+		{
+			object->video->count++;
+		}
+		while (capture_grab_frame(object));
+	}
+	else
+	{
+		printf("Cannot get frames from '%s'?\n",filename);
 		exit(-1);
 	}
 #ifdef MY1DEBUG
@@ -271,6 +285,17 @@ void capture_live(my1video_capture_t* object, char *camname)
 	/* try to initialize? */
 	capture_core(object,camname);
 	if (!object->fcontext) return;
+	/* grab a 'sample' frame */
+	if (capture_grab_frame(object))
+	{
+		capture_form_frame(object); /* get frame in rgb format */
+		image_make(&object->video->image,
+			object->video->height,object->video->width);
+		/* capture_form_frame always convert rgb? */
+		object->video->image.mask = IMASK_COLOR24;
+		image_set_frame(&object->video->image,object->buffer);
+		object->video->frame = &object->video->image;
+	}
 	/* create/init device */
 	object->video->count = -1; /* already default! */
 	object->video->index = -1;
@@ -308,8 +333,9 @@ void capture_grab(my1video_capture_t* object)
 		capture_form_frame(object); /* get frame in rgb format */
 		image_make(&object->video->image,
 			object->video->height,object->video->width);
+		/* capture_form_frame always convert rgb? */
+		object->video->image.mask = IMASK_COLOR24;
 		image_set_frame(&object->video->image,object->buffer);
-		/**object->video->image.mask = IMASK_COLOR24;*/
 		object->video->frame = &object->video->image;
 		object->video->flags |= VIDEO_FLAG_NEW_FRAME;
 	}
@@ -336,12 +362,9 @@ void capture_stop(my1video_capture_t* object)
 /*----------------------------------------------------------------------------*/
 void display_init(my1video_display_t* object, my1video_t* video)
 {
-	object->window = 0x0;
-	object->dodraw = 0x0;
 	object->pixbuf = 0x0;
 	object->video = video;
-	object->h = -1;
-	object->w = -1;
+	image_view_init(&object->view);
 	video->display = (void*) object;
 }
 /*----------------------------------------------------------------------------*/
@@ -349,72 +372,28 @@ void display_free(my1video_display_t* object)
 {
 	if (object->pixbuf)
 		g_object_unref(object->pixbuf);
-}
-/*----------------------------------------------------------------------------*/
-void display_draw(my1video_display_t* object)
-{
-	my1image_t* image;
-	GtkWidget* widget;
-	/* must have image frame */
-	if (!object->video||!object->video->frame) return;
-	image = (my1image_t*) object->video->frame;
-	/* colormode abgr32 for gdk function */
-	image_color2bgr(image);
-	/* get widget and draw! */
-	widget = object->dodraw;
-	gdk_draw_rgb_32_image(widget->window,
-		widget->style->fg_gc[GTK_STATE_NORMAL],
-		0, 0, image->width, image->height,
-		GDK_RGB_DITHER_NONE, (const guchar*)image->data, image->width*4);
+	image_view_free(&object->view);
 }
 /*----------------------------------------------------------------------------*/
 void display_make(my1video_display_t* object)
 {
 	/* must have image frame */
-	if (!object->video) return;
-	/* check default size */
-	if (object->w<0||object->h<0)
-	{
-		object->w = object->video->width;
-		object->h = object->video->height;
-	}
-	/* create window */
-	object->window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
-	gtk_window_set_title(GTK_WINDOW(object->window),DEFAULT_TITLE);
-	gtk_window_set_default_size(GTK_WINDOW(object->window),object->w,object->h);
-	gtk_window_set_position(GTK_WINDOW(object->window),GTK_WIN_POS_CENTER);
-	gtk_window_set_resizable(GTK_WINDOW(object->window),FALSE);
-	/* deprecated in gtk3 in favor of cairo? */
-	object->dodraw = gtk_drawing_area_new();
-	gtk_widget_set_size_request(object->dodraw,object->w,object->h);
-	gtk_container_add(GTK_CONTAINER(object->window),object->dodraw);
-	gtk_widget_show_all(object->window);
+	if (!object->video||!object->video->frame) return;
+	image_view_make(&object->view,object->video->frame);
 }
 /*----------------------------------------------------------------------------*/
-void display_view(my1video_display_t* object)
+void display_draw(my1video_display_t* object)
 {
-	my1image_t *image;
 	/* must have image frame */
 	if (!object->video||!object->video->frame) return;
-	/* get current video frame */
-	image = object->video->frame;
-	/* check the need to resize window */
-	if (object->w!=image->width||object->h!=image->height)
-	{
-		gtk_widget_set_size_request(object->dodraw,image->width,image->height);
-		object->w = image->width;
-		object->h = image->height;
-	}
-	/* queue drawing */
-	/**gtk_widget_queue_draw(object->dodraw);*/
-	display_draw(object);
+	image_view_draw(&object->view,object->video->frame);
 }
 /*----------------------------------------------------------------------------*/
 void display_name(my1video_display_t* object,const char *name,const char *icon)
 {
 	if (!object->video) return;
 	/* set title */
-	gtk_window_set_title(GTK_WINDOW(object->window),name);
+	image_view_name(&object->view,name);
 	/* remove existing pixbuf */
 	if (object->pixbuf)
 		g_object_unref(object->pixbuf);
@@ -423,7 +402,7 @@ void display_name(my1video_display_t* object,const char *name,const char *icon)
 	{
 		object->pixbuf = gdk_pixbuf_new_from_file(icon,0x0);
 		if (object->pixbuf)
-			gtk_window_set_icon(GTK_WINDOW(object->window),object->pixbuf);
+			gtk_window_set_icon(GTK_WINDOW(object->view.window),object->pixbuf);
 	}
 }
 /*----------------------------------------------------------------------------*/
