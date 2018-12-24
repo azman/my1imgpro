@@ -58,6 +58,14 @@ void image_flip(my1image_t *image, my1image_t *check, int side); /* h/v */
 /*----------------------------------------------------------------------------*/
 typedef unsigned char cbyte; /** color byte */
 /*----------------------------------------------------------------------------*/
+typedef struct
+{
+	cbyte b,g,r,a;
+}
+my1image_rgb_t;
+/*----------------------------------------------------------------------------*/
+typedef my1image_rgb_t my1rgb_t;
+/*----------------------------------------------------------------------------*/
 /* color information - structure member 'mask' MUST BE assigned! */
 int image_assign_rgb(my1image_t *image, cbyte *rgb);
 int image_extract_rgb(my1image_t *image, cbyte *rgb);
@@ -70,8 +78,8 @@ void image_copy_color2bgr(my1image_t *dst, my1image_t *src);
 int encode_rgb(cbyte r, cbyte g, cbyte b);
 void decode_rgb(int data, cbyte *r, cbyte *g, cbyte *b);
 /* enforce gray/color value */
-int color2gray(int data);
 int gray2color(int data);
+int color2gray(int data);
 /*----------------------------------------------------------------------------*/
 #endif
 /*----------------------------------------------------------------------------*/
