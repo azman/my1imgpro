@@ -46,6 +46,7 @@ my1image_filter_t;
 /*----------------------------------------------------------------------------*/
 typedef struct _my1image_histogram_t
 {
+	int threshold; /* suggested threshold value? */
 	int maxindex, chkindex; /* find 2 highest peak */
 	int count[GRAYLEVEL]; /* grayscale level count */
 }
@@ -83,6 +84,8 @@ my1image_t* image_filter(my1image_t* image, my1filter_t* pfilter);
 /* grayscale histogram utility */
 void image_get_histogram(my1image_t *image, my1histogram_t *hist);
 void image_smooth_histogram(my1image_t *image, my1histogram_t *hist);
+/* histogram threshold utility */
+void histogram_get_threshold(my1histogram_t *hist);
 /*----------------------------------------------------------------------------*/
 #endif
 /*----------------------------------------------------------------------------*/

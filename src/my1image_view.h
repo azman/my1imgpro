@@ -19,7 +19,7 @@ typedef struct _my1image_view_t
 	GtkWidget *donext, *dohist, *dostat;
 	guint idstat, idmesg, idtime; /* gtk stuffs */
 	int width, height; /* current view size */
-	int gohist; /* histogram result, request flag */
+	int gohist; /* histogram request flag */
 	my1image_t *image; /* pure pointer to image object */
 	my1image_t buff; /* local buffer coz gdk uses abgr, not argb! */
 	my1image_histogram_t hist; /* histogram */
