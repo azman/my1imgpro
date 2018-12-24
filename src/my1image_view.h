@@ -7,9 +7,11 @@
 /*----------------------------------------------------------------------------*/
 #include <gtk/gtk.h>
 /*----------------------------------------------------------------------------*/
-#define HISTSIZE_W 320
-#define HISTSIZE_H 240
-#define HISTSIZE_B 10
+#define HISTSIZE_WIDTH 640
+#define HISTSIZE_HEIGHT 480
+#define HISTSIZE_BORDER 30
+#define HISTSIZE_BCHART 1
+#define HISTSIZE_BCHART_SKIP 1
 /*----------------------------------------------------------------------------*/
 typedef struct _my1image_view_t
 {

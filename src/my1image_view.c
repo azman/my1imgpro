@@ -41,20 +41,59 @@ gboolean on_draw_expose(GtkWidget *widget, GdkEventExpose *event,
 gboolean on_draw_hist_expose(GtkWidget *widget, GdkEventExpose *event,
 	gpointer user_data)
 {
+	int loop;
 	my1image_view_t* v = (my1image_view_t*) user_data;
+	my1image_histogram_t* h = &v->hist;
 	cairo_t *dodraw = gdk_cairo_create(v->dohist->window);
+	/* declared as double in case we want to use scaling later! */
+	double offs_x = (double)HISTSIZE_BORDER;
+	double offs_y = (double)HISTSIZE_BORDER;
+	double ends_x = (double)(HISTSIZE_WIDTH-HISTSIZE_BORDER);
+	double ends_y = (double)(HISTSIZE_HEIGHT-HISTSIZE_BORDER);
+	double bars_w = (double)HISTSIZE_BCHART;
+	double bars_d = (double)HISTSIZE_BCHART_SKIP;
+	double diff_y = ends_y-offs_y;
+	double next_x, next_y, size_y, yscale;
 	/* white background */
-	cairo_set_source_rgb(dodraw, 1.0, 1.0, 1.0);
+	cairo_set_source_rgb(dodraw,1.0,1.0,1.0);
 	cairo_paint(dodraw);
+	/* test text - blue! */
+	cairo_set_source_rgb(dodraw,0.0,0.0,1.0);
+	cairo_move_to(dodraw,40,20);
+	cairo_set_font_size(dodraw,12);
+	cairo_show_text(dodraw,"HISTOGRAM CHART");
 	if (v->image->mask==IMASK_GRAY)
 	{
-		image_get_histogram(v->image,&v->hist);
+		image_get_histogram(v->image,h);
+		/* scale drawing area */
+		/**cairo_scale(dodraw,HISTSIZE_WIDTH,HISTSIZE_HEIGHT);*/
+		/* x and y axis */
+		cairo_set_source_rgb(dodraw,0.0,0.0,1.0);
+		cairo_set_line_width(dodraw,1);
+		cairo_move_to(dodraw,ends_x,ends_y);
+		cairo_line_to(dodraw,offs_x,ends_y);
+		cairo_line_to(dodraw,offs_x,offs_y);
+		cairo_stroke(dodraw);
+		/* draw data bars */
+		cairo_set_source_rgb(dodraw,0.0,1.0,0.0);
+		next_x = offs_x + bars_d;
+		yscale = diff_y/h->count[h->maxindex];
+		for (loop=0;loop<GRAYLEVEL;loop++)
+		{
+			size_y = yscale*h->count[loop];
+			next_y = ends_y-size_y;
+			cairo_move_to(dodraw,next_x,ends_y);
+			cairo_rectangle(dodraw,next_x,next_y,bars_w,size_y);
+			cairo_fill(dodraw);
+			next_x += bars_w+bars_d;
+		}
+/*
+		cairo_set_source_rgb(dodraw,0.0,0.0,1.0);
+		cairo_move_to(dodraw,next_x,ends_y);
+		cairo_line_to(dodraw,next_x,offs_y);
+*/
+		cairo_stroke(dodraw);
 	}
-	/* test text - blue! */
-	cairo_set_source_rgb(dodraw, 0.0, 0.0, 1.0);
-	cairo_move_to(dodraw, 30, 30);
-	cairo_set_font_size(dodraw, 15);
-	cairo_show_text(dodraw, "HAHA");
 	cairo_destroy(dodraw);
 	return TRUE;
 }
@@ -147,11 +186,11 @@ void image_view_make_hist(my1image_view_t* iview)
 	iview->donext = gtk_window_new(GTK_WINDOW_TOPLEVEL);
 	gtk_window_set_title(GTK_WINDOW(iview->donext),"Histogram Viewer");
 	gtk_window_set_default_size(GTK_WINDOW(iview->donext),
-		HISTSIZE_W,HISTSIZE_H);
+		HISTSIZE_WIDTH,HISTSIZE_HEIGHT);
 	gtk_window_set_resizable(GTK_WINDOW(iview->donext),FALSE);
 	/* create draw canvas - deprecated in gtk3 in favor of cairo? */
 	iview->dohist = gtk_drawing_area_new();
-	gtk_widget_set_size_request(iview->dohist,HISTSIZE_W,HISTSIZE_H);
+	gtk_widget_set_size_request(iview->dohist,HISTSIZE_WIDTH,HISTSIZE_HEIGHT);
 	gtk_container_add(GTK_CONTAINER(iview->donext),iview->dohist);
 	/* connect event handlers */
 	g_signal_connect(G_OBJECT(iview->donext),"delete-event",
@@ -172,6 +211,7 @@ void image_view_show_hist(my1image_view_t* iview)
 		gdk_window_get_frame_extents(iview->window->window,&rect);
 		gtk_window_move(GTK_WINDOW(iview->donext),rect.x+rect.width,rect.y);
 		gtk_widget_show_all(iview->donext);
+		gtk_widget_queue_draw(iview->donext);
 	}
 	else
 	{
