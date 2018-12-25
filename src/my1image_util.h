@@ -48,6 +48,8 @@ typedef struct _my1image_histogram_t
 {
 	int threshold; /* suggested threshold value? */
 	int maxindex, chkindex; /* find 2 highest peak */
+	int maxvalue, chkvalue;
+	int minvalue, minindex;
 	int count[GRAYLEVEL]; /* grayscale level count */
 }
 my1image_histogram_t;

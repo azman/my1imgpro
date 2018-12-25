@@ -252,38 +252,58 @@ void image_get_histogram(my1image_t *image, my1histogram_t *hist)
 {
 	int loop, temp;
 	/* clear histogram */
-	for(loop=0;loop<GRAYLEVEL;loop++)
+	for (loop=0;loop<GRAYLEVEL;loop++)
 		hist->count[loop] = 0;
 	/* count! */
-	for(loop=0;loop<image->length;loop++)
+	for (loop=0;loop<image->length;loop++)
 	{
 		temp = image->data[loop];
 		hist->count[temp]++;
 	}
 	/* get index for highest count */
 	temp = hist->count[0];
+	hist->chkvalue = temp;
 	hist->chkindex = -1;
-	hist->maxindex = temp?0:-1;
-	for(loop=1;loop<GRAYLEVEL;loop++)
+	hist->maxvalue = temp;
+	hist->maxindex = 0;
+	hist->minvalue = temp;
+	hist->minindex = 0;
+	for (loop=1;loop<GRAYLEVEL;loop++)
 	{
-		if(hist->count[loop]>temp)
+		temp = hist->count[loop];
+		if (temp>hist->maxvalue)
 		{
-			temp = hist->count[loop];
+			hist->chkvalue = hist->maxvalue;
 			hist->chkindex = hist->maxindex;
+			hist->maxvalue = temp;
 			hist->maxindex = loop;
+		}
+		/* in case first value IS maximum value */
+		if (temp>hist->chkvalue)
+		{
+			if (loop!=hist->maxindex)
+			{
+				hist->chkvalue = temp;
+				hist->chkindex = loop;
+			}
+		}
+		/* look for non-zero minimum count */
+		if (temp<hist->minvalue||!hist->minvalue)
+		{
+			hist->minvalue = temp;
+			hist->minindex = loop;
 		}
 	}
 }
 /*----------------------------------------------------------------------------*/
 void image_smooth_histogram(my1image_t *image, my1histogram_t *hist)
 {
-	int loop;
-	float alpha = (float) WHITE/image->length;
-	for(loop=0;loop<image->length;loop++)
-	{
-		float buff = hist->count[image->data[loop]] * alpha;
-		image->data[loop] = (int) buff;
-	}
+	int loop, size = image->length, buff[GRAYLEVEL];
+	float alpha = (float)WHITE/image->length;
+	for (loop=1;loop<GRAYLEVEL;loop++)
+		buff[loop] = (int)(hist->count[loop]*alpha);
+	for(loop=0;loop<size;loop++)
+		image->data[loop] = buff[image->data[loop]];
 }
 /*----------------------------------------------------------------------------*/
 void histogram_get_threshold(my1histogram_t *hist)
@@ -301,7 +321,7 @@ void histogram_get_threshold(my1histogram_t *hist)
 	{
 		if (chkr>chkl)
 		{
-			while (!(temp=hist->count[ends--]);
+			while (!(temp=hist->count[ends--]));
 			chkr -= temp;
 			if (((init+ends)>>1)<mids)
 			{
@@ -312,7 +332,7 @@ void histogram_get_threshold(my1histogram_t *hist)
 		}
 		else /**if (chkl>=chkr)*/
 		{
-			while (!(temp=hist->count[init++]);
+			while (!(temp=hist->count[init++]));
 			chkl -= temp;
 			if (((init+ends)>>1)>=mids)
 			{
