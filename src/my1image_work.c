@@ -1,9 +1,10 @@
 /*----------------------------------------------------------------------------*/
 #include "my1image_work.h"
 #include "my1image_util.h"
-/* heed the following for laplace2 */
+/* need the following for laplace2 */
 #include "my1image_fpo.h"
 /*----------------------------------------------------------------------------*/
+/* need for sqrt in sobel */
 #include <math.h>
 /*----------------------------------------------------------------------------*/
 my1image_t* filter_gray(my1image_t* img, my1image_t* res, void* data)
@@ -150,6 +151,7 @@ my1image_t* filter_laplace_2(my1image_t* img, my1image_t* res, void* data)
 	frame_free(&buff1);
 	frame_free(&buff2);
 	frame_kernel_free(&kernel);
+	res->mask = IMASK_GRAY;
 	return res;
 }
 /*----------------------------------------------------------------------------*/
@@ -263,8 +265,8 @@ my1image_t* filter_sobel(my1image_t* img, my1image_t* res, void* data)
 			image_set_pixel(chk,irow,icol,p);
 		}
 	}
-	image_limit(res);
 	res->mask = IMASK_GRAY;
+	image_limit(res);
 	/* clean-up */
 	image_free(&buff1);
 	image_free(&buff2);
@@ -280,67 +282,123 @@ my1image_t* filter_gauss(my1image_t* img, my1image_t* res, void* data)
 	return res;
 }
 /*----------------------------------------------------------------------------*/
+my1image_t* filter_maxscale(my1image_t* img, my1image_t* res, void* data)
+{
+	int loop, size = img->length, pmax = img->data[0], temp;
+	image_make(res,img->height,img->width);
+	/* find max value, stretch if less than GRAYLEVEL/2 */
+	for (loop=1;loop<size;loop++)
+	{
+		temp = img->data[loop];
+		if (temp>pmax)
+			pmax = temp;
+	}
+	if (pmax<GRAYLEVEL>>1)
+		pmax = GRAYLEVEL-pmax;
+	else pmax = 0;
+	for (loop=0;loop<size;loop++)
+		res->data[loop] = img->data[loop] + pmax;
+	res->mask = IMASK_GRAY;
+	return res;
+}
+/*----------------------------------------------------------------------------*/
+#define CHECK_TOP 0
+#define CHECK_BOTTOM 1
+#define CHECK_LEFT 2
+#define CHECK_RIGHT 3
+#define CHECK_TOP_LEFT 4
+#define CHECK_BOTTOM_RIGHT 5
+#define CHECK_TOP_RIGHT 6
+#define CHECK_BOTTOM_LEFT 7
+/*----------------------------------------------------------------------------*/
 int image_check_suppress(my1image_t *img, my1image_t *chk, int pref, int pchk)
 {
-	int edge = img->data[pref];
+	int pick, temp, edge = img->data[pref];
+	switch (pchk)
+	{
+		default:
+		case CHECK_TOP: pick = pref-img->width; break;
+		case CHECK_BOTTOM: pick = pref+img->width; break;
+		case CHECK_LEFT: pick = pref-1; break;
+		case CHECK_RIGHT: pick = pref+1; break;
+		case CHECK_TOP_LEFT: pick = pref-img->width-1; break;
+		case CHECK_BOTTOM_RIGHT: pick = pref+img->width+1; break;
+		case CHECK_TOP_RIGHT: pick = pref-img->width+1; break;
+		case CHECK_BOTTOM_LEFT: pick = pref-img->width-1; break;
+	}
 	/* check valid index */
-	if (pchk<0||pchk>=img->length||!edge)
+	if (pick<0||pick>=img->length)
 		return edge;
 	/* suppress if parallel and stronger edge */
-	if (chk->data[pchk]==chk->data[pref]&&img->data[pchk]>edge)
-		edge = 0;
+	if (chk->data[pick]==chk->data[pref])
+	{
+		temp = img->data[pick];
+		if (temp>edge)
+			edge = 0;
+		else
+		{
+			if (temp==edge)
+			{
+				/* check further if going 'downwards' */
+				switch (pchk)
+				{
+					case CHECK_BOTTOM:
+					case CHECK_RIGHT:
+					case CHECK_BOTTOM_RIGHT:
+					case CHECK_BOTTOM_LEFT:
+						temp = image_check_suppress(img,chk,pick,pchk);
+						if (!temp) edge = 0;
+						break;
+				}
+			}
+		}
+	}
 	return edge;
 }
 /*----------------------------------------------------------------------------*/
-void image_non_max_suppress(my1image_t *img, my1image_t *res, my1image_t *chk)
+my1image_t* filter_suppress(my1image_t* img, my1image_t* res, void* data)
 {
-	int loop, curr, buff;
-	for (loop=0;loop<img->length;loop++)
+	int loop, size = img->length, curr, buff;
+	my1image_t *chk = (my1image_t*) data;
+	image_make(res,img->height,img->width);
+	for (loop=0;loop<size;loop++)
 	{
-		/* get current edge value */
-		curr = img->data[loop];
-		/* skip if no edge? */
-		if (!curr) continue;
-		/* get current edge direction */
-		buff = chk->data[loop]; /* edge dir */
 		/* dummy loop */
 		do
 		{
+			/* get current edge value */
+			curr = img->data[loop];
+			/* skip if no edge? */
+			if (!curr) break;
+			/* get current edge direction */
+			buff = chk->data[loop]; /* edge dir */
 			/* check based on edge direction */
 			if (buff==0)
 			{
-				/* get/check top index */
-				curr = image_check_suppress(img,chk,loop,loop-img->width);
+				curr = image_check_suppress(img,chk,loop,CHECK_TOP);
 				if (!curr) break;
-				/* get/check bottom index */
-				curr = image_check_suppress(img,chk,loop,loop+img->width);
+				curr = image_check_suppress(img,chk,loop,CHECK_BOTTOM);
 				if (!curr) break;
 			}
 			else if (buff==90)
 			{
-				/* get/check left index */
-				curr = image_check_suppress(img,chk,loop,loop-1);
+				curr = image_check_suppress(img,chk,loop,CHECK_LEFT);
 				if (!curr) break;
-				/* get/check right index */
-				curr = image_check_suppress(img,chk,loop,loop+1);
+				curr = image_check_suppress(img,chk,loop,CHECK_RIGHT);
 				if (!curr) break;
 			}
 			else if (buff==45)
 			{
-				/* get/check top-left index */
-				curr = image_check_suppress(img,chk,loop,loop-img->width-1);
+				curr = image_check_suppress(img,chk,loop,CHECK_TOP_LEFT);
 				if (!curr) break;
-				/* get/check bottom-right index */
-				curr = image_check_suppress(img,chk,loop,loop+img->width+1);
+				curr = image_check_suppress(img,chk,loop,CHECK_BOTTOM_RIGHT);
 				if (!curr) break;
 			}
 			else if (buff==135)
 			{
-				/* get/check top-right index */
-				curr = image_check_suppress(img,chk,loop,loop-img->width+1);
+				curr = image_check_suppress(img,chk,loop,CHECK_TOP_RIGHT);
 				if (!curr) break;
-				/* get/check bottom-left index */
-				curr = image_check_suppress(img,chk,loop,loop+img->width-1);
+				curr = image_check_suppress(img,chk,loop,CHECK_BOTTOM_LEFT);
 				if (!curr) break;
 			}
 		}
@@ -348,13 +406,35 @@ void image_non_max_suppress(my1image_t *img, my1image_t *res, my1image_t *chk)
 		/* assign new value */
 		res->data[loop] = curr;
 	}
+	res->mask = IMASK_GRAY;
+	return res;
+}
+/*----------------------------------------------------------------------------*/
+my1image_t* filter_threshold(my1image_t* img, my1image_t* res, void* data)
+{
+	int loop, size = img->length, temp;
+	my1image_histogram_t hist;
+	image_get_histogram(img,&hist);
+	histogram_get_threshold(&hist);
+	image_make(res,img->height,img->width);
+	for (loop=0;loop<size;loop++)
+	{
+		temp = img->data[loop];
+		if (temp>hist.threshold) temp = WHITE;
+		else temp = BLACK;
+		res->data[loop] = temp;
+	}
+	res->mask = IMASK_GRAY;
+	return res;
 }
 /*----------------------------------------------------------------------------*/
 void image_double_threshold(my1image_t *img, my1image_t *res, int hi, int lo)
 {
-	int loop, curr, weak = WHITE>>1, that, rows, cols;
+	int loop, size = img->length;
+	int curr, weak = WHITE>>1, that, rows, cols;
+	image_make(res,img->height,img->width);
 	/* separate into 3 */
-	for (loop=0;loop<img->length;loop++)
+	for (loop=0;loop<size;loop++)
 	{
 		/* get current edge value */
 		curr = img->data[loop];
@@ -388,33 +468,23 @@ void image_double_threshold(my1image_t *img, my1image_t *res, int hi, int lo)
 		if (curr!=WHITE) curr = BLACK;
 		res->data[loop] = curr;
 	}
+	res->mask = IMASK_GRAY;
 }
 /*----------------------------------------------------------------------------*/
 my1image_t* filter_canny(my1image_t* img, my1image_t* res, void* data)
 {
+	/** WORK IN PROGRESS */
 	my1image_buffer_t buff;
-	/* should i run gaussian? */
 	/* initialize buffer stuctures */
 	buffer_init(&buff);
-	/* create temporary buffers */
-	buffer_size(&buff,img->height,img->width);
-	/* create the extra buffer */
-	image_make(&buff.xtra,img->height,img->width);
-	buff.xtra.mask = IMASK_GRAY;
-	/* prepare resulting image structure */
-	image_make(res,img->height,img->width);
-	res->mask = IMASK_GRAY;
+	/* should i run gaussian? */
+	img = filter_gauss(img,buff.curr,0x0);
 	/* calculate directional edge */
-	//filter_sobel(img,&buff.main,(void*)&buff.buff);
-	filter_sobel(img,res,0x0);
-	/* clip weak edges */
-	//image_cliplo(&buff.main,WHITE/10);
-	image_cliplo(res,WHITE/5);
+	img = filter_sobel(img,buff.next,(void*)&buff.xtra);
 	/* non-maximum suppression */
-	//image_non_max_suppress(&buff.main,&buff.xtra,&buff.buff);
-	//image_non_max_suppress(&buff.main,res,&buff.buff);
+	img = filter_suppress(img,buff.curr,(void*)&buff.xtra);
 	/* hi-lo threshold? try-and-error values for now! */
-	//image_double_threshold(img,res,164,82);
+	image_double_threshold(img,res,164,82);
 	/* cleanup */
 	buffer_free(&buff);
 	return res;

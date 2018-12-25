@@ -34,13 +34,13 @@
 /*----------------------------------------------------------------------------*/
 typedef struct _my1image_test_t
 {
-	int check; /* used for key-press value */
 	my1image_t currimage, *image;
 	my1image_view_t view;
 	my1image_buffer_t work;
 	my1image_filter_t ifilter_gray, ifilter_laplace1, ifilter_laplace2,
 		ifilter_sobelx, ifilter_sobely, ifilter_sobel,
-		ifilter_gauss, ifilter_canny;
+		ifilter_gauss, ifilter_maxscale, ifilter_suppress,
+		ifilter_threshold, ifilter_canny;
 	my1image_filter_t *pfilter;
 }
 my1image_test_t;
@@ -58,7 +58,12 @@ void image_test_init(my1image_test_t* test)
 	filter_init(&test->ifilter_sobely,filter_sobel_y,&test->work);
 	filter_init(&test->ifilter_sobel,filter_sobel,&test->work);
 	filter_init(&test->ifilter_gauss,filter_gauss,&test->work);
+	filter_init(&test->ifilter_maxscale,filter_maxscale,&test->work);
+	filter_init(&test->ifilter_suppress,filter_suppress,&test->work);
+	filter_init(&test->ifilter_threshold,filter_threshold,&test->work);
 	filter_init(&test->ifilter_canny,filter_canny,&test->work);
+	test->ifilter_sobel.data = (void*) &test->work.xtra;
+	test->ifilter_suppress.data = (void*) &test->work.xtra;
 	test->pfilter = 0x0;
 }
 /*----------------------------------------------------------------------------*/
@@ -223,6 +228,31 @@ void on_image_gaussian(my1image_test_t *q)
 	image_view_draw(&q->view,q->image);
 }
 /*----------------------------------------------------------------------------*/
+void on_image_maxscale(my1image_test_t *q)
+{
+	q->pfilter = filter_insert(0x0,&q->ifilter_gray);
+	q->pfilter = filter_insert(q->pfilter,&q->ifilter_maxscale);
+	q->image = image_filter(q->image,q->pfilter);
+	image_view_draw(&q->view,q->image);
+}
+/*----------------------------------------------------------------------------*/
+void on_image_suppress(my1image_test_t *q)
+{
+	q->pfilter = filter_insert(0x0,&q->ifilter_gray);
+	q->pfilter = filter_insert(q->pfilter,&q->ifilter_sobel);
+	q->pfilter = filter_insert(q->pfilter,&q->ifilter_suppress);
+	q->image = image_filter(q->image,q->pfilter);
+	image_view_draw(&q->view,q->image);
+}
+/*----------------------------------------------------------------------------*/
+void on_image_threshold(my1image_test_t *q)
+{
+	q->pfilter = filter_insert(0x0,&q->ifilter_gray);
+	q->pfilter = filter_insert(q->pfilter,&q->ifilter_threshold);
+	q->image = image_filter(q->image,q->pfilter);
+	image_view_draw(&q->view,q->image);
+}
+/*----------------------------------------------------------------------------*/
 void on_image_canny(my1image_test_t *q)
 {
 	q->pfilter = filter_insert(0x0,&q->ifilter_gray);
@@ -235,14 +265,6 @@ void on_image_normalize(my1image_test_t *q)
 {
 	image_grayscale(q->image);
 	image_normalize(q->image);
-	image_view_draw(&q->view,q->image);
-}
-/*----------------------------------------------------------------------------*/
-void on_image_threshold(my1image_test_t *q)
-{
-	/* TODO: make this histogram based! */
-	image_grayscale(q->image);
-	image_binary(q->image,WHITE/10);
 	image_view_draw(&q->view,q->image);
 }
 /*----------------------------------------------------------------------------*/
@@ -317,12 +339,6 @@ void image_test_menu(my1image_test_t* test)
 	g_signal_connect_swapped(G_OBJECT(menu_item),"activate",
 		G_CALLBACK(on_image_normalize),(gpointer)test);
 	gtk_widget_show(menu_item);
-	/* threshold menu */
-	menu_item = gtk_menu_item_new_with_mnemonic("_Threshold");
-	gtk_menu_shell_append(GTK_MENU_SHELL(menu_subs),menu_item);
-	g_signal_connect_swapped(G_OBJECT(menu_item),"activate",
-		G_CALLBACK(on_image_threshold),(gpointer)test);
-	gtk_widget_show(menu_item);
 	/* temp menu to insert as sub-menu */
 	menu_temp = gtk_menu_item_new_with_mnemonic("_Image");
 	gtk_menu_item_set_submenu(GTK_MENU_ITEM(menu_temp),menu_subs);
@@ -366,6 +382,24 @@ void image_test_menu(my1image_test_t* test)
 	gtk_menu_shell_append(GTK_MENU_SHELL(menu_subs),menu_item);
 	g_signal_connect_swapped(G_OBJECT(menu_item),"activate",
 		G_CALLBACK(on_image_gaussian),(gpointer)test);
+	gtk_widget_show(menu_item);
+	/* maxscale menu */
+	menu_item = gtk_menu_item_new_with_mnemonic("_Max-Rescale");
+	gtk_menu_shell_append(GTK_MENU_SHELL(menu_subs),menu_item);
+	g_signal_connect_swapped(G_OBJECT(menu_item),"activate",
+		G_CALLBACK(on_image_maxscale),(gpointer)test);
+	gtk_widget_show(menu_item);
+	/* suppress menu */
+	menu_item = gtk_menu_item_new_with_mnemonic("_Suppress");
+	gtk_menu_shell_append(GTK_MENU_SHELL(menu_subs),menu_item);
+	g_signal_connect_swapped(G_OBJECT(menu_item),"activate",
+		G_CALLBACK(on_image_suppress),(gpointer)test);
+	gtk_widget_show(menu_item);
+	/* threshold menu */
+	menu_item = gtk_menu_item_new_with_mnemonic("_Threshold");
+	gtk_menu_shell_append(GTK_MENU_SHELL(menu_subs),menu_item);
+	g_signal_connect_swapped(G_OBJECT(menu_item),"activate",
+		G_CALLBACK(on_image_threshold),(gpointer)test);
 	gtk_widget_show(menu_item);
 	/* canny menu */
 	menu_item = gtk_menu_item_new_with_mnemonic("_Canny");

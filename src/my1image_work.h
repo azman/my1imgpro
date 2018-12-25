@@ -16,7 +16,9 @@ my1image_t* filter_sobel_x(my1image_t* img, my1image_t* res, void* data);
 my1image_t* filter_sobel_y(my1image_t* img, my1image_t* res, void* data);
 my1image_t* filter_sobel(my1image_t* img, my1image_t* res, void* data);
 my1image_t* filter_gauss(my1image_t* img, my1image_t* res, void* data);
-void image_non_max_suppress(my1image_t *img, my1image_t *res, my1image_t *chk);
+my1image_t* filter_maxscale(my1image_t* img, my1image_t* res, void* data);
+my1image_t* filter_suppress(my1image_t* img, my1image_t* res, void* data);
+my1image_t* filter_threshold(my1image_t* img, my1image_t* res, void* data);
 my1image_t* filter_canny(my1image_t* img, my1image_t* res, void* data);
 /*----------------------------------------------------------------------------*/
 #endif
