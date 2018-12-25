@@ -170,11 +170,11 @@ void image_normalize(my1image_t *image)
 	int loop, size = image->length;
 	int diff, temp, max = image->data[0], min = image->data[0];
 	/* get min max range */
-	for (loop=0;loop<size;loop++)
+	for (loop=1;loop<size;loop++)
 	{
 		temp = image->data[loop];
-		if (max<temp) max = temp;
-		if (min>temp) min = temp;
+		if (temp>max) max = temp;
+		if (temp<min) min = temp;
 	}
 	/* normalize to min-max scale! */
 	diff = max-min;
