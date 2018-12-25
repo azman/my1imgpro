@@ -17,7 +17,7 @@ typedef struct _my1image_view_t
 {
 	GtkWidget *window, *canvas, *domenu;
 	GtkWidget *donext, *dohist, *dostat, *dostxt;
-	guint idstat, idmesg, idtime, idstxt, idwhat; /* gtk stuffs */
+	guint idstat, idstxt, idtime; /* gtk stuffs */
 	int width, height; /* current view size */
 	int gohist; /* histogram request flag */
 	my1image_t *image; /* pure pointer to image object */
@@ -33,10 +33,11 @@ void image_view_draw(my1image_view_t* iview, my1image_t* that);
 void image_view_name(my1image_view_t* iview, const char* name);
 void image_view_make_hist(my1image_view_t* iview); /* to enable histogram */
 void image_view_show_hist(my1image_view_t* iview);
-void image_view_stat_push(my1image_view_t* iview, const char* stat);
+void image_view_stat_show(my1image_view_t* iview, const char* mesg);
+guint image_view_stat_push(my1image_view_t* iview, const char* mesg);
 void image_view_stat_pop(my1image_view_t* iview);
 void image_view_stat_remove(my1image_view_t* iview, guint mesg_id);
-void image_view_stat_time(my1image_view_t* iview, const char* stat, int secs);
+guint image_view_stat_time(my1image_view_t* iview, const char* mesg, int secs);
 /*----------------------------------------------------------------------------*/
 #endif
 /*----------------------------------------------------------------------------*/

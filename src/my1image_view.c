@@ -11,10 +11,8 @@ void image_view_init(my1image_view_t* iview)
 	iview->dostat = 0x0;
 	iview->dostxt = 0x0;
 	iview->idstat = 0;
-	iview->idmesg = 0;
-	iview->idtime = 0;
 	iview->idstxt = 0;
-	iview->idwhat = 0;
+	iview->idtime = 0;
 	iview->width = -1;
 	iview->height = -1;
 	iview->gohist = 0;
@@ -59,6 +57,8 @@ gboolean on_draw_hist_expose(GtkWidget *widget, GdkEventExpose *event,
 	double bars_d = (double)HISTSIZE_BCHART_SKIP;
 	double diff_y = ends_y-offs_y;
 	double next_x, next_y, size_y, yscale;
+	/* clear statusbar */
+	gtk_statusbar_remove_all((GtkStatusbar*)v->dostxt,v->idstxt);
 	/* white background */
 	cairo_set_source_rgb(dodraw,1.0,1.0,1.0);
 	cairo_paint(dodraw);
@@ -66,7 +66,7 @@ gboolean on_draw_hist_expose(GtkWidget *widget, GdkEventExpose *event,
 	cairo_set_source_rgb(dodraw,0.0,0.0,1.0);
 	cairo_move_to(dodraw,40,20);
 	cairo_set_font_size(dodraw,12);
-	cairo_show_text(dodraw,"HISTOGRAM CHART");
+	cairo_show_text(dodraw,"HISTOGRAM CHART (Grayscale Images Only)");
 	if (v->image->mask==IMASK_GRAY)
 	{
 		image_get_histogram(v->image,h);
@@ -115,9 +115,7 @@ gboolean on_draw_hist_expose(GtkWidget *widget, GdkEventExpose *event,
 			"Min:%d,Idx:%d,Max2:%d,Idx:%d",
 			v->image->length,step,h->maxvalue,h->maxindex,
 			h->minvalue,h->minindex,h->chkvalue,h->chkindex);
-		if (v->idwhat)
-			gtk_statusbar_pop((GtkStatusbar*)v->dostxt,v->idstxt);
-		v->idwhat = gtk_statusbar_push((GtkStatusbar*)v->dostxt,v->idstxt,buff);
+		gtk_statusbar_push((GtkStatusbar*)v->dostxt,v->idstxt,buff);
 /*
 		cairo_set_source_rgb(dodraw,0.0,0.0,1.0);
 		cairo_move_to(dodraw,next_x,ends_y);
@@ -165,7 +163,6 @@ void image_view_make(my1image_view_t* iview, my1image_t* that)
 	iview->dostat = gtk_statusbar_new();
 	iview->idstat = gtk_statusbar_get_context_id((GtkStatusbar*)iview->dostat,
 		"MY1ImageViewStat");
-	image_view_stat_push(iview,"MY1Image Viewer Status");
 	gtk_box_pack_start(GTK_BOX(vbox),iview->dostat,FALSE,FALSE,0);
 	/* connect event handlers */
 	g_signal_connect(G_OBJECT(iview->window),"destroy",
@@ -246,7 +243,7 @@ void image_view_show_hist(my1image_view_t* iview)
 	/* skip if histogram window not available */
 	if (!iview->donext) return;
 	/* show histogram if requested and image is grayscale */
-	if (iview->gohist&&iview->image->mask==IMASK_GRAY)
+	if (iview->gohist)
 	{
 		GdkRectangle rect;
 		/* update histogram window position & show it! */
@@ -261,16 +258,22 @@ void image_view_show_hist(my1image_view_t* iview)
 	}
 }
 /*----------------------------------------------------------------------------*/
-void image_view_stat_push(my1image_view_t* iview, const char* stat)
+void image_view_stat_show(my1image_view_t* iview, const char* mesg)
 {
-	iview->idmesg = gtk_statusbar_push((GtkStatusbar*)iview->dostat,
-		iview->idstat,stat);
+	/* remove all previous */
+	gtk_statusbar_remove_all((GtkStatusbar*)iview->dostat,iview->idstat);
+	/* show new */
+	gtk_statusbar_push((GtkStatusbar*)iview->dostat,iview->idstat,mesg);
+}
+/*----------------------------------------------------------------------------*/
+guint image_view_stat_push(my1image_view_t* iview, const char* mesg)
+{
+	return gtk_statusbar_push((GtkStatusbar*)iview->dostat,iview->idstat,mesg);
 }
 /*----------------------------------------------------------------------------*/
 void image_view_stat_pop(my1image_view_t* iview)
 {
 	gtk_statusbar_pop((GtkStatusbar*)iview->dostat,iview->idstat);
-	iview->idmesg = 0;
 }
 /*----------------------------------------------------------------------------*/
 void image_view_stat_remove(my1image_view_t* iview, guint mesg_id)
@@ -281,18 +284,15 @@ void image_view_stat_remove(my1image_view_t* iview, guint mesg_id)
 gboolean on_timer_status(gpointer data)
 {
 	my1image_view_t *view = (my1image_view_t*) data;
-	if (view->idtime)
-	{
-		image_view_stat_remove(view,view->idtime);
-		view->idtime = 0;
-	}
+	image_view_stat_remove(view,view->idtime);
+	view->idtime = 0;
 	return 0; /* a one-shot */
 }
 /*----------------------------------------------------------------------------*/
-void image_view_stat_time(my1image_view_t* iview, const char* stat, int secs)
+guint image_view_stat_time(my1image_view_t* iview, const char* mesg, int secs)
 {
-	image_view_stat_push(iview,stat);
-	iview->idtime = iview->idmesg;
+	iview->idtime = image_view_stat_push(iview,mesg);
 	g_timeout_add_seconds(secs,on_timer_status,(gpointer)iview);
+	return iview->idtime;
 }
 /*----------------------------------------------------------------------------*/
