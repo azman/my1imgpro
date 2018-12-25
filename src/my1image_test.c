@@ -15,6 +15,8 @@
 /*----------------------------------------------------------------------------*/
 #define MAX_WIDTH 640
 #define MAX_HEIGHT 480
+#define DEF_WIDTH 320
+#define DEF_HEIGHT 240
 /*----------------------------------------------------------------------------*/
 #ifndef MY1APP_PROGNAME
 #define MY1APP_PROGNAME "my1image_test"
@@ -305,6 +307,123 @@ void image_test_events(my1image_test_t* test)
 		G_CALLBACK(on_key_press),(gpointer)test);
 }
 /*----------------------------------------------------------------------------*/
+void on_file_open_main(my1image_test_t* test)
+{
+	GtkWidget *doopen = gtk_file_chooser_dialog_new("Open Image File",
+		GTK_WINDOW(test->view.window),GTK_FILE_CHOOSER_ACTION_OPEN,
+		GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
+		GTK_STOCK_OPEN, GTK_RESPONSE_ACCEPT, NULL);
+	if (gtk_dialog_run(GTK_DIALOG(doopen))==GTK_RESPONSE_ACCEPT)
+	{
+		int error;
+		my1image_t that;
+		gchar *filename, *buff = 0x0;
+		filename = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(doopen));
+		image_init(&that);
+		if((error=image_load(&that,filename))<0)
+		{
+			switch (error)
+			{
+				case BMP_ERROR_FILEOPEN:
+				case PNM_ERROR_FILEOPEN:
+					buff = g_strdup_printf("Error opening file! (%d){%s}",
+						error,filename);
+					break;
+				case BMP_ERROR_VALIDBMP:
+				case PNM_ERROR_VALIDPNM:
+				case FILE_ERROR_FORMAT:
+					buff = g_strdup_printf("Unsupported file format! (%d){%s}",
+						error,filename);
+					break;
+				case BMP_ERROR_RGBNGRAY:
+					buff = g_strdup_printf("Unsupported BMP format! (%d){%s}",
+						error,filename);
+					break;
+				case PNM_ERROR_NOSUPPORT:
+					buff = g_strdup_printf("Unsupported PNM format! (%d){%s}",
+						error,filename);
+					break;
+				case BMP_ERROR_FILESIZE:
+				case PNM_ERROR_FILESIZE:
+					buff = g_strdup_printf("Invalid file size! (%d){%s}",
+						error,filename);
+					break;
+				case BMP_ERROR_MEMALLOC:
+				case PNM_ERROR_MEMALLOC:
+					buff = g_strdup_printf("Cannot allocate memory! (%d){%s}",
+						error,filename);
+					break;
+				case BMP_ERROR_DIBINVAL:
+				case BMP_ERROR_COMPRESS:
+					buff = g_strdup_printf("Invalid BMP format! (%d){%s}",
+						error,filename);
+					break;
+				default:
+					buff = g_strdup_printf("Unknown error! (%d){%s}",
+						error,filename);
+			}
+			/* show show message dialog! */
+			printf("[ERROR] %s\n",buff);
+		}
+		else
+		{
+			printf("[CHECK] File '%s' loaded!\n",filename);
+			/* successful image file open */
+			buffer_size(&test->work,that.height,that.width);
+			image_copy(test->work.curr,&that);
+			test->image = image_size_this(test->work.curr,test->work.next,
+				MAX_HEIGHT,MAX_WIDTH);
+			if (test->image!=test->work.curr)
+				buffer_swap(&test->work);
+			image_copy(&test->currimage,test->image); /* keep original */
+			image_view_draw(&test->view,test->image);
+		}
+		image_free(&that);
+		if (buff) g_free(buff);
+		g_free (filename);
+	}
+	gtk_widget_destroy(doopen);
+ }
+/*----------------------------------------------------------------------------*/
+void on_file_save_main(my1image_test_t* test)
+{
+	GtkWidget *dosave = gtk_file_chooser_dialog_new("Save Image File",
+		GTK_WINDOW(test->view.window),GTK_FILE_CHOOSER_ACTION_SAVE,
+		GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
+		GTK_STOCK_SAVE, GTK_RESPONSE_ACCEPT, NULL);
+	gtk_file_chooser_set_do_overwrite_confirmation(GTK_FILE_CHOOSER(dosave),
+		TRUE);
+	if (gtk_dialog_run(GTK_DIALOG(dosave))==GTK_RESPONSE_ACCEPT)
+	{
+		int error;
+		gchar *filename, *buff = 0x0;
+		filename = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(dosave));
+		if ((error=image_save(test->image,filename))<0)
+		{
+			switch (error)
+			{
+				case BMP_ERROR_FILEOPEN:
+				case PNM_ERROR_FILEOPEN:
+					buff = g_strdup_printf("Write error! (%d){%s}",
+						error,filename);
+					break;
+				default:
+					buff = g_strdup_printf("Unknown error! (%d){%s}",
+						error,filename);
+			}
+			/* show show message dialog! */
+			printf("[ERROR] %s\n",buff);
+		}
+		else
+		{
+			printf("[CHECK] File '%s' saved! (%d)\n",filename,error);
+		}
+		if (buff) g_free(buff);
+		g_free (filename);
+	}
+	gtk_widget_destroy(dosave);
+ }
+/*----------------------------------------------------------------------------*/
 void image_test_menu(my1image_test_t* test)
 {
 	GtkWidget *menu_main, *menu_item, *menu_subs, *menu_temp;
@@ -313,6 +432,26 @@ void image_test_menu(my1image_test_t* test)
 	gtk_widget_add_events(test->view.canvas, GDK_BUTTON_PRESS_MASK);
 	g_signal_connect(GTK_OBJECT(test->view.canvas),"button-press-event",
 		G_CALLBACK(on_mouse_click),(gpointer)menu_main);
+	/* sub menu? */
+	menu_subs = gtk_menu_new();
+	/* file load menu */
+	menu_item = gtk_menu_item_new_with_mnemonic("_Open Image...");
+	gtk_menu_shell_append(GTK_MENU_SHELL(menu_subs),menu_item);
+	g_signal_connect_swapped(G_OBJECT(menu_item),"activate",
+		G_CALLBACK(on_file_open_main),(gpointer)test);
+	gtk_widget_show(menu_item);
+	/* file save as menu */
+	menu_item = gtk_menu_item_new_with_mnemonic("Save Image _As...");
+	gtk_menu_shell_append(GTK_MENU_SHELL(menu_subs),menu_item);
+	g_signal_connect_swapped(G_OBJECT(menu_item),"activate",
+		G_CALLBACK(on_file_save_main),(gpointer)test);
+	gtk_widget_show(menu_item);
+	/* temp menu to insert as sub-menu */
+	menu_temp = gtk_menu_item_new_with_mnemonic("_File");
+	gtk_menu_item_set_submenu(GTK_MENU_ITEM(menu_temp),menu_subs);
+	/* add to main menu */
+	gtk_menu_shell_append(GTK_MENU_SHELL(menu_main),menu_temp);
+	gtk_widget_show(menu_temp);
 	/* sub menu? */
 	menu_subs = gtk_menu_new();
 	/* original menu */
@@ -462,15 +601,12 @@ int main(int argc, char* argv[])
 	int loop, error = 0, view = 0, help = 0;
 	char *psave = 0x0, *pname = 0x0, *pdata = 0x0;
 	my1image_test_t q;
-
 	/* print tool info */
 	printf("\n%s - %s (%s)\n",
 		MY1APP_PROGNAME,MY1APP_PROGINFO,MY1APP_PROGVERS);
 	printf("  => by azman@my1matrix.org\n\n");
-
 	/* initialize image_test */
 	image_test_init(&q);
-
 	/* check program arguments */
 	if(argc>1)
 	{
@@ -566,125 +702,131 @@ int main(int argc, char* argv[])
 			}
 		}
 	}
-
 	/* check if user requested help */
 	if(help)
 	{
 		about();
 		return 0;
 	}
-
 	/** check input filename */
-	if(!pname)
+	if(pname)
 	{
-		printf("No filename given! Aborting!\n\n");
-		return ERROR_NOFILE;
-	}
-
-	/* try to open file */
-	if((error|=image_load(&q.currimage,pname))<0)
-	{
-		switch (error)
-		{
-			case BMP_ERROR_FILEOPEN:
-			case PNM_ERROR_FILEOPEN:
-				printf("Error opening file");
-				break;
-			case BMP_ERROR_VALIDBMP:
-			case PNM_ERROR_VALIDPNM:
-			case FILE_ERROR_FORMAT:
-				printf("Unsupported file format (%d)",error);
-				break;
-			case BMP_ERROR_RGBNGRAY:
-				printf("Unsupported BMP format");
-				break;
-			case PNM_ERROR_NOSUPPORT:
-				printf("Unsupported PNM format");
-				break;
-			case BMP_ERROR_FILESIZE:
-			case PNM_ERROR_FILESIZE:
-				printf("Invalid file size");
-				break;
-			case BMP_ERROR_MEMALLOC:
-			case PNM_ERROR_MEMALLOC:
-				printf("Unable to allocate memory");
-				break;
-			case BMP_ERROR_DIBINVAL:
-			case BMP_ERROR_COMPRESS:
-				printf("Invalid BMP format");
-				break;
-			default:
-				printf("Unknown error opening file (%d)",error);
-		}
-		printf(": '%s'!\n\n",pname);
-		return error;
-	}
-
-	/* prepare buffer */
-	buffer_size(&q.work,q.currimage.height,q.currimage.width);
-	image_copy(q.work.curr,&q.currimage);
-	q.image = q.work.curr;
-
-	/* display basic info */
-	printf("Input image: %s\n",pname);
-	print_image_info(q.image);
-
-	/* run image filter, if requested */
-	if (q.pfilter)
-	{
-		q.image = image_filter(q.image,q.pfilter);
-		image_absolute(q.image);
-		image_cliphi(q.image,WHITE);
-	}
-
-	/* display processed info */
-	printf("Check image:\n");
-	print_image_info(q.image);
-
-	/** save results if requested */
-	if(psave)
-	{
-		printf("Saving image data to %s...\n",psave);
-		if ((error|=image_save(q.image,psave))<0)
+		/* try to open file */
+		if((error=image_load(&q.currimage,pname))<0)
 		{
 			switch (error)
 			{
 				case BMP_ERROR_FILEOPEN:
 				case PNM_ERROR_FILEOPEN:
-					printf("Error writing file");
+					printf("Error opening file");
+					break;
+				case BMP_ERROR_VALIDBMP:
+				case PNM_ERROR_VALIDPNM:
+				case FILE_ERROR_FORMAT:
+					printf("Unsupported file format (%d)",error);
+					break;
+				case BMP_ERROR_RGBNGRAY:
+					printf("Unsupported BMP format");
+					break;
+				case PNM_ERROR_NOSUPPORT:
+					printf("Unsupported PNM format");
+					break;
+				case BMP_ERROR_FILESIZE:
+				case PNM_ERROR_FILESIZE:
+					printf("Invalid file size");
+					break;
+				case BMP_ERROR_MEMALLOC:
+				case PNM_ERROR_MEMALLOC:
+					printf("Unable to allocate memory");
+					break;
+				case BMP_ERROR_DIBINVAL:
+				case BMP_ERROR_COMPRESS:
+					printf("Invalid BMP format");
 					break;
 				default:
-					printf("Unknown error opening file");
+					printf("Unknown error opening file (%d)",error);
 			}
-			printf(":'%s'!\n",psave);
+			printf(": '%s'!\n\n",pname);
+			return error;
 		}
-		view = 0;
 	}
-
-	/** save c-formatted data if requested */
-	if(pdata)
+	else
 	{
-		printf("Saving C data to %s...\n",pdata);
-		switch (image_cdat(q.image,pdata))
+		if (!view)
 		{
-			case FILE_ERROR_OPEN:
-				printf("Error writing c file:'%s'!\n",pdata);
-				return error|FILE_ERROR_OPEN;
+			printf("No filename given! Aborting!\n\n");
+			return ERROR_NOFILE;
+		}
+		/* create blank image at default size */
+		image_make(&q.currimage,DEF_HEIGHT,DEF_WIDTH);
+		image_fill(&q.currimage,BLACK);
+	}
+	/* prepare buffer */
+	buffer_size(&q.work,q.currimage.height,q.currimage.width);
+	image_copy(q.work.curr,&q.currimage);
+	q.image = q.work.curr;
+	/* only if a file has been loaded */
+	if (pname)
+	{
+		/* display basic info */
+		printf("Input image: %s\n",pname);
+		print_image_info(q.image);
+		/* run image filter, if requested */
+		if (q.pfilter)
+		{
+			q.image = image_filter(q.image,q.pfilter);
+			image_absolute(q.image);
+			image_cliphi(q.image,WHITE);
+		}
+		/* display processed info */
+		printf("Check image:\n");
+		print_image_info(q.image);
+		/** save results if requested */
+		if(psave)
+		{
+			printf("Saving image data to %s... ",psave);
+			if ((error=image_save(q.image,psave))<0)
+			{
+				switch (error)
+				{
+					case BMP_ERROR_FILEOPEN:
+					case PNM_ERROR_FILEOPEN:
+						printf("write error!\n");
+						break;
+					default:
+						printf("unknown error!\n");
+				}
+			}
+			else printf("done!\n");
+		}
+		/** save c-formatted data if requested */
+		if(pdata)
+		{
+			printf("Saving C data to %s... ",pdata);
+			if ((error=image_cdat(q.image,pdata))<0)
+			{
+				switch (error)
+				{
+					case FILE_ERROR_OPEN:
+						printf("write error!\n");
+						break;
+					default:
+						printf("unknown error!\n");
+				}
+			}
+			else printf("done!\n");
 		}
 	}
-
 	/* check request for ui */
 	if (view)
 	{
+		gchar *buff;
 		/* check size for gui */
 		image_copy(q.work.curr,&q.currimage);
 		image_size_this(q.work.curr,&q.currimage,MAX_HEIGHT,MAX_WIDTH);
 		buffer_size_all(&q.work,q.currimage.height,q.currimage.width);
 		image_copy(q.work.curr,&q.currimage);
 		q.image = q.work.curr;
-		/* display processed info */
-		printf("View image:\n");
-		print_image_info(q.image);
 		/* initialize gui */
 		gtk_init(&argc,&argv);
 		/* make image_view */
@@ -692,6 +834,11 @@ int main(int argc, char* argv[])
 		image_view_draw(&q.view,q.image);
 		/* allow histogram */
 		image_view_make_hist(&q.view);
+		/* show info on status bar */
+		buff = g_strdup_printf("Size:%dx%d Mask:0x%08x",
+			q.image->width,q.image->height,q.image->mask);
+		image_view_stat_time(&q.view,(char*)buff,5);
+		g_free(buff);
 		/* event handlers */
 		image_test_events(&q);
 		/* menu stuff */
@@ -699,10 +846,9 @@ int main(int argc, char* argv[])
 		/* main loop */
 		gtk_main();
 	}
-
 	/* cleanup image_test */
 	image_test_free(&q);
-
+	/* done! */
 	putchar('\n');
 	return error;
 }
