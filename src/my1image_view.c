@@ -8,9 +8,13 @@ void image_view_init(my1image_view_t* iview)
 	iview->domenu = 0x0;
 	iview->donext = 0x0;
 	iview->dohist = 0x0;
+	iview->dostat = 0x0;
+	iview->dostxt = 0x0;
 	iview->idstat = 0;
 	iview->idmesg = 0;
 	iview->idtime = 0;
+	iview->idstxt = 0;
+	iview->idwhat = 0;
 	iview->width = -1;
 	iview->height = -1;
 	iview->gohist = 0;
@@ -41,7 +45,8 @@ gboolean on_draw_expose(GtkWidget *widget, GdkEventExpose *event,
 gboolean on_draw_hist_expose(GtkWidget *widget, GdkEventExpose *event,
 	gpointer user_data)
 {
-	int loop;
+	int loop, step, temp;
+	gchar *buff = 0x0;
 	my1image_view_t* v = (my1image_view_t*) user_data;
 	my1image_histogram_t* h = &v->hist;
 	cairo_t *dodraw = gdk_cairo_create(v->dohist->window);
@@ -65,6 +70,7 @@ gboolean on_draw_hist_expose(GtkWidget *widget, GdkEventExpose *event,
 	if (v->image->mask==IMASK_GRAY)
 	{
 		image_get_histogram(v->image,h);
+		histogram_get_threshold(h);
 		/* scale drawing area */
 		/**cairo_scale(dodraw,HISTSIZE_WIDTH,HISTSIZE_HEIGHT);*/
 		/* x and y axis */
@@ -77,16 +83,41 @@ gboolean on_draw_hist_expose(GtkWidget *widget, GdkEventExpose *event,
 		/* draw data bars */
 		cairo_set_source_rgb(dodraw,0.0,1.0,0.0);
 		next_x = offs_x + bars_d;
-		yscale = diff_y/h->count[h->maxindex];
-		for (loop=0;loop<GRAYLEVEL;loop++)
+		yscale = diff_y/h->maxvalue;
+		for (loop=0,step=0;loop<GRAYLEVEL;loop++)
 		{
-			size_y = yscale*h->count[loop];
+			temp = h->count[loop];
+			step += temp;
+			size_y = yscale*temp;
 			next_y = ends_y-size_y;
-			cairo_move_to(dodraw,next_x,ends_y);
-			cairo_rectangle(dodraw,next_x,next_y,bars_w,size_y);
-			cairo_fill(dodraw);
+			if (bars_w>1)
+			{
+				cairo_rectangle(dodraw,next_x,next_y,bars_w,size_y);
+				cairo_fill(dodraw);
+			}
+			else
+			{
+				cairo_move_to(dodraw,next_x,ends_y);
+				cairo_line_to(dodraw,next_x,next_y);
+				cairo_stroke(dodraw);
+			}
+			if (loop==h->threshold)
+			{
+				cairo_set_source_rgb(dodraw,0.0,0.0,0.0);
+				cairo_move_to(dodraw,next_x,ends_y);
+				cairo_line_to(dodraw,next_x,ends_y+10);
+				cairo_stroke(dodraw);
+				cairo_set_source_rgb(dodraw,0.0,1.0,0.0);
+			}
 			next_x += bars_w+bars_d;
 		}
+		buff = g_strdup_printf("Len:%d,Chk:%d,Max:%d,Idx:%d,"
+			"Min:%d,Idx:%d,Max2:%d,Idx:%d",
+			v->image->length,step,h->maxvalue,h->maxindex,
+			h->minvalue,h->minindex,h->chkvalue,h->chkindex);
+		if (v->idwhat)
+			gtk_statusbar_pop((GtkStatusbar*)v->dostxt,v->idstxt);
+		v->idwhat = gtk_statusbar_push((GtkStatusbar*)v->dostxt,v->idstxt,buff);
 /*
 		cairo_set_source_rgb(dodraw,0.0,0.0,1.0);
 		cairo_move_to(dodraw,next_x,ends_y);
@@ -95,6 +126,7 @@ gboolean on_draw_hist_expose(GtkWidget *widget, GdkEventExpose *event,
 		cairo_stroke(dodraw);
 	}
 	cairo_destroy(dodraw);
+	if (buff) g_free(buff);
 	return TRUE;
 }
 /*----------------------------------------------------------------------------*/
@@ -180,6 +212,7 @@ void image_view_name(my1image_view_t* iview,const char* name)
 /*----------------------------------------------------------------------------*/
 void image_view_make_hist(my1image_view_t* iview)
 {
+	GtkWidget* vbox;
 	/* skip if histogram window already created */
 	if (iview->donext) return;
 	/* create histogram window */
@@ -188,10 +221,19 @@ void image_view_make_hist(my1image_view_t* iview)
 	gtk_window_set_default_size(GTK_WINDOW(iview->donext),
 		HISTSIZE_WIDTH,HISTSIZE_HEIGHT);
 	gtk_window_set_resizable(GTK_WINDOW(iview->donext),FALSE);
+	/* container box */
+	vbox = gtk_vbox_new(FALSE, 0);
+	gtk_container_add(GTK_CONTAINER(iview->donext),vbox);
 	/* create draw canvas - deprecated in gtk3 in favor of cairo? */
 	iview->dohist = gtk_drawing_area_new();
 	gtk_widget_set_size_request(iview->dohist,HISTSIZE_WIDTH,HISTSIZE_HEIGHT);
-	gtk_container_add(GTK_CONTAINER(iview->donext),iview->dohist);
+	gtk_box_pack_start(GTK_BOX(vbox),iview->dohist,TRUE,TRUE,0);
+	gtk_widget_grab_focus(iview->dohist); /* just in case */
+ 	/* create status bar */
+	iview->dostxt = gtk_statusbar_new();
+	iview->idstxt = gtk_statusbar_get_context_id((GtkStatusbar*)iview->dostxt,
+		"MY1ImageHistStat");
+	gtk_box_pack_start(GTK_BOX(vbox),iview->dostxt,FALSE,FALSE,0);
 	/* connect event handlers */
 	g_signal_connect(G_OBJECT(iview->donext),"delete-event",
 		G_CALLBACK(on_done_hist),(gpointer)iview);

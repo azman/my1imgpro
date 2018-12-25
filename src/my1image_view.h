@@ -16,8 +16,8 @@
 typedef struct _my1image_view_t
 {
 	GtkWidget *window, *canvas, *domenu;
-	GtkWidget *donext, *dohist, *dostat;
-	guint idstat, idmesg, idtime; /* gtk stuffs */
+	GtkWidget *donext, *dohist, *dostat, *dostxt;
+	guint idstat, idmesg, idtime, idstxt, idwhat; /* gtk stuffs */
 	int width, height; /* current view size */
 	int gohist; /* histogram request flag */
 	my1image_t *image; /* pure pointer to image object */
