@@ -39,17 +39,18 @@ int* image_make(my1image_t *image, int height, int width)
 /*----------------------------------------------------------------------------*/
 void image_copy(my1image_t *dst, my1image_t *src)
 {
-	int iloop;
-	for (iloop=0;iloop<dst->length;iloop++)
-		dst->data[iloop] = src->data[iloop];
+	int loop;
+	image_make(dst,src->height,src->width);
+	for (loop=0;loop<dst->length;loop++)
+		dst->data[loop] = src->data[loop];
 	dst->mask = src->mask;
 }
 /*----------------------------------------------------------------------------*/
 void image_fill(my1image_t *image, int value)
 {
-	int iloop, ilength = image->length;
-	for (iloop=0;iloop<ilength;iloop++)
-		image->data[iloop] = value;
+	int loop, size = image->length;
+	for (loop=0;loop<size;loop++)
+		image->data[loop] = value;
 }
 /*----------------------------------------------------------------------------*/
 int image_get_pixel(my1image_t *image, int row, int col) /* col(x),row(y) */
@@ -69,197 +70,181 @@ int* image_row_data(my1image_t *image, int row)
 /*----------------------------------------------------------------------------*/
 void image_limit(my1image_t *image)
 {
-	int iloop, ilength = image->length;
-	for (iloop=0;iloop<ilength;iloop++)
+	int loop, size = image->length;
+	for (loop=0;loop<size;loop++)
 	{
-		if (image->data[iloop]>WHITE) image->data[iloop] = WHITE;
-		else if (image->data[iloop]<BLACK) image->data[iloop] = BLACK;
+		if (image->data[loop]>WHITE)
+			image->data[loop] = WHITE;
+		else if (image->data[loop]<BLACK)
+			image->data[loop] = BLACK;
 	}
 }
 /*----------------------------------------------------------------------------*/
 void image_invert(my1image_t *image)
 {
-	int iloop, ilength = image->length;
-	for (iloop=0;iloop<ilength;iloop++)
-		image->data[iloop] = WHITE - image->data[iloop];
+	int loop, size = image->length;
+	for (loop=0;loop<size;loop++)
+		image->data[loop] = WHITE - image->data[loop];
 }
 /*----------------------------------------------------------------------------*/
 void image_absolute(my1image_t *image)
 {
-	int iloop, ilength = image->length;
-	for (iloop=0;iloop<ilength;iloop++)
+	int loop, size = image->length;
+	for (loop=0;loop<size;loop++)
 	{
-		if (image->data[iloop]<0)
-			image->data[iloop] = -image->data[iloop];
+		if (image->data[loop]<0)
+			image->data[loop] = -image->data[loop];
 	}
 }
 /*----------------------------------------------------------------------------*/
 void image_binary(my1image_t *image, int threshold)
 {
-	int iloop, ilength = image->length;
-	for (iloop=0;iloop<ilength;iloop++)
+	int loop, size = image->length;
+	for (loop=0;loop<size;loop++)
 	{
-		if (image->data[iloop]>threshold)
-			image->data[iloop] = WHITE;
+		if (image->data[loop]>threshold)
+			image->data[loop] = WHITE;
 		else
-			image->data[iloop] = BLACK;
+			image->data[loop] = BLACK;
 	}
 }
 /*----------------------------------------------------------------------------*/
 void image_range(my1image_t *image, int lothresh, int hithresh)
 {
-	int temp, iloop, ilength = image->length;
-	for (iloop=0;iloop<ilength;iloop++)
+	int loop, size = image->length, temp;
+	for (loop=0;loop<size;loop++)
 	{
-		temp = image->data[iloop];
+		temp = image->data[loop];
 		if (temp>hithresh||temp<lothresh) /* check if out of range [lo,hi] */
-			image->data[iloop] = BLACK;
+			image->data[loop] = BLACK;
 		else /* hilite in-range pixels */
-			image->data[iloop] = WHITE;
+			image->data[loop] = WHITE;
 	}
 }
 /*----------------------------------------------------------------------------*/
 void image_cliphi(my1image_t *image, int hithresh)
 {
-	int iloop, ilength = image->length;
-	for (iloop=0;iloop<ilength;iloop++)
+	int loop, size = image->length;
+	for (loop=0;loop<size;loop++)
 	{
-		if (image->data[iloop]>hithresh)
-			image->data[iloop] = WHITE;
+		if (image->data[loop]>hithresh)
+			image->data[loop] = WHITE;
 	}
 }
 /*----------------------------------------------------------------------------*/
 void image_cliplo(my1image_t *image, int lothresh)
 {
-	int iloop, ilength = image->length;
-	for (iloop=0;iloop<ilength;iloop++)
+	int loop, size = image->length;
+	for (loop=0;loop<size;loop++)
 	{
-		if (image->data[iloop]<lothresh)
-			image->data[iloop] = BLACK;
+		if (image->data[loop]<lothresh)
+			image->data[loop] = BLACK;
 	}
 }
 /*----------------------------------------------------------------------------*/
 void image_shift(my1image_t *image, int value)
 {
-	int iloop, ilength = image->length;
-	for (iloop=0;iloop<ilength;iloop++)
+	int loop, size = image->length;
+	for (loop=0;loop<size;loop++)
 	{
-		int temp = image->data[iloop] + value;
+		int temp = image->data[loop] + value;
 		if (temp>WHITE) temp = WHITE;
 		else if (temp<BLACK) temp = BLACK;
-		image->data[iloop] = temp;
+		image->data[loop] = temp;
 	}
 }
 /*----------------------------------------------------------------------------*/
 void image_scale(my1image_t *image, float value)
 {
-	int iloop, ilength = image->length;
-	for (iloop=0;iloop<ilength;iloop++)
+	int loop, size = image->length;
+	for (loop=0;loop<size;loop++)
 	{
-		float temp = (float) image->data[iloop]*value;
+		float temp = (float) image->data[loop]*value;
 		if (temp>(float)WHITE) temp = (float) WHITE;
-		image->data[iloop] = (int) temp;
+		image->data[loop] = (int) temp;
 	}
 }
 /*----------------------------------------------------------------------------*/
 void image_normalize(my1image_t *image)
 {
-	int iloop, ilength = image->length;
-	int diff, max = image->data[0], min = image->data[0];
+	int loop, size = image->length;
+	int diff, temp, max = image->data[0], min = image->data[0];
 	/* get min max range */
-	for (iloop=1;iloop<ilength;iloop++)
+	for (loop=0;loop<size;loop++)
 	{
-		if (max<image->data[iloop]) max = image->data[iloop];
-		else if (min>image->data[iloop]) min = image->data[iloop];
+		temp = image->data[loop];
+		if (max<temp) max = temp;
+		if (min>temp) min = temp;
 	}
 	/* normalize to min-max scale! */
 	diff = max-min;
-	for (iloop=0;iloop<ilength;iloop++)
-		image->data[iloop] = (image->data[iloop]-min)*WHITE/diff;
-}
-/*----------------------------------------------------------------------------*/
-void image_add(my1image_t *image1, my1image_t *image2, my1image_t *result)
-{
-	int iloop, ilength = image1->length;
-	for (iloop=0;iloop<ilength;iloop++)
-	{
-		int temp = image1->data[iloop] + image2->data[iloop];
-		if (temp>WHITE) temp = WHITE;
-		else if (temp<BLACK) temp = BLACK;
-		result->data[iloop] = temp;
-	}
-}
-/*----------------------------------------------------------------------------*/
-void image_sub(my1image_t *image1, my1image_t *image2, my1image_t *result)
-{
-	int iloop, ilength = image1->length;
-	for (iloop=0;iloop<ilength;iloop++)
-	{
-		int temp = image1->data[iloop] - image2->data[iloop];
-		if (temp>WHITE) temp = WHITE;
-		else if (temp<BLACK) temp = BLACK;
-		result->data[iloop] = temp;
-	}
+	for (loop=0;loop<size;loop++)
+		image->data[loop] = (image->data[loop]-min)*WHITE/diff;
 }
 /*----------------------------------------------------------------------------*/
 void image_pan(my1image_t *image, my1image_t *check, int shx, int shy, int vin)
 {
-	int iloop, jloop;
-	int calcx, calcy, calcv;
-	int row = image->height, col = image->width;
+	int calx, caly, calv;
+	int irow, icol;
+	int rows = image->height, cols = image->width;
+	image_make(check,rows,cols);
 	/* calculate new pixel index */
-	for (iloop=0;iloop<row;iloop++)
+	for (irow=0;irow<rows;irow++)
 	{
-		for (jloop=0;jloop<col;jloop++)
+		for (icol=0;icol<cols;icol++)
 		{
-			calcx = jloop - shx;
-			calcy = iloop - shy;
-			if (calcx>=0&&calcx<col&&calcy>=0&&calcy<row)
+			calx = icol - shx;
+			caly = irow - shy;
+			if (calx>=0&&calx<cols&&caly>=0&&caly<rows)
 			{
-				calcv = image_get_pixel(image,calcy,calcx);
-				image_set_pixel(check,iloop,jloop,calcv);
+				calv = image_get_pixel(image,caly,calx);
+				image_set_pixel(check,irow,icol,calv);
 			}
 			else
 			{
-				image_set_pixel(check,iloop,jloop,vin);
+				image_set_pixel(check,irow,icol,vin);
 			}
 		}
 	}
+	check->mask = image->mask;
 }
 /*----------------------------------------------------------------------------*/
 void image_turn(my1image_t *image, my1image_t *check, int turn)
 {
-	int irow, icol;
+	int irow, icol, rows, cols;
 	switch (turn)
 	{
 		case IMAGE_TURN_090:
 		case IMAGE_TURN_270:
-			image_make(check,image->width,image->height);
+			rows = image->width;
+			cols = image->height;
 			break;
 		case IMAGE_TURN_180:
 		case IMAGE_TURN_000:
 		default:
-			image_make(check,image->height,image->width);
+			rows = image->height;
+			cols = image->width;
 			break;
 	}
-	for (irow=0;irow<check->height;irow++)
+	image_make(check,rows,cols);
+	for (irow=0;irow<rows;irow++)
 	{
-		for (icol=0;icol<check->width;icol++)
+		for (icol=0;icol<cols;icol++)
 		{
 			int trow = irow, tcol = icol;
 			switch (turn)
 			{
 				case IMAGE_TURN_090:
 					trow = icol;
-					tcol = check->height-irow-1;
+					tcol = rows-irow-1;
 					break;
 				case IMAGE_TURN_270:
-					trow = check->width-icol-1;
+					trow = cols-icol-1;
 					tcol = irow;
 					break;
 				case IMAGE_TURN_180:
-					trow = check->height-irow-1;
-					tcol = check->width-icol-1;
+					trow = rows-irow-1;
+					tcol = cols-icol-1;
 					break;
 			}
 			image_set_pixel(check,irow,icol,
@@ -272,20 +257,21 @@ void image_turn(my1image_t *image, my1image_t *check, int turn)
 void image_flip(my1image_t *image, my1image_t *check, int side)
 {
 	int irow, icol;
-	image_make(check,image->height,image->width);
-	for (irow=0;irow<check->height;irow++)
+	int rows = image->height, cols = image->width;
+	image_make(check,rows,cols);
+	for (irow=0;irow<rows;irow++)
 	{
-		for (icol=0;icol<check->width;icol++)
+		for (icol=0;icol<cols;icol++)
 		{
 			int trow = irow, tcol = icol;
 			switch (side)
 			{
 				case IMAGE_FLIP_HORIZONTAL:
 					trow = irow;
-					tcol = check->width-icol-1;
+					tcol = cols-icol-1;
 					break;
 				case IMAGE_FLIP_VERTICAL:
-					trow = check->height-irow-1;
+					trow = rows-irow-1;
 					tcol = icol;
 					break;
 			}
@@ -296,27 +282,28 @@ void image_flip(my1image_t *image, my1image_t *check, int side)
 	check->mask = image->mask;
 }
 /*----------------------------------------------------------------------------*/
+int gray4rgb(cbyte r, cbyte g, cbyte b)
+{
+	return (((int)g<<1)+(int)r+(int)b)>>2; /* average: (g+g+r+b)/4 */
+}
+/*----------------------------------------------------------------------------*/
 int image_assign_rgb(my1image_t *image, cbyte *rgb)
 {
-	char chkr, chkg, chkb;
-	int loop, index = 0;
-	if (image->mask==IMASK_COLOR24)
+	int loop, size = image->length;
+	if (image->mask==IMASK_COLOR)
 	{
-		for (loop=0;loop<image->length;loop++)
+		for (loop=0;loop<size;loop++)
 		{
-			image->data[loop] = encode_rgb(rgb[index+2],
-				rgb[index+1],rgb[index+0]);
-			index += 3;
+			image->data[loop] = encode_rgb(rgb[0],rgb[1],rgb[2]);
+			rgb += 3;
 		}
 	}
 	else
 	{
-		for (loop=0;loop<image->length;loop++)
+		for (loop=0;loop<size;loop++)
 		{
-			chkr = rgb[index++];
-			chkg = rgb[index++];
-			chkb = rgb[index++];
-			image->data[loop] = ((int)chkr+chkg+chkb)/3;
+			image->data[loop] = gray4rgb(rgb[0],rgb[1],rgb[2]);
+			rgb += 3;
 		}
 	}
 	return image->mask;
@@ -324,23 +311,22 @@ int image_assign_rgb(my1image_t *image, cbyte *rgb)
 /*----------------------------------------------------------------------------*/
 int image_extract_rgb(my1image_t *image, cbyte *rgb)
 {
-	int loop, index = 0;
-	if (image->mask==IMASK_COLOR24)
+	int loop, size = image->length;
+	if (image->mask==IMASK_COLOR)
 	{
-		for (loop=0;loop<image->length;loop++)
+		for (loop=0;loop<size;loop++)
 		{
-			decode_rgb(image->data[loop],&rgb[index+2],
-				&rgb[index+1],&rgb[index+0]);
-			index += 3;
+			decode_rgb(image->data[loop],&rgb[0],&rgb[1],&rgb[2]);
+			rgb += 3;
 		}
 	}
 	else
 	{
-		for (loop=0;loop<image->length;loop++)
+		for (loop=0;loop<size;loop++)
 		{
-			rgb[index++] = (image->data[loop]&0xff);
-			rgb[index++] = (image->data[loop]&0xff);
-			rgb[index++] = (image->data[loop]&0xff);
+			*rgb = (image->data[loop]&0xff); rgb++;
+			*rgb = (image->data[loop]&0xff); rgb++;
+			*rgb = (image->data[loop]&0xff); rgb++;
 		}
 	}
 	return image->mask;
@@ -348,10 +334,10 @@ int image_extract_rgb(my1image_t *image, cbyte *rgb)
 /*----------------------------------------------------------------------------*/
 void image_grayscale(my1image_t *image)
 {
-	int loop;
-	if (image->mask==IMASK_COLOR24)
+	if (image->mask==IMASK_COLOR)
 	{
-		for(loop=0;loop<image->length;loop++)
+		int loop, size = image->length;
+		for (loop=0;loop<size;loop++)
 			image->data[loop] = color2gray(image->data[loop]);
 		image->mask = IMASK_GRAY;
 	}
@@ -359,12 +345,12 @@ void image_grayscale(my1image_t *image)
 /*----------------------------------------------------------------------------*/
 void image_colormode(my1image_t *image)
 {
-	int loop;
-	if (image->mask!=IMASK_COLOR24)
+	if (image->mask!=IMASK_COLOR)
 	{
-		for(loop=0;loop<image->length;loop++)
+		int loop, size = image->length;
+		for (loop=0;loop<size;loop++)
 			image->data[loop] = gray2color(image->data[loop]);
-		image->mask = IMASK_COLOR24;
+		image->mask = IMASK_COLOR;
 	}
 }
 /*----------------------------------------------------------------------------*/
@@ -379,11 +365,12 @@ int encode_bgr(cbyte r, cbyte g, cbyte b)
 /*----------------------------------------------------------------------------*/
 void image_copy_color2bgr(my1image_t *dst, my1image_t *src)
 {
-	int loop;
-	if (src->mask==IMASK_COLOR24)
+	int loop, size = src->length;
+	image_make(dst,src->height,src->width);
+	if (src->mask==IMASK_COLOR)
 	{
 		cbyte *that;
-		for(loop=0;loop<src->length;loop++)
+		for(loop=0;loop<size;loop++)
 		{
 			that = (cbyte*) &src->data[loop];
 			dst->data[loop] = encode_bgr(that[2],that[1],that[0]);
@@ -391,13 +378,34 @@ void image_copy_color2bgr(my1image_t *dst, my1image_t *src)
 	}
 	else
 	{
-		for(loop=0;loop<src->length;loop++)
+		cbyte temp;
+		for(loop=0;loop<size;loop++)
 		{
-			dst->data[loop] = encode_bgr(src->data[loop],
-				src->data[loop],src->data[loop]);
+			temp = (cbyte) src->data[loop];
+			dst->data[loop] = encode_bgr(temp,temp,temp);
 		}
 	}
-	dst->mask = IMASK_COLOR24;
+	dst->mask = IMASK_COLOR;
+}
+/*----------------------------------------------------------------------------*/
+void image_copy_color_channel(my1image_t *dst, my1image_t *src, int mask)
+{
+	cbyte *that;
+	int loop, size = src->length, pick;
+	image_make(dst,src->height,src->width);
+	switch (mask)
+	{
+		default:
+		case IMASK_COLOR_B: pick = 0; break;
+		case IMASK_COLOR_G: pick = 1; break;
+		case IMASK_COLOR_R: pick = 2; break;
+	}
+	for(loop=0;loop<size;loop++)
+	{
+		that = (cbyte*) &src->data[loop];
+		dst->data[loop] = (int) that[pick];
+	}
+	dst->mask = IMASK_GRAY;
 }
 /*----------------------------------------------------------------------------*/
 int encode_rgb(cbyte r, cbyte g, cbyte b)
@@ -434,6 +442,6 @@ int color2gray(int data)
 	/** consider luminosity? */
 	/*0.21 R + 0.71 G + 0.07 B*/
 	/** go for speed? */
-	return (((int)g<<1)+(int)r+(int)b)>>2; /* average: (g+g+r+b)/4 */
+	return gray4rgb(r,g,b);
 }
 /*----------------------------------------------------------------------------*/

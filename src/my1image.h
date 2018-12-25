@@ -34,10 +34,9 @@ void image_cliphi(my1image_t *image, int hithresh);
 void image_cliplo(my1image_t *image, int lothresh);
 void image_shift(my1image_t *image, int value);
 void image_scale(my1image_t *image, float value);
-void image_normalize(my1image_t *image); /* get max value, rescale */
+void image_normalize(my1image_t *image); /* get max-min value, rescale */
+/*----------------------------------------------------------------------------*/
 /* image functions */
-void image_add(my1image_t *image1, my1image_t *image2, my1image_t *result);
-void image_sub(my1image_t *image1, my1image_t *image2, my1image_t *result);
 void image_pan(my1image_t *image, my1image_t *check,
 	int shx, int shy, int vin); /* pan-x,pan-y,value-in */
 /*----------------------------------------------------------------------------*/
@@ -48,13 +47,17 @@ void image_pan(my1image_t *image, my1image_t *check,
 /*----------------------------------------------------------------------------*/
 #define IMAGE_FLIP_VERTICAL 0
 #define IMAGE_FLIP_HORIZONTAL 1
-/*----------------------------------------------------------------------------*/
 void image_turn(my1image_t *image, my1image_t *check, int turn); /* turn*90 */
 void image_flip(my1image_t *image, my1image_t *check, int side); /* h/v */
+/*----------------------------------------------------------------------------*/
+/* image color stuffs */
 /*----------------------------------------------------------------------------*/
 #define IMASK_COLOR24 0x00FFFFFF
 #define IMASK_COLOR IMASK_COLOR24
 #define IMASK_GRAY 0x00
+#define IMASK_COLOR_R 0x00FF0000
+#define IMASK_COLOR_G 0x0000FF00
+#define IMASK_COLOR_B 0x000000FF
 /*----------------------------------------------------------------------------*/
 typedef unsigned char cbyte; /** color byte */
 /*----------------------------------------------------------------------------*/
@@ -74,6 +77,8 @@ void image_grayscale(my1image_t *image);
 void image_colormode(my1image_t *image);
 /* hack for gdk_draw_rgb_32_image */
 void image_copy_color2bgr(my1image_t *dst, my1image_t *src);
+/* color channel extract */
+void image_copy_color_channel(my1image_t *dst, my1image_t *src, int mask);
 /* rgb conversion utility */
 int encode_rgb(cbyte r, cbyte g, cbyte b);
 void decode_rgb(int data, cbyte *r, cbyte *g, cbyte *b);
