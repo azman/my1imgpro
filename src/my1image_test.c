@@ -362,12 +362,12 @@ void on_file_open_main(my1image_test_t* test)
 					buff = g_strdup_printf("Unknown error! (%d){%s}",
 						error,filename);
 			}
-			/* show show message dialog! */
-			printf("[ERROR] %s\n",buff);
+			/* show info on status bar */
+			buff = g_strdup_printf("[ERROR] %s\n",buff);
+			image_view_stat_time(&test->view,(char*)buff,5);
 		}
 		else
 		{
-			printf("[CHECK] File '%s' loaded!\n",filename);
 			/* successful image file open */
 			buffer_size(&test->work,that.height,that.width);
 			image_copy(test->work.curr,&that);
@@ -377,6 +377,9 @@ void on_file_open_main(my1image_test_t* test)
 				buffer_swap(&test->work);
 			image_copy(&test->currimage,test->image); /* keep original */
 			image_view_draw(&test->view,test->image);
+			/* show info on status bar */
+			buff = g_strdup_printf("[CHECK] %s\n",filename);
+			image_view_stat_time(&test->view,(char*)buff,5);
 		}
 		image_free(&that);
 		if (buff) g_free(buff);
@@ -411,12 +414,15 @@ void on_file_save_main(my1image_test_t* test)
 					buff = g_strdup_printf("Unknown error! (%d){%s}",
 						error,filename);
 			}
-			/* show show message dialog! */
-			printf("[ERROR] %s\n",buff);
+			/* show info on status bar */
+			buff = g_strdup_printf("[ERROR] %s\n",buff);
+			image_view_stat_time(&test->view,(char*)buff,5);
 		}
 		else
 		{
-			printf("[CHECK] File '%s' saved! (%d)\n",filename,error);
+			/* show info on status bar */
+			buff = g_strdup_printf("[SAVED] %s\n",filename);
+			image_view_stat_time(&test->view,(char*)buff,5);
 		}
 		if (buff) g_free(buff);
 		g_free (filename);
@@ -432,26 +438,6 @@ void image_test_menu(my1image_test_t* test)
 	gtk_widget_add_events(test->view.canvas, GDK_BUTTON_PRESS_MASK);
 	g_signal_connect(GTK_OBJECT(test->view.canvas),"button-press-event",
 		G_CALLBACK(on_mouse_click),(gpointer)menu_main);
-	/* sub menu? */
-	menu_subs = gtk_menu_new();
-	/* file load menu */
-	menu_item = gtk_menu_item_new_with_mnemonic("_Open Image...");
-	gtk_menu_shell_append(GTK_MENU_SHELL(menu_subs),menu_item);
-	g_signal_connect_swapped(G_OBJECT(menu_item),"activate",
-		G_CALLBACK(on_file_open_main),(gpointer)test);
-	gtk_widget_show(menu_item);
-	/* file save as menu */
-	menu_item = gtk_menu_item_new_with_mnemonic("Save Image _As...");
-	gtk_menu_shell_append(GTK_MENU_SHELL(menu_subs),menu_item);
-	g_signal_connect_swapped(G_OBJECT(menu_item),"activate",
-		G_CALLBACK(on_file_save_main),(gpointer)test);
-	gtk_widget_show(menu_item);
-	/* temp menu to insert as sub-menu */
-	menu_temp = gtk_menu_item_new_with_mnemonic("_File");
-	gtk_menu_item_set_submenu(GTK_MENU_ITEM(menu_temp),menu_subs);
-	/* add to main menu */
-	gtk_menu_shell_append(GTK_MENU_SHELL(menu_main),menu_temp);
-	gtk_widget_show(menu_temp);
 	/* sub menu? */
 	menu_subs = gtk_menu_new();
 	/* original menu */
@@ -574,6 +560,26 @@ void image_test_menu(my1image_test_t* test)
 	gtk_widget_show(menu_item);
 	/* temp menu to insert as sub-menu */
 	menu_temp = gtk_menu_item_new_with_mnemonic("_Orientation");
+	gtk_menu_item_set_submenu(GTK_MENU_ITEM(menu_temp),menu_subs);
+	/* add to main menu */
+	gtk_menu_shell_append(GTK_MENU_SHELL(menu_main),menu_temp);
+	gtk_widget_show(menu_temp);
+	/* sub menu? */
+	menu_subs = gtk_menu_new();
+	/* file load menu */
+	menu_item = gtk_menu_item_new_with_mnemonic("_Open Image...");
+	gtk_menu_shell_append(GTK_MENU_SHELL(menu_subs),menu_item);
+	g_signal_connect_swapped(G_OBJECT(menu_item),"activate",
+		G_CALLBACK(on_file_open_main),(gpointer)test);
+	gtk_widget_show(menu_item);
+	/* file save as menu */
+	menu_item = gtk_menu_item_new_with_mnemonic("Save Image _As...");
+	gtk_menu_shell_append(GTK_MENU_SHELL(menu_subs),menu_item);
+	g_signal_connect_swapped(G_OBJECT(menu_item),"activate",
+		G_CALLBACK(on_file_save_main),(gpointer)test);
+	gtk_widget_show(menu_item);
+	/* temp menu to insert as sub-menu */
+	menu_temp = gtk_menu_item_new_with_mnemonic("_File");
 	gtk_menu_item_set_submenu(GTK_MENU_ITEM(menu_temp),menu_subs);
 	/* add to main menu */
 	gtk_menu_shell_append(GTK_MENU_SHELL(menu_main),menu_temp);
