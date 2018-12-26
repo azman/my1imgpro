@@ -13,17 +13,17 @@ typedef struct _my1image_mask_t
 }
 my1image_mask_t;
 /*----------------------------------------------------------------------------*/
-typedef struct _my1image_region_t
+typedef struct _my1image_area_t
 {
 	int xset, yset;
 	int width, height;
 }
-my1image_region_t;
+my1image_area_t;
 /*----------------------------------------------------------------------------*/
 typedef struct _my1image_buffer_t
 {
 	/* double buffer image - with region! */
-	my1image_region_t region;
+	my1image_area_t region;
 	my1image_t main, buff, xtra, *curr, *next, *temp;
 }
 my1image_buffer_t;
@@ -37,6 +37,7 @@ typedef struct _my1image_filter_t
 {
 	char name[FILTER_NAMESIZE];
 	void *data; /* pointer to user-defined data - sent to pfilter_t */
+	void *parent; /* pointer to parent object */
 	my1image_buffer_t *buffer; /* external shared buffer */
 	my1image_t *docopy; /* if supplied, copy to this struct! */
 	pfilter_t filter; /* pointer to filter function */
@@ -54,7 +55,7 @@ typedef struct _my1image_histogram_t
 }
 my1image_histogram_t;
 /*----------------------------------------------------------------------------*/
-typedef my1image_region_t my1region_t;
+typedef my1image_area_t my1area_t;
 typedef my1image_mask_t my1mask_t;
 typedef my1image_buffer_t my1buffer_t;
 typedef my1image_filter_t my1filter_t;
@@ -65,12 +66,13 @@ int* image_mask_init(my1image_mask_t *mask, int size);
 void image_mask_free(my1image_mask_t *mask);
 void image_mask_make(my1image_mask_t *mask, int size, int *pval);
 /* linear filter : cross-correlation & convolution */
-void image_correlation(my1image_t *img, my1image_t *res, my1mask_t *mask);
-void image_convolution(my1image_t *img, my1image_t *res, my1mask_t *mask);
+void image_correlation(my1image_t *img, my1image_t *res, my1image_mask_t *mask);
+void image_convolution(my1image_t *img, my1image_t *res, my1image_mask_t *mask);
 /* region@sub-image management functions */
-void image_get_region(my1image_t *img, my1image_t *sub, my1region_t *reg);
-void image_set_region(my1image_t *img, my1image_t *sub, my1region_t *reg);
-void image_fill_region(my1image_t *img, int val, my1region_t *reg);
+void image_get_region(my1image_t *img, my1image_t *sub, my1image_area_t *reg);
+void image_set_region(my1image_t *img, my1image_t *sub, my1image_area_t *reg);
+void image_fill_region(my1image_t *img, my1image_area_t *reg, int val);
+void image_mask_region(my1image_t *img, my1image_area_t *reg, int inv);
 /* double buffered image for processing */
 void buffer_init(my1image_buffer_t* ibuff);
 void buffer_free(my1image_buffer_t* ibuff);
@@ -79,15 +81,16 @@ void buffer_size_all(my1image_buffer_t* ibuff, int height, int width);
 void buffer_swap(my1image_buffer_t* ibuff);
 /* generic filter */
 void filter_init(my1image_filter_t* pfilter,
-	pfilter_t filter, my1buffer_t *pbuffer);
+	pfilter_t filter, my1image_buffer_t *buffer);
 void filter_free(my1image_filter_t* pfilter);
-my1filter_t* filter_insert(my1filter_t* pstack, my1filter_t* pcheck);
-my1image_t* image_filter(my1image_t* image, my1filter_t* pfilter);
+my1image_filter_t* filter_insert(my1image_filter_t* pstack,
+	my1image_filter_t* pcheck);
+my1image_t* image_filter(my1image_t* image, my1image_filter_t* pfilter);
 /* grayscale histogram utility */
-void image_get_histogram(my1image_t *image, my1histogram_t *hist);
-void image_smooth_histogram(my1image_t *image, my1histogram_t *hist);
+void image_get_histogram(my1image_t *image, my1image_histogram_t *hist);
+void image_smooth_histogram(my1image_t *image, my1image_histogram_t *hist);
 /* histogram threshold utility */
-void histogram_get_threshold(my1histogram_t *hist);
+void histogram_get_threshold(my1image_histogram_t *hist);
 /*----------------------------------------------------------------------------*/
 #endif
 /*----------------------------------------------------------------------------*/

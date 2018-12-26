@@ -40,7 +40,7 @@ int image_get_valid(my1image_t *image, int row, int col)
 	return image->data[row*image->width+col];
 }
 /*----------------------------------------------------------------------------*/
-void image_correlation(my1image_t *img, my1image_t *res, my1mask_t *mask)
+void image_correlation(my1image_t *img, my1image_t *res, my1image_mask_t *mask)
 {
 	int irow, icol, mrow, mcol;
 	int index, value;
@@ -64,7 +64,7 @@ void image_correlation(my1image_t *img, my1image_t *res, my1mask_t *mask)
 	}
 }
 /*----------------------------------------------------------------------------*/
-void image_convolution(my1image_t *img, my1image_t *res, my1mask_t *mask)
+void image_convolution(my1image_t *img, my1image_t *res, my1image_mask_t *mask)
 {
 	int irow, icol, mrow, mcol;
 	int index, value;
@@ -88,7 +88,7 @@ void image_convolution(my1image_t *img, my1image_t *res, my1mask_t *mask)
 	}
 }
 /*----------------------------------------------------------------------------*/
-void image_get_region(my1image_t *img, my1image_t *sub, my1region_t *reg)
+void image_get_region(my1image_t *img, my1image_t *sub, my1image_area_t *reg)
 {
 	int iloop, jloop, xoff = 0, yoff = 0;
 	int row = img->height, col = img->width;
@@ -108,7 +108,7 @@ void image_get_region(my1image_t *img, my1image_t *sub, my1region_t *reg)
 	}
 }
 /*----------------------------------------------------------------------------*/
-void image_set_region(my1image_t *img, my1image_t *sub, my1region_t *reg)
+void image_set_region(my1image_t *img, my1image_t *sub, my1image_area_t *reg)
 {
 	int iloop, jloop, xoff = 0, yoff = 0;
 	int row = img->height, col = img->width;
@@ -128,7 +128,7 @@ void image_set_region(my1image_t *img, my1image_t *sub, my1region_t *reg)
 	}
 }
 /*----------------------------------------------------------------------------*/
-void image_fill_region(my1image_t *img, int val, my1region_t *reg)
+void image_fill_region(my1image_t *img, my1image_area_t *reg, int val)
 {
 	int iloop, jloop, xoff = 0, yoff = 0;
 	int row = img->height, col = img->width;
@@ -144,6 +144,36 @@ void image_fill_region(my1image_t *img, int val, my1region_t *reg)
 		int* pImg = image_row_data(img,iloop+yoff);
 		for (jloop=0;jloop<col;jloop++)
 			pImg[jloop+xoff] = val;
+	}
+}
+/*----------------------------------------------------------------------------*/
+void image_mask_region(my1image_t *img, my1image_area_t *reg, int inv)
+{
+	int irow, icol, rows = img->height, cols = img->width;
+	int yoff = 0, xoff = 0, ymax = rows, xmax = cols;
+	if (reg)
+	{
+		yoff = reg->yset;
+		ymax = reg->height+yoff;
+		xoff = reg->xset;
+		xmax = reg->width+xoff;
+	}
+	for (irow=0;irow<rows;irow++)
+	{
+		int* pImg = image_row_data(img,irow);
+		for (icol=0;icol<cols;icol++)
+		{
+			if ((irow<yoff||irow>=ymax)||(icol<xoff||icol>=xmax))
+			{
+				/* outside of mask region - mask if invert requested */
+				if (inv) pImg[icol] = BLACK;
+			}
+			else
+			{
+				/* inside mask region - mask if no invert request */
+				if (!inv) pImg[icol] = BLACK;
+			}
+		}
 	}
 }
 /*----------------------------------------------------------------------------*/
@@ -189,10 +219,11 @@ void buffer_swap(my1image_buffer_t* ibuff)
 }
 /*----------------------------------------------------------------------------*/
 void filter_init(my1image_filter_t* pfilter,
-	pfilter_t filter, my1buffer_t *buffer)
+	pfilter_t filter, my1image_buffer_t* buffer)
 {
 	pfilter->name[0] = 0x0; /* anonymous */
 	pfilter->data = 0x0;
+	pfilter->parent = 0x0;
 	pfilter->buffer = buffer;
 	pfilter->docopy = 0x0;
 	pfilter->filter = filter;
@@ -248,7 +279,7 @@ my1image_t* image_filter(my1image_t* image, my1filter_t* pfilter)
 	return image;
 }
 /*----------------------------------------------------------------------------*/
-void image_get_histogram(my1image_t *image, my1histogram_t *hist)
+void image_get_histogram(my1image_t *image, my1image_histogram_t *hist)
 {
 	int loop, temp;
 	/* clear histogram */
@@ -296,7 +327,7 @@ void image_get_histogram(my1image_t *image, my1histogram_t *hist)
 	}
 }
 /*----------------------------------------------------------------------------*/
-void image_smooth_histogram(my1image_t *image, my1histogram_t *hist)
+void image_smooth_histogram(my1image_t *image, my1image_histogram_t *hist)
 {
 	int loop, size = image->length, buff[GRAYLEVEL];
 	float alpha = (float)WHITE/image->length;
@@ -306,7 +337,7 @@ void image_smooth_histogram(my1image_t *image, my1histogram_t *hist)
 		image->data[loop] = buff[image->data[loop]];
 }
 /*----------------------------------------------------------------------------*/
-void histogram_get_threshold(my1histogram_t *hist)
+void histogram_get_threshold(my1image_histogram_t *hist)
 {
 	int loop, last, init = 0, ends = GRAYLEVEL-1, mids = (init+ends)>>1;
 	int stop = GRAYLEVEL>>1, chkl = 0, chkr = 0, temp;

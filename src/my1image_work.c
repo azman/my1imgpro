@@ -104,7 +104,7 @@ my1image_t* image_size_this(my1image_t* img,my1image_t* res,
 /*----------------------------------------------------------------------------*/
 my1image_t* filter_resize(my1image_t* img, my1image_t* res, void* data)
 {
-	my1image_region_t *size = (my1image_region_t*) data;
+	my1image_area_t *size = (my1image_area_t*) data;
 	return image_size_this(img,res,size->height,size->width);
 }
 /*----------------------------------------------------------------------------*/
