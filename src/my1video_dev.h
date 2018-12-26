@@ -25,7 +25,7 @@ typedef struct _my1video_capture_t
 	AVFrame *buffer; /* internal capture buffer (RGB) */
 	AVFrame *ready; /* pure pointer to buffer */
 	my1video_t *video; /* pure pointer to video object */
-	int lindex; /* sync marker for video index */
+	int index; /* sync marker for video index */
 }
 my1video_capture_t;
 /*----------------------------------------------------------------------------*/

@@ -56,7 +56,7 @@ void capture_init(my1video_capture_t* object, my1video_t* video)
 	object->buffer = 0x0;
 	object->ready = 0x0;
 	object->video = video;
-	object->lindex = -1;
+	object->index = -1;
 	video->capture = (void*) object;
 }
 /*----------------------------------------------------------------------------*/
@@ -274,6 +274,7 @@ void capture_file(my1video_capture_t* object, char *filename)
 	object->video->index = 0;
 	object->video->flags |= VIDEO_FLAG_DO_UPDATE;
 	object->video->flags |= VIDEO_FLAG_STEP;
+	object->video->flags |= VIDEO_FLAG_IS_PAUSED;
 }
 /*----------------------------------------------------------------------------*/
 void capture_live(my1video_capture_t* object, char *camname)
@@ -316,16 +317,17 @@ void capture_grab(my1video_capture_t* object)
 	}
 	else
 	{
-		if (object->video->index==0) /* check reset request */
+		/* check reset request */
+		if (object->video->index==0)
 		{
 			capture_reset(object);
-			object->lindex = -1;
+			object->index = 0;
 		}
-		/* using last index to see if grabbing is required */
-		if (object->lindex<object->video->index)
+		/* compare index to see if grabbing is required */
+		if (object->index<=object->video->index)
 		{
 			object->ready = capture_grab_frame(object);
-			object->lindex++;
+			object->index++;
 		}
 	}
 	if (object->ready) /* create video internal copy if valid frame */

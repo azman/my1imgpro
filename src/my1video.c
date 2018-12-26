@@ -4,8 +4,6 @@
 void video_init(my1video_t *video)
 {
 	image_init(&video->image);
-	video->vdata.viewdata = &video->image;
-	video->vdata.userdata = 0x0;
 	video->frame = 0x0; /* frame is pure pointer! */
 	buffer_init(&video->vbuff);
 	video->filter = 0x0;
@@ -18,6 +16,7 @@ void video_init(my1video_t *video)
 	video->flags &= ~VIDEO_FLAG_DO_UPDATE; /* do not update initially */
 	video->flags &= ~VIDEO_FLAG_NEW_FRAME; /* no new frame */
 	video->flags &= ~VIDEO_FLAG_IS_PAUSED; /* NOT paused initially */
+	video->flags &= ~VIDEO_FLAG_DO_GOBACK; /* disable reverse flag! */
 	video->inkey = 0;
 	video->capture = 0x0;
 	video->display = 0x0;
@@ -33,6 +32,7 @@ void video_play(my1video_t *video)
 {
 	video->flags |= VIDEO_FLAG_DO_UPDATE;
 	video->flags &= ~VIDEO_FLAG_STEP;
+	video->flags &= ~VIDEO_FLAG_IS_PAUSED;
 }
 /*----------------------------------------------------------------------------*/
 void video_stop(my1video_t *video)
@@ -45,39 +45,49 @@ void video_stop(my1video_t *video)
 		/* get 1st frame and step on */
 		video->flags |= VIDEO_FLAG_DO_UPDATE;
 		video->flags |= VIDEO_FLAG_STEP;
+		video->flags |= VIDEO_FLAG_IS_PAUSED;
 	}
+}
+/*----------------------------------------------------------------------------*/
+void video_hold(my1video_t *video)
+{
+	video->flags ^= VIDEO_FLAG_IS_PAUSED; /* toggle pause flag */
+	if (!(video->flags&VIDEO_FLAG_IS_PAUSED))
+	{
+		/* update if no longer paused! and no stepping! */
+		video->flags |= VIDEO_FLAG_DO_UPDATE;
+		video->flags &= ~VIDEO_FLAG_STEP;
+	}
+	else
+		video->flags &= ~VIDEO_FLAG_DO_UPDATE;
+}
+/*----------------------------------------------------------------------------*/
+void video_loop(my1video_t *video)
+{
+	video->flags ^= VIDEO_FLAG_LOOP; /* toggle loop flag */
 }
 /*----------------------------------------------------------------------------*/
 void video_next_frame(my1video_t *video)
 {
 	video->flags |= VIDEO_FLAG_STEP;
-	if (video->index<video->count)
-	{
-		video->flags |= VIDEO_FLAG_DO_UPDATE;
-		video->index++;
-		if (video->index==video->count)
-		{
-			if (video->flags&VIDEO_FLAG_LOOP)
-			{
-				video->index = 0;
-			}
-			else
-			{
-				video->flags &= ~VIDEO_FLAG_DO_UPDATE;
-				video->index--;
-			}
-		}
-	}
+	video->flags |= VIDEO_FLAG_IS_PAUSED;
+	video->flags &= ~VIDEO_FLAG_DO_GOBACK;
+	video->flags |= VIDEO_FLAG_DO_UPDATE;
 }
 /*----------------------------------------------------------------------------*/
 void video_prev_frame(my1video_t *video)
 {
 	video->flags |= VIDEO_FLAG_STEP;
-	if (video->index>0)
-	{
-		video->flags |= VIDEO_FLAG_DO_UPDATE;
-		video->index--;
-	}
+	video->flags |= VIDEO_FLAG_IS_PAUSED;
+	/* capture library cannot implement this!
+	video->flags |= VIDEO_FLAG_DO_GOBACK;
+	video->flags |= VIDEO_FLAG_DO_UPDATE;
+	*/
+}
+/*----------------------------------------------------------------------------*/
+void video_skip_filter(my1video_t *video)
+{
+	video->flags ^= VIDEO_FLAG_NO_FILTER; /* toggle flag to skip filter */
 }
 /*----------------------------------------------------------------------------*/
 void video_filter_init(my1video_t *video, my1vpass_t *vpass)
@@ -87,7 +97,7 @@ void video_filter_init(my1video_t *video, my1vpass_t *vpass)
 	{
 		/* allow filters to use external buffer */
 		if (!ptask->buffer) ptask->buffer = &video->vbuff;
-		ptask->data = (void*) &video->vdata;
+		ptask->parent = (void*) video;
 		ptask = ptask->next;
 	}
 	video->filter = vpass;
@@ -101,12 +111,39 @@ void video_filter(my1video_t *video)
 /*----------------------------------------------------------------------------*/
 void video_post_frame(my1video_t *video)
 {
-	if (video->flags&VIDEO_FLAG_IS_PAUSED) return;
-	if (video->flags&VIDEO_FLAG_STEP) return;
+	if (video->count<0) return;
+	video->index++;
+	if (video->index>=video->count)
+	{
+		if (video->flags&VIDEO_FLAG_LOOP)
+		{
+			video->index = 0;
+		}
+		else
+		{
+			video->flags &= ~VIDEO_FLAG_DO_UPDATE;
+			video->flags |= VIDEO_FLAG_IS_PAUSED;
+		}
+	}
+}
+/*----------------------------------------------------------------------------*/
+void video_post_input(my1video_t *video)
+{
+	if (video->count<0) return;
 	if (video->flags&VIDEO_FLAG_DO_UPDATE)
 	{
-		video_next_frame(video);
-		video->flags &= ~VIDEO_FLAG_STEP; /* make sure NOT stepping */
+		if (video->index>=video->count)
+		{
+			if (video->flags&VIDEO_FLAG_LOOP)
+			{
+				video->index = 0;
+			}
+			else
+			{
+				video->flags &= ~VIDEO_FLAG_DO_UPDATE;
+				video->flags |= VIDEO_FLAG_IS_PAUSED;
+			}
+		}
 	}
 }
 /*----------------------------------------------------------------------------*/
@@ -118,6 +155,7 @@ int encode_vrgb(vrgb_t colorpix)
 vrgb_t decode_vrgb(int rgbcode)
 {
 	vrgb_t cpix;
+	cpix.a = 0;
 	decode_rgb(rgbcode,&cpix.r,&cpix.g,&cpix.b);
 	return cpix;
 }
@@ -130,11 +168,9 @@ int vrgb2gray(vrgb_t colorpix)
 /*----------------------------------------------------------------------------*/
 vrgb_t gray2vrgb(int grayvalue)
 {
-	vrgb_t cpix;
-	cpix.a = 0;
-	cpix.r = (vbyte) grayvalue;
-	cpix.g = (vbyte) grayvalue;
-	cpix.b = (vbyte) grayvalue;
-	return cpix;
+	int temp;
+	vrgb_t *cpix = (vrgb_t*)&temp;
+	temp = gray2color(grayvalue);
+	return *cpix;
 }
 /*----------------------------------------------------------------------------*/

@@ -37,13 +37,16 @@ static char showkeys[] =
 gboolean on_timer_callback(gpointer data)
 {
 	my1video_t* video = (my1video_t*) data;
+	my1video_capture_t* vgrab = (my1video_capture_t*)video->capture;
 	guint keyval = (guint)video->inkey;
-	capture_grab((my1video_capture_t*)video->capture);
+	capture_grab(vgrab);
 	if(video->flags&VIDEO_FLAG_NEW_FRAME)
 	{
+		video_post_frame(video);
 		video_filter(video);
 		if (video->count>=0)
-			printf("Video frame index: %d/%d\n", video->index, video->count);
+			printf("Video frame index: %d/%d(%d)\n",
+				video->index, video->count, vgrab->index);
 		display_draw((my1video_display_t*)video->display);
 	}
 	if(keyval == GDK_KEY_Escape||
@@ -54,8 +57,8 @@ gboolean on_timer_callback(gpointer data)
 	}
 	else if(keyval == GDK_KEY_c)
 	{
-		printf("Play.\n");
 		video_play(video);
+		printf("Play.\n");
 	}
 	else if(keyval == GDK_KEY_s)
 	{
@@ -64,40 +67,39 @@ gboolean on_timer_callback(gpointer data)
 	}
 	else if(keyval == GDK_KEY_space)
 	{
-		if (video->flags&VIDEO_FLAG_IS_PAUSED)
+		if (video->index!=video->count||video->flags&VIDEO_FLAG_LOOP)
 		{
-			video->flags &= ~VIDEO_FLAG_IS_PAUSED;
-			printf("Continue.\n");
-		}
-		else
-		{
-			video->flags |= VIDEO_FLAG_IS_PAUSED;
-			printf("Paused.\n");
+			video_hold(video);
+			if (video->flags&VIDEO_FLAG_IS_PAUSED)
+				printf("Paused.\n");
+			else
+				printf("Continue.\n");
 		}
 	}
 	else if(keyval == GDK_KEY_f)
 	{
-		printf("Next.\n");
 		video_next_frame(video);
+		printf("Next.\n");
 	}
 	else if(keyval == GDK_KEY_b)
 	{
-		printf("Previous.\n");
-		printf("Not implemented... yet!\n");
-		/**video_prev_frame(video);*/
-	}
-	else if(keyval == GDK_KEY_l)
-	{
-		if (video->flags&VIDEO_FLAG_LOOP)
+		if (video->count<0)
 		{
-			video->flags &= ~VIDEO_FLAG_LOOP;
-			printf("Looping OFF.\n");
+			printf("Useless during live feed.\n");
 		}
 		else
 		{
-			video->flags |= VIDEO_FLAG_LOOP;
-			printf("Looping ON.\n");
+			video_prev_frame(video);
+			printf("Previous.\n");
 		}
+	}
+	else if(keyval == GDK_KEY_l)
+	{
+		video_loop(video);
+		if (video->flags&VIDEO_FLAG_LOOP)
+			printf("Looping ON.\n");
+		else
+			printf("Looping OFF.\n");
 	}
 	else if(keyval == GDK_KEY_h)
 	{
@@ -105,19 +107,14 @@ gboolean on_timer_callback(gpointer data)
 	}
 	else if(keyval == GDK_KEY_z)
 	{
+		video_skip_filter(video);
 		if (video->flags&VIDEO_FLAG_NO_FILTER)
-		{
-			video->flags &= ~VIDEO_FLAG_NO_FILTER;
 			printf("Filter ON.\n");
-		}
 		else
-		{
-			video->flags |= VIDEO_FLAG_NO_FILTER;
 			printf("Filter OFF.\n");
-		}
 	}
 	video->inkey = 0;
-	video_post_frame(video);
+	video_post_input(video);
 	return 1; /* return 0 to stop */
 }
 /*----------------------------------------------------------------------------*/
@@ -215,11 +212,8 @@ int main(int argc, char* argv[])
 	else if (pdevice)
 		capture_live(&cCapture,pdevice);
 
-	printf("[DEBUG]{Video:%p,View:%p}\n",cMain.frame,cDisplay.view.canvas);
 	display_make(&cDisplay);
-	printf("[DEBUG]{Video:%p,View:%p}\n",cMain.frame,cDisplay.view.canvas);
 	display_draw(&cDisplay);
-	printf("[DEBUG]{Video:%p,View:%p}\n",cMain.frame,cDisplay.view.canvas);
 	display_name(&cDisplay, "MY1 Video Test",0x0);
 
 	printf("Press 'h' for hotkeys.\n");
