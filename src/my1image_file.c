@@ -286,8 +286,8 @@ int image_load_pnm(my1image_t *image, char *filename)
 {
 	FILE *pnmfile;
 	char buffer[PNM_MAGIC_SIZE];
-	int r, g, b, buff, loop;
-	int width, height, levels = 1, error = 0, version = 0;
+	int r, g, b, buff, loop, size;
+	int width, height, maxval = 1, error = 0, version = 0;
 	/* open file for read */
 	pnmfile = fopen(filename, "rt");
 	if (!pnmfile) return PNM_ERROR_FILEOPEN; /* cannot open file */
@@ -317,10 +317,10 @@ int image_load_pnm(my1image_t *image, char *filename)
 	} while (buff=='#');
 	/** get width and height */
 	fscanf(pnmfile,"%d %d",&width,&height);
-	/** levels for version 2/3 only! */
-	if (version>1) fscanf(pnmfile,"%d",&levels);
+	/** maxval for version 2/3 only! */
+	if (version>1) fscanf(pnmfile,"%d",&maxval);
 #ifdef MY1DEBUG
-	printf("Image format: P%d, levels: %d\n",version,levels);
+	printf("Image format: P%d, maxval: %d\n",version,maxval);
 	printf("Image width: %d, height: %d\n",width,height);
 #endif
 	/** try to create storage */
@@ -329,39 +329,88 @@ int image_load_pnm(my1image_t *image, char *filename)
 		fclose(pnmfile);
 		return PNM_ERROR_MEMALLOC; /* cannot allocate memory */
 	}
-	/** read in the pixels */
-	for (loop=0; loop<image->length; loop++)
+	/** skip any comment lines */
+	do {
+		buff = fgetc(pnmfile);
+		if (buff=='#') while (!feof(pnmfile)&&fgetc(pnmfile)!='\n');
+		else ungetc(buff,pnmfile);
+	} while (buff=='#');
+	/** read in the pixels - depending on version (validated as 1-3)! */
+	size = image->length;
+	switch (version)
 	{
-		if (version==3)
+		case 3:
 		{
-			if (fscanf(pnmfile,"%d %d %d",&r,&g,&b)==EOF)
+			for (loop=0;loop<size;loop++)
 			{
-				error = PNM_ERROR_FILESIZE;
-				break;
+				if (fscanf(pnmfile,"%d %d %d",&r,&g,&b)==EOF)
+				{
+					error = PNM_ERROR_FILESIZE;
+					break;
+				}
+				if ((r<0||r>maxval)||(g<0||g>maxval)||(b<0||b>maxval))
+				{
+					error = PNM_ERROR_LEVELPNM;
+					break;
+				}
+				buff = encode_rgb(r,g,b);
+				image->data[loop] = buff;
 			}
-			if (r>levels) r = levels;
-			if (g>levels) g = levels;
-			if (b>levels) b = levels;
-			buff = encode_rgb(r,g,b);
+			break;
 		}
-		else
+		case 2:
 		{
-			if (fscanf(pnmfile,"%d",&buff)==EOF)
+			for (loop=0;loop<size;loop++)
 			{
-				error = PNM_ERROR_FILESIZE;
-				break;
+				if (fscanf(pnmfile,"%d",&buff)==EOF)
+				{
+					error = PNM_ERROR_FILESIZE;
+					break;
+				}
+				if (buff<0||buff>maxval)
+				{
+					error = PNM_ERROR_LEVELPNM;
+					break;
+				}
+				image->data[loop] = buff;
 			}
-			if (buff>levels) buff = levels;
-			/* adjust for binary pixel */
-			if (version==1)
-			{
-				if (buff) buff = WHITE;
-			}
+			break;
 		}
-		image->data[loop] = buff;
+		case 1:
+		{
+			for (loop=0;loop<size;loop++)
+			{
+				if (feof(pnmfile))
+				{
+					error = PNM_ERROR_FILESIZE;
+					break;
+				}
+				buff = fgetc(pnmfile);
+				switch (buff)
+				{
+					/* PBM is 'ink on' coded => 1 is BLACK! */
+					case '1': buff = BLACK; break;
+					case '0': buff = WHITE; break;
+					default: buff = -1; break;
+					case ' ':
+					case '\t':
+					case '\r':
+					case '\n':
+						continue;
+				}
+				if (buff<0)
+				{
+					error = PNM_ERROR_LEVELPNM;
+					break;
+				}
+				image->data[loop] = buff;
+			}
+			break;
+		}
 	}
 	fclose(pnmfile);
-	image->mask = (version==3) ? IMASK_COLOR24 : 0;
+	if (!error)
+		image->mask = (version==3) ? IMASK_COLOR : IMASK_GRAY;
 	return error;
 }
 /*----------------------------------------------------------------------------*/
@@ -383,7 +432,7 @@ int image_save_pnm(my1image_t *image, char *filename)
 	fprintf(pnmfile,"# Written by my1imgpro library\n");
 	/* write size */
 	fprintf(pnmfile,"%d %d\n",image->width,image->height);
-	/* write level - ALWAYS 8-bit {gray,color}levels */
+	/* write max value - ALWAYS 8-bit {gray,color} max value */
 	fprintf(pnmfile,"255\n");
 #ifdef MY1DEBUG
 	printf("Version: %d, ",version);

@@ -19,6 +19,7 @@
 #define PNM_ERROR_FILESIZE -3+PNM_ERROR_OFFSET
 #define PNM_ERROR_NOSUPPORT -4+PNM_ERROR_OFFSET
 #define PNM_ERROR_MEMALLOC -5+PNM_ERROR_OFFSET
+#define PNM_ERROR_LEVELPNM -6+PNM_ERROR_OFFSET
 /*----------------------------------------------------------------------------*/
 #define FILE_ERROR_OPEN -1
 #define FILE_ERROR_FORMAT BMP_ERROR_VALIDBMP+PNM_ERROR_VALIDPNM
