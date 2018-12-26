@@ -264,9 +264,10 @@ my1image_t* image_filter(my1image_t* image, my1filter_t* pfilter)
 		if (pfilter->filter&&pfilter->buffer)
 		{
 			my1image_buffer_t *pbuff = pfilter->buffer;
-			pfilter->filter(image,pbuff->next,pfilter->data);
+			image = pfilter->filter(image,pbuff->next,pfilter);
 			buffer_swap(pbuff);
-			image = pbuff->curr;
+			/* just in case... should we break? */
+			if (!image) image = pbuff->curr;
 			/* in case we need a copy of this stage output! */
 			if (pfilter->docopy)
 			{

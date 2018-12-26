@@ -1,13 +1,13 @@
 /*----------------------------------------------------------------------------*/
 #include "my1image_work.h"
-#include "my1image_util.h"
 /* need the following for laplace2 */
 #include "my1image_fpo.h"
 /*----------------------------------------------------------------------------*/
 /* need for sqrt in sobel */
 #include <math.h>
 /*----------------------------------------------------------------------------*/
-my1image_t* filter_gray(my1image_t* img, my1image_t* res, void* data)
+my1image_t* filter_gray(my1image_t* img, my1image_t* res,
+	my1image_filter_t* filter)
 {
 	int loop;
 	image_make(res,img->height,img->width);
@@ -102,9 +102,10 @@ my1image_t* image_size_this(my1image_t* img,my1image_t* res,
 	return image_size_down(img,res,height,width);
 }
 /*----------------------------------------------------------------------------*/
-my1image_t* filter_resize(my1image_t* img, my1image_t* res, void* data)
+my1image_t* filter_resize(my1image_t* img, my1image_t* res,
+	my1image_filter_t* filter)
 {
-	my1image_area_t *size = (my1image_area_t*) data;
+	my1image_area_t *size = (my1image_area_t*) filter->data;
 	return image_size_this(img,res,size->height,size->width);
 }
 /*----------------------------------------------------------------------------*/
@@ -122,7 +123,8 @@ my1image_t* image_mask_this(my1image_t* img, my1image_t* res,
 	return res;
 }
 /*----------------------------------------------------------------------------*/
-my1image_t* filter_laplace_1(my1image_t* img, my1image_t* res, void* data)
+my1image_t* filter_laplace_1(my1image_t* img, my1image_t* res,
+	my1image_filter_t* filter)
 {
 	int coeff[] = { 0,-1,0, -1,4,-1, 0,-1,0 };
 	image_mask_this(img,res,3,9,coeff);
@@ -130,7 +132,8 @@ my1image_t* filter_laplace_1(my1image_t* img, my1image_t* res, void* data)
 	return res;
 }
 /*----------------------------------------------------------------------------*/
-my1image_t* filter_laplace_2(my1image_t* img, my1image_t* res, void* data)
+my1image_t* filter_laplace_2(my1image_t* img, my1image_t* res,
+	my1image_filter_t* filter)
 {
 	my1frame_t buff1, buff2;
 	float coeff[] = { 0.0,-1.0,0.0, -1.0,4.0,-1.0, 0.0,-1.0,0.0 };
@@ -155,7 +158,8 @@ my1image_t* filter_laplace_2(my1image_t* img, my1image_t* res, void* data)
 	return res;
 }
 /*----------------------------------------------------------------------------*/
-my1image_t* filter_sobel_x(my1image_t* img, my1image_t* res, void* data)
+my1image_t* filter_sobel_x(my1image_t* img, my1image_t* res,
+	my1image_filter_t* filter)
 {
 	/* +ve gradient when dark(left) -> light(right) */
 	int coeff[] = { -1,0,1, -2,0,2, -1,0,1 };
@@ -164,7 +168,8 @@ my1image_t* filter_sobel_x(my1image_t* img, my1image_t* res, void* data)
 	return res;
 }
 /*----------------------------------------------------------------------------*/
-my1image_t* filter_sobel_y(my1image_t* img, my1image_t* res, void* data)
+my1image_t* filter_sobel_y(my1image_t* img, my1image_t* res,
+	my1image_filter_t* filter)
 {
 	/* +ve gradient when dark(bottom) -> light(top) */
 	int coeff[] = { 1,2,1, 0,0,0, -1,-2,-1 };
@@ -173,9 +178,10 @@ my1image_t* filter_sobel_y(my1image_t* img, my1image_t* res, void* data)
 	return res;
 }
 /*----------------------------------------------------------------------------*/
-my1image_t* filter_sobel(my1image_t* img, my1image_t* res, void* data)
+my1image_t* filter_sobel(my1image_t* img, my1image_t* res,
+	my1image_filter_t* filter)
 {
-	my1image_t buff1, buff2, *chk = (my1image_t*) data;
+	my1image_t buff1, buff2, *chk = (my1image_t*) filter->data;
 	int irow, icol, x, y, z, p;
 	/* initialize buffer structures */
 	image_init(&buff1);
@@ -274,7 +280,8 @@ my1image_t* filter_sobel(my1image_t* img, my1image_t* res, void* data)
 	return res;
 }
 /*----------------------------------------------------------------------------*/
-my1image_t* filter_gauss(my1image_t* img, my1image_t* res, void* data)
+my1image_t* filter_gauss(my1image_t* img, my1image_t* res,
+	my1image_filter_t* filter)
 {
 	int coeff[] = { 1,2,1, 2,4,2, 1,2,1};
 	image_mask_this(img,res,3,9,coeff);
@@ -282,7 +289,8 @@ my1image_t* filter_gauss(my1image_t* img, my1image_t* res, void* data)
 	return res;
 }
 /*----------------------------------------------------------------------------*/
-my1image_t* filter_maxscale(my1image_t* img, my1image_t* res, void* data)
+my1image_t* filter_maxscale(my1image_t* img, my1image_t* res,
+	my1image_filter_t* filter)
 {
 	int loop, size = img->length, pmax = img->data[0], temp;
 	image_make(res,img->height,img->width);
@@ -356,10 +364,11 @@ int image_check_suppress(my1image_t *img, my1image_t *chk, int pref, int pchk)
 	return edge;
 }
 /*----------------------------------------------------------------------------*/
-my1image_t* filter_suppress(my1image_t* img, my1image_t* res, void* data)
+my1image_t* filter_suppress(my1image_t* img, my1image_t* res,
+	my1image_filter_t* filter)
 {
 	int loop, size = img->length, curr, buff;
-	my1image_t *chk = (my1image_t*) data;
+	my1image_t *chk = (my1image_t*) filter->data;
 	image_make(res,img->height,img->width);
 	for (loop=0;loop<size;loop++)
 	{
@@ -410,7 +419,8 @@ my1image_t* filter_suppress(my1image_t* img, my1image_t* res, void* data)
 	return res;
 }
 /*----------------------------------------------------------------------------*/
-my1image_t* filter_threshold(my1image_t* img, my1image_t* res, void* data)
+my1image_t* filter_threshold(my1image_t* img, my1image_t* res,
+	my1image_filter_t* filter)
 {
 	int loop, size = img->length, temp;
 	my1image_histogram_t hist;
@@ -471,7 +481,8 @@ void image_double_threshold(my1image_t *img, my1image_t *res, int hi, int lo)
 	res->mask = IMASK_GRAY;
 }
 /*----------------------------------------------------------------------------*/
-my1image_t* filter_canny(my1image_t* img, my1image_t* res, void* data)
+my1image_t* filter_canny(my1image_t* img, my1image_t* res,
+	my1image_filter_t* filter)
 {
 	/** WORK IN PROGRESS */
 	my1image_buffer_t buff;
@@ -480,9 +491,9 @@ my1image_t* filter_canny(my1image_t* img, my1image_t* res, void* data)
 	/* should i run gaussian? */
 	img = filter_gauss(img,buff.curr,0x0);
 	/* calculate directional edge */
-	img = filter_sobel(img,buff.next,(void*)&buff.xtra);
+	img = filter_sobel(img,buff.next,filter);
 	/* non-maximum suppression */
-	img = filter_suppress(img,buff.curr,(void*)&buff.xtra);
+	img = filter_suppress(img,buff.curr,filter);
 	/* hi-lo threshold? try-and-error values for now! */
 	image_double_threshold(img,res,164,82);
 	/* cleanup */

@@ -66,6 +66,7 @@ void image_test_init(my1image_test_t* test)
 	filter_init(&test->ifilter_canny,filter_canny,&test->work);
 	test->ifilter_sobel.data = (void*) &test->work.xtra;
 	test->ifilter_suppress.data = (void*) &test->work.xtra;
+	test->ifilter_canny.data = (void*) &test->work.xtra;
 	test->pfilter = 0x0;
 }
 /*----------------------------------------------------------------------------*/
