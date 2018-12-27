@@ -233,7 +233,8 @@ void filter_init(my1image_filter_t* pfilter,
 /*----------------------------------------------------------------------------*/
 void filter_free(my1image_filter_t* pfilter)
 {
-	pfilter->filter = 0x0;
+	/* no resource to release, just prepare for new filter chaining */
+	pfilter->docopy = 0x0;
 	if (pfilter->next)
 		filter_free(pfilter->next);
 	pfilter->next = 0x0;

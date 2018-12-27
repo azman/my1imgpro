@@ -358,7 +358,8 @@ int encode_bgr(cbyte r, cbyte g, cbyte b)
 {
 	my1rgb_t temp;
 	int *buff = (int*) &temp;
-	temp.a = 0; temp.r = b; temp.g = g; temp.b = r;
+	/* exclusive for my1image_view_draw - need alpha channel to be 255! */
+	temp.a = 0xff; temp.r = b; temp.g = g; temp.b = r;
 	/**return (((int)b&0xff)<<16) | (((int)g&0xff)<<8) | ((int)r&0xff);*/
 	return *buff;
 }

@@ -34,6 +34,23 @@ static char showkeys[] =
 /*----------------------------------------------------------------------------*/
 #define FRAME_NEXT_MS 10
 /*----------------------------------------------------------------------------*/
+void video_draw_index(void* data)
+{
+	my1image_view_t* view = (my1image_view_t*) data;
+	my1video_t* video = (my1video_t*)view->draw_more_data;
+	my1video_capture_t* vgrab = (my1video_capture_t*)video->capture;
+	gchar *buff = 0x0;
+	if (video->count<0) return;
+	cairo_set_source_rgb(view->dodraw,0.0,0.0,1.0);
+	cairo_move_to(view->dodraw,20,20);
+	cairo_set_font_size(view->dodraw,12);
+	buff = g_strdup_printf("%d/%d(%d)",
+		video->index, video->count, vgrab->index);
+	cairo_show_text(view->dodraw,buff);
+	cairo_stroke(view->dodraw);
+	g_free(buff);
+}
+/*----------------------------------------------------------------------------*/
 gboolean on_timer_callback(gpointer data)
 {
 	my1video_t* video = (my1video_t*) data;
@@ -44,9 +61,6 @@ gboolean on_timer_callback(gpointer data)
 	{
 		video_post_frame(video);
 		video_filter(video);
-		if (video->count>=0)
-			printf("Video frame index: %d/%d(%d)\n",
-				video->index, video->count, vgrab->index);
 		display_draw((my1video_display_t*)video->display);
 	}
 	if(keyval == GDK_KEY_Escape||
@@ -195,9 +209,10 @@ int main(int argc, char* argv[])
 
 	/* initialize main structures */
 	video_init(&cMain);
-	cMain.flags |= VIDEO_FLAG_NO_FILTER;
 	capture_init(&cCapture,&cMain);
 	display_init(&cDisplay,&cMain);
+	cDisplay.view.draw_more = &video_draw_index;
+	cDisplay.view.draw_more_data = (void*)&cMain;
 	filter_init(&grayfilter,filter_gray,0x0);
 	filter_init(&edgefilter,filter_laplace_1,0x0);
 	filter_init(&morefilter,0x0,0x0);

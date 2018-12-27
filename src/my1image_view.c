@@ -16,6 +16,9 @@ void image_view_init(my1image_view_t* iview)
 	iview->width = -1;
 	iview->height = -1;
 	iview->gohist = 0;
+	iview->draw_more = 0x0;
+	iview->draw_more_data = 0x0;
+	iview->dodraw = 0x0;
 	iview->image = 0x0;
 	image_init(&iview->buff);
 }
@@ -175,6 +178,7 @@ void image_view_make(my1image_view_t* iview, my1image_t* that)
 /*----------------------------------------------------------------------------*/
 void image_view_draw(my1image_view_t* iview, my1image_t* that)
 {
+	GdkPixbuf *dotemp;
 	/* check if assigned new image */
 	if (that) iview->image = that;
 	/* must have image - and canvas! */
@@ -191,10 +195,14 @@ void image_view_draw(my1image_view_t* iview, my1image_t* that)
 	/* colormode abgr32 for gdk function */
 	image_copy_color2bgr(&iview->buff,iview->image);
 	/* draw! */
-	gdk_draw_rgb_32_image(iview->canvas->window,
-		iview->canvas->style->fg_gc[GTK_STATE_NORMAL],
-		0, 0, iview->buff.width, iview->buff.height, GDK_RGB_DITHER_NONE,
-		(const guchar*)iview->buff.data, iview->buff.width*4);
+	iview->dodraw = gdk_cairo_create(iview->canvas->window);
+	dotemp = gdk_pixbuf_new_from_data((const guchar*)iview->buff.data,
+		GDK_COLORSPACE_RGB,TRUE,8,iview->width,iview->height,
+		iview->width<<2,0x0,0x0);
+	gdk_cairo_set_source_pixbuf(iview->dodraw,dotemp,0,0);
+	cairo_paint(iview->dodraw);
+	if (iview->draw_more) iview->draw_more((void*)iview);
+	cairo_destroy(iview->dodraw);
 	/* check histogram */
 	image_view_show_hist(iview);
 }
