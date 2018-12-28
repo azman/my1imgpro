@@ -111,7 +111,7 @@ void video_post_frame(my1video_t *video)
 {
 	if (video->count<0) return;
 	video->index++;
-	if (video->index>=video->count)
+	if (video->index>video->count)
 	{
 		if (video->flags&VIDEO_FLAG_LOOP)
 		{
