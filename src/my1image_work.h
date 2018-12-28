@@ -6,8 +6,6 @@
 /*----------------------------------------------------------------------------*/
 my1image_t* filter_gray(my1image_t* img, my1image_t* res,
 	my1image_filter_t* filter);
-my1image_t* image_size_this(my1image_t* img,my1image_t* res,
-	int height, int width);
 my1image_t* filter_resize(my1image_t* img, my1image_t* res,
 	my1image_filter_t* filter);
 my1image_t* image_mask_this(my1image_t* img,my1image_t* res,

@@ -50,6 +50,12 @@ void image_pan(my1image_t *image, my1image_t *check,
 void image_turn(my1image_t *image, my1image_t *check, int turn); /* turn*90 */
 void image_flip(my1image_t *image, my1image_t *check, int side); /* h/v */
 /*----------------------------------------------------------------------------*/
+/* image sizing */
+my1image_t* image_size_down(my1image_t* image, my1image_t* check,
+	int height, int width);
+my1image_t* image_size_this(my1image_t* image, my1image_t* check,
+	int height, int width);
+/*----------------------------------------------------------------------------*/
 /* image color stuffs */
 /*----------------------------------------------------------------------------*/
 #define IMASK_COLOR24 0x00FFFFFF
