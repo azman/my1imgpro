@@ -133,7 +133,7 @@ void video_post_input(my1video_t *video)
 		if (video->flags&VIDEO_FLAG_DO_GOBACK)
 		{
 			video->flags &= ~VIDEO_FLAG_DO_GOBACK;
-			if (video->index>1)
+			if (video->count>=0&&video->index>1)
 				video->index -= 2;
 			else
 			{
