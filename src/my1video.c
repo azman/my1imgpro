@@ -79,10 +79,8 @@ void video_prev_frame(my1video_t *video)
 {
 	video->flags |= VIDEO_FLAG_STEP;
 	video->flags |= VIDEO_FLAG_IS_PAUSED;
-	/* capture library cannot implement this!
 	video->flags |= VIDEO_FLAG_DO_GOBACK;
 	video->flags |= VIDEO_FLAG_DO_UPDATE;
-	*/
 }
 /*----------------------------------------------------------------------------*/
 void video_skip_filter(my1video_t *video)
@@ -132,6 +130,17 @@ void video_post_input(my1video_t *video)
 	if (video->count<0) return;
 	if (video->flags&VIDEO_FLAG_DO_UPDATE)
 	{
+		if (video->flags&VIDEO_FLAG_DO_GOBACK)
+		{
+			video->flags &= ~VIDEO_FLAG_DO_GOBACK;
+			if (video->index>1)
+				video->index -= 2;
+			else
+			{
+				video->flags &= ~VIDEO_FLAG_DO_UPDATE;
+				video->flags |= VIDEO_FLAG_IS_PAUSED;
+			}
+		}
 		if (video->index>=video->count)
 		{
 			if (video->flags&VIDEO_FLAG_LOOP)

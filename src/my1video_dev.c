@@ -323,6 +323,12 @@ void capture_grab(my1video_capture_t* object)
 			capture_reset(object);
 			object->index = 0;
 		}
+		else if (object->video->index<object->index)
+		{
+			/* try to reverse step? */
+			capture_reset(object);
+			object->index = object->video->index;
+		}
 		/* compare index to see if grabbing is required */
 		if (object->index<=object->video->index)
 		{
