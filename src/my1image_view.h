@@ -21,7 +21,7 @@ typedef struct _my1image_view_t
 	GtkWidget *donext, *dohist, *dostat, *dostxt;
 	guint idstat, idstxt, idtime; /* gtk stuffs */
 	int width, height; /* current view size */
-	int gohist; /* histogram request flag */
+	int gohist, doquit; /* histogram/quit request flag */
 	pdraw_more draw_more; /* user draw function */
 	void* draw_more_data; /* data for user draw function */
 	cairo_t *dodraw; /* cairo drawing, needed by draw_more! */
@@ -39,10 +39,10 @@ void image_view_name(my1image_view_t* iview, const char* name);
 void image_view_make_hist(my1image_view_t* iview); /* to enable histogram */
 void image_view_show_hist(my1image_view_t* iview);
 void image_view_stat_show(my1image_view_t* iview, const char* mesg);
+void image_view_stat_time(my1image_view_t* iview, const char* mesg, int secs);
 guint image_view_stat_push(my1image_view_t* iview, const char* mesg);
 void image_view_stat_pop(my1image_view_t* iview);
 void image_view_stat_remove(my1image_view_t* iview, guint mesg_id);
-guint image_view_stat_time(my1image_view_t* iview, const char* mesg, int secs);
 /*----------------------------------------------------------------------------*/
 #endif
 /*----------------------------------------------------------------------------*/

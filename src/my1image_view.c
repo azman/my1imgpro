@@ -16,6 +16,7 @@ void image_view_init(my1image_view_t* iview)
 	iview->width = -1;
 	iview->height = -1;
 	iview->gohist = 0;
+	iview->doquit = 0;
 	iview->draw_more = 0x0;
 	iview->draw_more_data = 0x0;
 	iview->dodraw = 0x0;
@@ -26,6 +27,13 @@ void image_view_init(my1image_view_t* iview)
 void image_view_free(my1image_view_t* iview)
 {
 	image_free(&iview->buff);
+}
+/*----------------------------------------------------------------------------*/
+gboolean on_done_all(GtkWidget *widget, GdkEvent *event, gpointer data)
+{
+	my1image_view_t* view = (my1image_view_t*) data;
+	view->doquit = 1;
+	return TRUE;
 }
 /*----------------------------------------------------------------------------*/
 gboolean on_done_hist(GtkWidget *widget, GdkEvent *event, gpointer data)
@@ -168,8 +176,8 @@ void image_view_make(my1image_view_t* iview, my1image_t* that)
 		"MY1ImageViewStat");
 	gtk_box_pack_start(GTK_BOX(vbox),iview->dostat,FALSE,FALSE,0);
 	/* connect event handlers */
-	g_signal_connect(G_OBJECT(iview->window),"destroy",
-		G_CALLBACK(gtk_main_quit),0x0);
+	g_signal_connect(G_OBJECT(iview->window),"delete-event",
+		G_CALLBACK(on_done_all),(gpointer)iview);
 	g_signal_connect(G_OBJECT(iview->canvas),"expose-event",
 		G_CALLBACK(on_draw_expose),(gpointer)iview);
 	/* show main window */
@@ -274,6 +282,25 @@ void image_view_stat_show(my1image_view_t* iview, const char* mesg)
 	gtk_statusbar_push((GtkStatusbar*)iview->dostat,iview->idstat,mesg);
 }
 /*----------------------------------------------------------------------------*/
+gboolean on_timer_status(gpointer data)
+{
+	my1image_view_t *iview = (my1image_view_t*) data;
+	iview->idtime = 0;
+	gtk_statusbar_pop((GtkStatusbar*)iview->dostat,iview->idstat);
+	return 0; /* a one-shot */
+}
+/*----------------------------------------------------------------------------*/
+void image_view_stat_time(my1image_view_t* iview, const char* mesg, int secs)
+{
+	if (iview->idtime)
+	{
+		g_source_remove(iview->idtime);
+		gtk_statusbar_pop((GtkStatusbar*)iview->dostat,iview->idstat);
+	}
+	gtk_statusbar_push((GtkStatusbar*)iview->dostat,iview->idstat,mesg);
+	iview->idtime = g_timeout_add_seconds(secs,on_timer_status,(gpointer)iview);
+}
+/*----------------------------------------------------------------------------*/
 guint image_view_stat_push(my1image_view_t* iview, const char* mesg)
 {
 	return gtk_statusbar_push((GtkStatusbar*)iview->dostat,iview->idstat,mesg);
@@ -287,20 +314,5 @@ void image_view_stat_pop(my1image_view_t* iview)
 void image_view_stat_remove(my1image_view_t* iview, guint mesg_id)
 {
 	gtk_statusbar_remove((GtkStatusbar*)iview->dostat,iview->idstat,mesg_id);
-}
-/*----------------------------------------------------------------------------*/
-gboolean on_timer_status(gpointer data)
-{
-	my1image_view_t *view = (my1image_view_t*) data;
-	image_view_stat_remove(view,view->idtime);
-	view->idtime = 0;
-	return 0; /* a one-shot */
-}
-/*----------------------------------------------------------------------------*/
-guint image_view_stat_time(my1image_view_t* iview, const char* mesg, int secs)
-{
-	iview->idtime = image_view_stat_push(iview,mesg);
-	g_timeout_add_seconds(secs,on_timer_status,(gpointer)iview);
-	return iview->idtime;
 }
 /*----------------------------------------------------------------------------*/

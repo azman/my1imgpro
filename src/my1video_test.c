@@ -33,6 +33,7 @@ static char showkeys[] =
 };
 /*----------------------------------------------------------------------------*/
 #define FRAME_NEXT_MS 10
+#define MESG_SHOWTIME 1
 /*----------------------------------------------------------------------------*/
 void video_draw_index(void* data)
 {
@@ -55,6 +56,7 @@ gboolean on_timer_callback(gpointer data)
 {
 	my1video_t* video = (my1video_t*) data;
 	my1video_capture_t* vgrab = (my1video_capture_t*)video->capture;
+	my1video_display_t* vview = (my1video_display_t*)video->display;
 	guint keyval = (guint)video->inkey;
 	capture_grab(vgrab);
 	if(video->flags&VIDEO_FLAG_NEW_FRAME)
@@ -64,20 +66,19 @@ gboolean on_timer_callback(gpointer data)
 		display_draw((my1video_display_t*)video->display);
 	}
 	if(keyval == GDK_KEY_Escape||
-		keyval == GDK_KEY_q)
+		keyval == GDK_KEY_q || vview->view.doquit)
 	{
-		printf("User abort!\n");
 		gtk_main_quit();
 	}
 	else if(keyval == GDK_KEY_c)
 	{
 		video_play(video);
-		printf("Play.\n");
+		image_view_stat_time(&vview->view,"Play",MESG_SHOWTIME);
 	}
 	else if(keyval == GDK_KEY_s)
 	{
-		printf("Stop.\n");
 		video_stop(video);
+		image_view_stat_time(&vview->view,"Stop",MESG_SHOWTIME);
 	}
 	else if(keyval == GDK_KEY_space)
 	{
@@ -85,47 +86,44 @@ gboolean on_timer_callback(gpointer data)
 		{
 			video_hold(video);
 			if (video->flags&VIDEO_FLAG_IS_PAUSED)
-				printf("Paused.\n");
+				image_view_stat_time(&vview->view,"Paused",MESG_SHOWTIME);
 			else
-				printf("Continue.\n");
+				image_view_stat_time(&vview->view,"Continue",MESG_SHOWTIME);
 		}
 	}
 	else if(keyval == GDK_KEY_f)
 	{
 		video_next_frame(video);
-		printf("Next.\n");
+		image_view_stat_time(&vview->view,"Next",MESG_SHOWTIME);
 	}
 	else if(keyval == GDK_KEY_b)
 	{
 		if (video->count<0)
 		{
-			printf("Useless during live feed.\n");
+			image_view_stat_time(&vview->view,
+				"Not during live feed!",MESG_SHOWTIME);
 		}
 		else
 		{
 			video_prev_frame(video);
-			printf("Previous.\n");
+			image_view_stat_time(&vview->view,"Previous",MESG_SHOWTIME);
 		}
 	}
 	else if(keyval == GDK_KEY_l)
 	{
 		video_loop(video);
 		if (video->flags&VIDEO_FLAG_LOOP)
-			printf("Looping ON.\n");
+			image_view_stat_time(&vview->view,"Looping ON",MESG_SHOWTIME);
 		else
-			printf("Looping OFF.\n");
-	}
-	else if(keyval == GDK_KEY_h)
-	{
-		printf("%s",showkeys);
+			image_view_stat_time(&vview->view,"Looping OFF",MESG_SHOWTIME);
 	}
 	else if(keyval == GDK_KEY_z)
 	{
 		video_skip_filter(video);
 		if (video->flags&VIDEO_FLAG_NO_FILTER)
-			printf("Filter ON.\n");
+			image_view_stat_time(&vview->view,"Filter ON",MESG_SHOWTIME);
 		else
-			printf("Filter OFF.\n");
+			image_view_stat_time(&vview->view,"Filter OFF",MESG_SHOWTIME);
 	}
 	video->inkey = 0;
 	video_post_input(video);
@@ -231,8 +229,7 @@ int main(int argc, char* argv[])
 	display_draw(&cDisplay);
 	display_name(&cDisplay, "MY1 Video Test",0x0);
 
-	printf("Press 'h' for hotkeys.\n");
-	printf("Starting main capture loop.\n");
+	printf("Starting main capture loop.\n\n%s",showkeys);
 
 	/* setup signals/timer */
 	g_signal_connect(G_OBJECT(cDisplay.view.window),"key_press_event",
