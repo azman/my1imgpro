@@ -357,12 +357,44 @@ my1image_t* image_size_down(my1image_t* image, my1image_t* check,
 	return check;
 }
 /*----------------------------------------------------------------------------*/
+my1image_t* image_size_up(my1image_t* image, my1image_t* check,
+	int height, int width)
+{
+	int rows, cols, loop = 0;
+	int irow, icol, temp;
+	/* simple assignment, no fancy interpolation... for now */
+	/* prepare output image */
+	image_make(check,height,width);
+	/* browse all rows and cols in check */
+	for(rows=0;rows<check->height;rows++)
+	{
+		for(cols=0;cols<check->width;cols++,loop++)
+		{
+			/* find pixels in smaller image */
+			irow = rows*image->height/check->height;
+			icol = cols*image->width/check->width;
+			/* validate position */
+			if (irow>=image->height||icol>=image->width)
+				continue;
+			/* get index */
+			temp = irow*image->width+icol;
+			/* simply assign */
+			check->data[loop] = image->data[temp];
+		}
+	}
+	check->mask = image->mask;
+	return check;
+}
+/*----------------------------------------------------------------------------*/
 my1image_t* image_size_this(my1image_t* image, my1image_t* check,
 	int height, int width)
 {
-	if (image->height<=height&&image->width<=width)
-		return image;
-	return image_size_down(image,check,height,width);
+	if (image->height<height&&image->width<width)
+		return image_size_up(image,check,height,width);
+	if (image->height>height&&image->width>width)
+		return image_size_down(image,check,height,width);
+	image_copy(check,image);
+	return check;
 }
 /*----------------------------------------------------------------------------*/
 int gray4rgb(cbyte r, cbyte g, cbyte b)

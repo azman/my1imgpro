@@ -364,7 +364,7 @@ void on_file_open_main(my1image_test_t* test)
 						error,filename);
 			}
 			/* show info on status bar */
-			buff = g_strdup_printf("[ERROR] %s\n",buff);
+			buff = g_strdup_printf("[ERROR] %s",buff);
 			image_view_stat_time(&test->view,(char*)buff,5);
 		}
 		else
@@ -379,7 +379,7 @@ void on_file_open_main(my1image_test_t* test)
 			image_copy(&test->currimage,test->image); /* keep original */
 			image_view_draw(&test->view,test->image);
 			/* show info on status bar */
-			buff = g_strdup_printf("[CHECK] %s\n",filename);
+			buff = g_strdup_printf("[CHECK] %s",filename);
 			image_view_stat_time(&test->view,(char*)buff,5);
 		}
 		image_free(&that);
@@ -416,13 +416,13 @@ void on_file_save_main(my1image_test_t* test)
 						error,filename);
 			}
 			/* show info on status bar */
-			buff = g_strdup_printf("[ERROR] %s\n",buff);
+			buff = g_strdup_printf("[ERROR] %s",buff);
 			image_view_stat_time(&test->view,(char*)buff,5);
 		}
 		else
 		{
 			/* show info on status bar */
-			buff = g_strdup_printf("[SAVED] %s\n",filename);
+			buff = g_strdup_printf("[SAVED] %s",filename);
 			image_view_stat_time(&test->view,(char*)buff,5);
 		}
 		if (buff) g_free(buff);
@@ -837,6 +837,8 @@ int main(int argc, char* argv[])
 		/* initialize gui */
 		gtk_init(&argc,&argv);
 		/* make image_view */
+		q.view.gofull = 1;
+		q.view.aspect = 1;
 		image_view_make(&q.view,q.image);
 		image_view_draw(&q.view,q.image);
 		/* allow histogram */

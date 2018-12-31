@@ -53,6 +53,8 @@ void image_flip(my1image_t *image, my1image_t *check, int side); /* h/v */
 /* image sizing */
 my1image_t* image_size_down(my1image_t* image, my1image_t* check,
 	int height, int width);
+my1image_t* image_size_up(my1image_t* image, my1image_t* check,
+	int height, int width);
 my1image_t* image_size_this(my1image_t* image, my1image_t* check,
 	int height, int width);
 /*----------------------------------------------------------------------------*/
