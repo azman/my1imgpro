@@ -837,8 +837,6 @@ int main(int argc, char* argv[])
 		/* initialize gui */
 		gtk_init(&argc,&argv);
 		/* make image_view */
-		q.view.gofull = 1;
-		q.view.aspect = 1;
 		image_view_make(&q.view,q.image);
 		image_view_draw(&q.view,q.image);
 		/* allow histogram */

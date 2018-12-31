@@ -75,6 +75,7 @@ void image_get_region(my1image_t *img, my1image_t *sub, my1image_area_t *reg);
 void image_set_region(my1image_t *img, my1image_t *sub, my1image_area_t *reg);
 void image_fill_region(my1image_t *img, my1image_area_t *reg, int val);
 void image_mask_region(my1image_t *img, my1image_area_t *reg, int inv);
+void image_size_aspect(my1image_t *img, my1image_area_t *reg);
 /* double buffered image for processing */
 void buffer_init(my1image_buffer_t* ibuff);
 void buffer_free(my1image_buffer_t* ibuff);

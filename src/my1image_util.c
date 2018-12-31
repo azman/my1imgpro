@@ -177,6 +177,74 @@ void image_mask_region(my1image_t *img, my1image_area_t *reg, int inv)
 	}
 }
 /*----------------------------------------------------------------------------*/
+void image_size_aspect(my1image_t *img, my1image_area_t *reg)
+{
+	int rows = img->height, cols = img->width;
+	int ymax = reg->height, xmax = reg->width;
+	int ychk, xchk;
+	/* classify */
+	if (rows>xmax) /* assume cols>xmax */
+	{
+		/* create region bigger than scalable */
+		ychk = xmax*rows/cols;
+		if (ychk>ymax)
+		{
+			reg->yset = -((ychk-ymax)>>1);
+			reg->height = ychk;
+			reg->xset = 0;
+			reg->width = xmax;
+		}
+		else
+		{
+			xchk = ymax*cols/rows;
+			if (xchk>xmax)
+			{
+				reg->yset = 0;
+				reg->height = ymax;
+				reg->xset = -((xchk-xmax)>>1);
+				reg->width = xchk;
+			}
+			else
+			{
+				reg->yset = -((ychk-ymax)>>1);
+				reg->height = ymax;
+				reg->xset = -((xchk-xmax)>>1);
+				reg->width = xmax;
+			}
+		}
+	}
+	else if (rows<xmax) /* assume cols<xmax */
+	{
+		/* create region smaller than scalable */
+		ychk = xmax*rows/cols;
+		if (ychk<ymax)
+		{
+			reg->yset = (ymax-ychk)>>1;
+			reg->height = ychk;
+			reg->xset = 0;
+			reg->width = xmax;
+		}
+		else
+		{
+			xchk = ymax*cols/rows;
+			if (xchk<xmax)
+			{
+				reg->yset = 0;
+				reg->height = ymax;
+				reg->xset = (xmax-xchk)>>1;
+				reg->width = xchk;
+			}
+			else
+			{
+				reg->yset = (ymax-ychk)>>1;
+				reg->height = ymax;
+				reg->xset = (xmax-cols)>>1;
+				reg->width = xmax;
+			}
+		}
+	}
+}
+/*----------------------------------------------------------------------------*/
 void buffer_init(my1image_buffer_t* ibuff)
 {
 	ibuff->region.xset = 0;

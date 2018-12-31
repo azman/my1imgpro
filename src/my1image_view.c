@@ -226,9 +226,33 @@ void image_view_draw(my1image_view_t* iview, my1image_t* that)
 	chkh = iview->canvas->allocation.height;
 	if (chkw!=iview->width||chkh!=iview->height)
 	{
+		my1image_t temp;
+		image_init(&temp);
+		if (iview->aspect)
+		{
+			my1area_t area;
+			int ymax = ishow->height, xmax = ishow->width;
+			image_make(&temp,chkh,chkw);
+			area.height = ymax;
+			area.width = xmax;
+			image_size_aspect(&temp,&area);
+			if (area.height!=ymax||area.width!=xmax)
+			{
+				ymax = area.height;
+				xmax = area.width;
+				area.height = ishow->height;
+				area.width = ishow->width;
+				area.yset = (ymax-area.height)>>1;
+				area.xset = (xmax-area.width)>>1;
+				image_make(&temp,ymax,xmax);
+				image_fill(&temp,BLACK);
+				image_set_region(&temp,ishow,&area);
+				ishow = &temp;
+			}
+		}
 		gtk_widget_set_size_request(iview->canvas,chkw,chkh);
-		ishow = image_size_this(&iview->buff,&iview->size,
-			chkh,chkw);
+		ishow = image_size_this(ishow,&iview->size,chkh,chkw);
+		image_free(&temp);
 	}
 	/* draw! */
 	iview->dodraw = gdk_cairo_create(iview->canvas->window);
