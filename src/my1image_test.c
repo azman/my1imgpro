@@ -119,7 +119,8 @@ gboolean on_key_press(GtkWidget *widget, GdkEventKey *kevent, gpointer data)
 	if(kevent->type == GDK_KEY_PRESS)
 	{
 		/** g_message("%d, %c", kevent->keyval, kevent->keyval); */
-		if(kevent->keyval == GDK_KEY_Escape||kevent->keyval == GDK_KEY_q)
+		if(kevent->keyval == GDK_KEY_Escape||
+			kevent->keyval == GDK_KEY_q||q->view.doquit)
 		{
 			gtk_main_quit();
 			return TRUE;
@@ -136,14 +137,24 @@ gboolean on_key_press(GtkWidget *widget, GdkEventKey *kevent, gpointer data)
 /*----------------------------------------------------------------------------*/
 gboolean on_mouse_click(GtkWidget *widget, GdkEventButton *event, gpointer data)
 {
-	const gint RIGHT_CLICK = 3;
+	const gint RIGHT_CLICK = 3, LEFT_CLICK = 1;
 	if (event->type == GDK_BUTTON_PRESS)
 	{
+		my1image_test_t *q = (my1image_test_t*) data;
 		if (event->button == RIGHT_CLICK)
 		{
-			GtkWidget* menu = (GtkWidget*) data;
+			GtkWidget* menu = (GtkWidget*) q->view.domenu;
 			gtk_menu_popup(GTK_MENU(menu),0x0,0x0,0x0,0x0,
 				event->button,event->time);
+		}
+		else if (event->button == LEFT_CLICK)
+		{
+			int temp = event->x + event->y * q->view.ishow->width;
+			gchar *buff = g_strdup_printf("[PIXEL] %08X {%08X} @ (%d,%d)",
+				q->view.ishow->data[temp]&q->view.ishow->mask,
+				q->view.ishow->mask,(int)event->x,(int)event->y);
+			image_view_stat_time(&q->view,(char*)buff,3);
+			g_free(buff);
 		}
 		return TRUE;
 	}
@@ -438,7 +449,7 @@ void image_test_menu(my1image_test_t* test)
 	menu_main = gtk_menu_new();
 	gtk_widget_add_events(test->view.canvas, GDK_BUTTON_PRESS_MASK);
 	g_signal_connect(GTK_OBJECT(test->view.canvas),"button-press-event",
-		G_CALLBACK(on_mouse_click),(gpointer)menu_main);
+		G_CALLBACK(on_mouse_click),(gpointer)test);
 	/* sub menu? */
 	menu_subs = gtk_menu_new();
 	/* original menu */

@@ -24,6 +24,7 @@ void image_view_init(my1image_view_t* iview)
 	iview->draw_more_data = 0x0;
 	iview->dodraw = 0x0;
 	iview->image = 0x0;
+	iview->ishow = 0x0;
 	image_init(&iview->buff);
 	image_init(&iview->size);
 }
@@ -203,7 +204,6 @@ void image_view_make(my1image_view_t* iview, my1image_t* that)
 void image_view_draw(my1image_view_t* iview, my1image_t* that)
 {
 	GdkPixbuf *dotemp;
-	my1image_t *ishow;
 	int chkh, chkw;
 	/* check if assigned new image */
 	if (that) iview->image = that;
@@ -220,7 +220,7 @@ void image_view_draw(my1image_view_t* iview, my1image_t* that)
 	}
 	/* colormode abgr32 for gdk function */
 	image_copy_color2bgr(&iview->buff,iview->image);
-	ishow = &iview->buff;
+	iview->ishow = &iview->buff;
 	/* check canvas size and the need to resize */
 	chkw = iview->canvas->allocation.width;
 	chkh = iview->canvas->allocation.height;
@@ -231,7 +231,7 @@ void image_view_draw(my1image_view_t* iview, my1image_t* that)
 		if (iview->aspect)
 		{
 			my1area_t area;
-			int ymax = ishow->height, xmax = ishow->width;
+			int ymax = iview->ishow->height, xmax = iview->ishow->width;
 			image_make(&temp,chkh,chkw);
 			area.height = ymax;
 			area.width = xmax;
@@ -240,25 +240,25 @@ void image_view_draw(my1image_view_t* iview, my1image_t* that)
 			{
 				ymax = area.height;
 				xmax = area.width;
-				area.height = ishow->height;
-				area.width = ishow->width;
+				area.height = iview->ishow->height;
+				area.width = iview->ishow->width;
 				area.yset = (ymax-area.height)>>1;
 				area.xset = (xmax-area.width)>>1;
 				image_make(&temp,ymax,xmax);
 				image_fill(&temp,BLACK);
-				image_set_region(&temp,ishow,&area);
-				ishow = &temp;
+				image_set_region(&temp,iview->ishow,&area);
+				iview->ishow = &temp;
 			}
 		}
 		gtk_widget_set_size_request(iview->canvas,chkw,chkh);
-		ishow = image_size_this(ishow,&iview->size,chkh,chkw);
+		iview->ishow = image_size_this(iview->ishow,&iview->size,chkh,chkw);
 		image_free(&temp);
 	}
 	/* draw! */
 	iview->dodraw = gdk_cairo_create(iview->canvas->window);
-	dotemp = gdk_pixbuf_new_from_data((const guchar*)ishow->data,
-		GDK_COLORSPACE_RGB,TRUE,8,ishow->width,ishow->height,
-		ishow->width<<2,0x0,0x0);
+	dotemp = gdk_pixbuf_new_from_data((const guchar*)iview->ishow->data,
+		GDK_COLORSPACE_RGB,TRUE,8,iview->ishow->width,iview->ishow->height,
+		iview->ishow->width<<2,0x0,0x0);
 	gdk_cairo_set_source_pixbuf(iview->dodraw,dotemp,0,0);
 	cairo_paint(iview->dodraw);
 	if (iview->draw_more) iview->draw_more((void*)iview);
