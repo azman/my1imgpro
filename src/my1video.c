@@ -88,20 +88,21 @@ void video_skip_filter(my1video_t *video)
 	video->flags ^= VIDEO_FLAG_NO_FILTER; /* toggle flag to skip filter */
 }
 /*----------------------------------------------------------------------------*/
-void video_filter_init(my1video_t *video, my1vpass_t *vpass)
+void video_filter_insert(my1video_t *video, my1vpass_t *vpass)
 {
 	my1vpass_t* ptask = vpass;
+	/* link buffer and parent */
 	while (ptask)
 	{
-		/* allow filters to use external buffer */
-		if (!ptask->buffer) ptask->buffer = &video->vbuff;
+		/* must use video buffer */
+		ptask->buffer = &video->vbuff;
 		ptask->parent = (void*) video;
 		ptask = ptask->next;
 	}
-	video->filter = vpass;
+	video->filter = filter_insert(video->filter,vpass);
 }
 /*----------------------------------------------------------------------------*/
-void video_filter(my1video_t *video)
+void video_filter_frame(my1video_t *video)
 {
 	if (video->flags&VIDEO_FLAG_NO_FILTER) return;
 	video->frame = image_filter(video->frame,video->filter);

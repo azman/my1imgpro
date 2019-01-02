@@ -44,8 +44,8 @@ void video_next_frame(my1video_t *video);
 void video_prev_frame(my1video_t *video);
 void video_skip_filter(my1video_t *video); /* toggle filter mask */
 /* filtering effect */
-void video_filter_init(my1video_t *video,my1vpass_t *vpass);
-void video_filter(my1video_t *video);
+void video_filter_insert(my1video_t *video,my1vpass_t *vpass);
+void video_filter_frame(my1video_t *video);
 /* execute this whenever a frame has been captured */
 void video_post_frame(my1video_t *video);
 /* handle user input */
