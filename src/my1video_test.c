@@ -1,10 +1,7 @@
 /*----------------------------------------------------------------------------*/
 #include "my1video_dev.h"
-#include "my1image_work.h"
 /*----------------------------------------------------------------------------*/
 #include <stdio.h>
-//#include <ctype.h>
-//#include <string.h>
 /*----------------------------------------------------------------------------*/
 #ifndef MY1APP_PROGNAME
 #define MY1APP_PROGNAME "my1video_test"
@@ -30,6 +27,12 @@ static char showkeys[] =
 	"\tz       - toggle filter\n"
 	"\t---------------------------\n"
 };
+/*----------------------------------------------------------------------------*/
+/** externally-defined filter functions */
+extern my1image_t* filter_gray(my1image_t* img, my1image_t* res,
+	my1image_filter_t* filter);
+extern my1image_t* filter_laplace_1(my1image_t* img, my1image_t* res,
+	my1image_filter_t* filter);
 /*----------------------------------------------------------------------------*/
 void video_draw_index(void* data)
 {
