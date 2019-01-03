@@ -114,7 +114,7 @@ int main(int argc, char* argv[])
 	cDisplay.view.draw_more_data = (void*)&cMain;
 	/* setup filters */
 	filter_init(&grayfilter,filter_gray,0x0);
-	filter_init(&edgefilter,filter_laplace_1,0x0);
+	filter_init(&edgefilter,filter_laplace,0x0);
 	video_filter_insert(&cMain,&grayfilter);
 	video_filter_insert(&cMain,&edgefilter);
 	/* setup devices */

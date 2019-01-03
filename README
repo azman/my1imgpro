@@ -12,7 +12,6 @@ This software consists of several small modules:
   * my1image_file - file load/save functions (BMP & PNM only)
   * my1image_util - basic region/mask@filter/histogram structure & utility
   * my1image_math - math-related function(s), matrix structure & operations
-  * my1image_fpo  - floating-point grayscale structure & utility
   * my1image_work - sample image processing filters
   * my1image_test - main test program for my1image & friends (gtk for viewing!)
   * my1video      - video structure based on basic image structure
@@ -29,3 +28,6 @@ Only 2 image file formats supported: BMP (gray & 24-bit RGB only) and
 NetPBM@PNM Portable Any Map (P1[bit|*.pbm]/P2[gray|*.pgm]/P3[pix|*.ppm] only).
 
 See LICENSE for licensing details.
+
+*Note*: The my1image_math module has no test codes... yet! I will put this in
+when I have the time and idea :p

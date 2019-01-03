@@ -46,7 +46,7 @@ int image_load_bmp(my1image_t *image, char *filename)
 	unsigned char bmpID[BMP_ID_SIZE];
 	int row, col, temp, buff;
 	unsigned char r, g, b;
-	int iscolor = IMASK_COLOR24; /* assumes 24-bit rgb by default */
+	int iscolor = IMASK_COLOR; /* assumes 24-bit rgb by default */
 	int palette[GRAYLEVEL_COUNT]; /* 8-bit palette */
 	my1image_bmp_head_t head;
 	my1image_bmp_info_t info;
@@ -185,7 +185,7 @@ int image_save_bmp(my1image_t *image, char *filename)
 	my1image_bmp_head_t head;
 	my1image_bmp_info_t info;
 	/* check if color image - palette NOT possible! */
-	if (image->mask==IMASK_COLOR24) bytepp = 3;
+	if (image->mask==IMASK_COLOR) bytepp = 3;
 	/* calculate filesize */
 	length = image->width*bytepp;
 	while (length%4) length++;
@@ -249,7 +249,7 @@ int image_save_bmp(my1image_t *image, char *filename)
 		for (col=0;col<image->width;col++)
 		{
 			buff = image_get_pixel(image,row,col);
-			if (image->mask==IMASK_COLOR24)
+			if (image->mask==IMASK_COLOR)
 			{
 				decode_rgb(buff,&r,&g,&b);
 				someChar = b;
@@ -419,9 +419,9 @@ int image_save_pnm(my1image_t *image, char *filename)
 	FILE *pnmfile;
 	char buffer[PNM_MAGIC_SIZE];
 	unsigned char r, g, b;
-	int loop, buff, version = 2;
+	int loop, next, buff, version = 2;
 	/* check if color image */
-	if (image->mask==IMASK_COLOR24) version = 3;
+	if (image->mask==IMASK_COLOR) version = 3;
 	/* try to open file for write! */
 	pnmfile = fopen(filename,"wt");
 	if (!pnmfile) return PNM_ERROR_FILEOPEN; /* cannot open file */
@@ -439,17 +439,23 @@ int image_save_pnm(my1image_t *image, char *filename)
 	printf("Image width: %d, height: %d\n",image->width,image->height);
 #endif
 	/* write data! */
-	for (loop=0;loop<image->length;loop++)
+	for (loop=0,next=0;loop<image->length;loop++)
 	{
 		buff = image->data[loop];
-		if (image->mask==IMASK_COLOR24)
+		if (image->mask==IMASK_COLOR)
 		{
 			decode_rgb(buff,&r,&g,&b);
-			fprintf(pnmfile,"%d %d %d\n",r,g,b);
+			fprintf(pnmfile,"%d %d %d ",r,g,b);
 		}
 		else
 		{
-			fprintf(pnmfile,"%d\n",buff);
+			fprintf(pnmfile,"%d ",buff);
+		}
+		/* newline for every row */
+		if (++next==image->width)
+		{
+			next = 0;
+			fprintf(pnmfile,"\n");
 		}
 	}
 	fclose(pnmfile);

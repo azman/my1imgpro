@@ -17,6 +17,7 @@ void image_view_init(my1image_view_t* iview)
 	iview->height = -1;
 	iview->gohist = 0;
 	iview->doquit = 0;
+	iview->goquit = 0;
 	iview->gofull = 0;
 	iview->isfull = 0;
 	iview->aspect = 1;
@@ -38,7 +39,10 @@ void image_view_free(my1image_view_t* iview)
 gboolean on_done_all(GtkWidget *widget, GdkEvent *event, gpointer data)
 {
 	my1image_view_t* view = (my1image_view_t*) data;
-	view->doquit = 1;
+	if (view->goquit)
+		gtk_main_quit();
+	else
+		view->doquit = 1;
 	return TRUE;
 }
 /*----------------------------------------------------------------------------*/
@@ -65,7 +69,7 @@ gboolean on_draw_expose(GtkWidget *widget, GdkEventExpose *event,
 gboolean on_draw_hist_expose(GtkWidget *widget, GdkEventExpose *event,
 	gpointer user_data)
 {
-	int loop, step, temp;
+	int loop, temp;
 	gchar *buff = 0x0;
 	my1image_view_t* v = (my1image_view_t*) user_data;
 	my1image_histogram_t* h = &v->hist;
@@ -106,10 +110,9 @@ gboolean on_draw_hist_expose(GtkWidget *widget, GdkEventExpose *event,
 		cairo_set_source_rgb(dodraw,0.0,1.0,0.0);
 		next_x = offs_x + bars_d;
 		yscale = diff_y/h->maxvalue;
-		for (loop=0,step=0;loop<GRAYLEVEL;loop++)
+		for (loop=0;loop<GRAYLEVEL;loop++)
 		{
 			temp = h->count[loop];
-			step += temp;
 			size_y = yscale*temp;
 			next_y = ends_y-size_y;
 			if (bars_w>1)
@@ -133,10 +136,11 @@ gboolean on_draw_hist_expose(GtkWidget *widget, GdkEventExpose *event,
 			}
 			next_x += bars_w+bars_d;
 		}
-		buff = g_strdup_printf("Len:%d,Chk:%d,Max:%d,Idx:%d,"
-			"Min:%d,Idx:%d,Max2:%d,Idx:%d",
-			v->image->length,step,h->maxvalue,h->maxindex,
-			h->minvalue,h->minindex,h->chkvalue,h->chkindex);
+		buff = g_strdup_printf("Len:%d,Max:%d(@%d),"
+			"Min:%d(@%d),Chk:%d(@%d),Dif:%d,Th@%d",
+			v->image->length,h->maxvalue,h->maxindex,
+			h->minvalue,h->minindex,h->chkvalue,h->chkindex,
+			(h->maxvalue-h->minvalue),h->threshold);
 		gtk_statusbar_push((GtkStatusbar*)v->dostxt,v->idstxt,buff);
 /*
 		cairo_set_source_rgb(dodraw,0.0,0.0,1.0);
@@ -212,47 +216,50 @@ void image_view_draw(my1image_view_t* iview, my1image_t* that)
 	/* check the need to resize window */
 	if (iview->width!=iview->image->width||iview->height!=iview->image->height)
 	{
-		gtk_widget_set_size_request(iview->canvas,
-			iview->image->width,iview->image->height);
 		iview->width = iview->image->width;
 		iview->height = iview->image->height;
+		gtk_widget_set_size_request(iview->canvas,iview->width,iview->height);
 		image_make(&iview->buff,iview->height,iview->width);
 	}
 	/* colormode abgr32 for gdk function */
 	image_copy_color2bgr(&iview->buff,iview->image);
 	iview->ishow = &iview->buff;
-	/* check canvas size and the need to resize */
-	chkw = iview->canvas->allocation.width;
-	chkh = iview->canvas->allocation.height;
-	if (chkw!=iview->width||chkh!=iview->height)
+	/* check if we are in fullscreen mode? */
+	if (iview->isfull)
 	{
-		my1image_t temp;
-		image_init(&temp);
-		if (iview->aspect)
+		/* check canvas size and the need to resize */
+		chkw = iview->canvas->allocation.width;
+		chkh = iview->canvas->allocation.height;
+		if (chkw!=iview->width||chkh!=iview->height)
 		{
-			my1area_t area;
-			int ymax = iview->ishow->height, xmax = iview->ishow->width;
-			image_make(&temp,chkh,chkw);
-			area.height = ymax;
-			area.width = xmax;
-			image_size_aspect(&temp,&area);
-			if (area.height!=ymax||area.width!=xmax)
+			my1image_t temp;
+			image_init(&temp);
+			if (iview->aspect)
 			{
-				ymax = area.height;
-				xmax = area.width;
-				area.height = iview->ishow->height;
-				area.width = iview->ishow->width;
-				area.yset = (ymax-area.height)>>1;
-				area.xset = (xmax-area.width)>>1;
-				image_make(&temp,ymax,xmax);
-				image_fill(&temp,BLACK);
-				image_set_region(&temp,iview->ishow,&area);
-				iview->ishow = &temp;
+				my1area_t area;
+				int ymax = iview->ishow->height, xmax = iview->ishow->width;
+				image_make(&temp,chkh,chkw);
+				area.height = ymax;
+				area.width = xmax;
+				image_size_aspect(&temp,&area);
+				if (area.height!=ymax||area.width!=xmax)
+				{
+					ymax = area.height;
+					xmax = area.width;
+					area.height = iview->ishow->height;
+					area.width = iview->ishow->width;
+					area.yset = (ymax-area.height)>>1;
+					area.xset = (xmax-area.width)>>1;
+					image_make(&temp,ymax,xmax);
+					image_fill(&temp,BLACK);
+					image_set_region(&temp,iview->ishow,&area);
+					iview->ishow = &temp;
+				}
 			}
+			gtk_widget_set_size_request(iview->canvas,chkw,chkh);
+			iview->ishow = image_size_this(iview->ishow,&iview->size,chkh,chkw);
+			image_free(&temp);
 		}
-		gtk_widget_set_size_request(iview->canvas,chkw,chkh);
-		iview->ishow = image_size_this(iview->ishow,&iview->size,chkh,chkw);
-		image_free(&temp);
 	}
 	/* draw! */
 	iview->dodraw = gdk_cairo_create(iview->canvas->window);

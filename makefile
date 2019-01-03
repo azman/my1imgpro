@@ -2,12 +2,12 @@
 # - using libav & gtk for interfacing & display
 
 TESTIMG = my1image_test
-OBJSIMG = my1image.o my1image_file.o my1image_view.o
-OBJSIMG += my1image_util.o my1image_math.o
-OBJSIMG += my1image_fpo.o my1image_work.o $(TESTIMG).o
+OBJSIMG = my1image.o my1image_util.o my1image_file.o
+OBJSIMG += my1image_work.o my1image_view.o $(TESTIMG).o
 TESTVIS = my1video_test
-OBJSVIS = my1image.o my1image_fpo.o my1image_util.o my1image_work.o
-OBJSVIS += my1image_view.o my1video.o my1video_dev.o $(TESTVIS).o
+OBJSVIS = my1image.o my1image_util.o
+OBJSVIS += my1image_work.o my1image_view.o
+OBJSVIS += my1video.o my1video_dev.o $(TESTVIS).o
 
 CFLAGS += -Wall
 LFLAGS += -lm

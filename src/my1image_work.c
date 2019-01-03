@@ -1,7 +1,5 @@
 /*----------------------------------------------------------------------------*/
 #include "my1image_work.h"
-/* need the following for laplace2 */
-#include "my1image_fpo.h"
 /*----------------------------------------------------------------------------*/
 /* need for sqrt in sobel */
 #include <math.h>
@@ -46,38 +44,12 @@ my1image_t* image_mask_this(my1image_t* img, my1image_t* res,
 	return res;
 }
 /*----------------------------------------------------------------------------*/
-my1image_t* filter_laplace_1(my1image_t* img, my1image_t* res,
+my1image_t* filter_laplace(my1image_t* img, my1image_t* res,
 	my1image_filter_t* filter)
 {
 	int coeff[] = { 0,-1,0, -1,4,-1, 0,-1,0 };
 	image_mask_this(img,res,3,9,coeff);
 	image_limit(res);
-	return res;
-}
-/*----------------------------------------------------------------------------*/
-my1image_t* filter_laplace_2(my1image_t* img, my1image_t* res,
-	my1image_filter_t* filter)
-{
-	my1frame_t buff1, buff2;
-	float coeff[] = { 0.0,-1.0,0.0, -1.0,4.0,-1.0, 0.0,-1.0,0.0 };
-	my1frame_kernel_t kernel;
-	if (!frame_kernel_init(&kernel,3))
-		return img;
-	image_make(res,img->height,img->width);
-	frame_kernel_make(&kernel,9,coeff);
-	frame_init(&buff1);
-	frame_init(&buff2);
-	if (frame_make(&buff1,img->height,img->width)&&
-		frame_make(&buff2,img->height,img->width))
-	{
-		frame_set_image(&buff1,img,0);
-		frame_correlate(&buff1,&buff2,&kernel);
-		frame_get_image(&buff2,res,1);
-	}
-	frame_free(&buff1);
-	frame_free(&buff2);
-	frame_kernel_free(&kernel);
-	res->mask = IMASK_GRAY;
 	return res;
 }
 /*----------------------------------------------------------------------------*/
@@ -217,18 +189,20 @@ my1image_t* filter_maxscale(my1image_t* img, my1image_t* res,
 {
 	int loop, size = img->length, pmax = img->data[0], temp;
 	image_make(res,img->height,img->width);
-	/* find max value, stretch if less than GRAYLEVEL/2 */
+	/* find max value, stretch to maximum */
 	for (loop=1;loop<size;loop++)
 	{
 		temp = img->data[loop];
 		if (temp>pmax)
 			pmax = temp;
 	}
-	if (pmax<GRAYLEVEL>>1)
-		pmax = GRAYLEVEL-pmax;
-	else pmax = 0;
+	pmax = GRAYLEVEL-pmax-1;
 	for (loop=0;loop<size;loop++)
-		res->data[loop] = img->data[loop] + pmax;
+	{
+		temp = img->data[loop];
+		if (temp>BLACK) temp += pmax;
+		res->data[loop] = temp;
+	}
 	res->mask = IMASK_GRAY;
 	return res;
 }
@@ -358,69 +332,6 @@ my1image_t* filter_threshold(my1image_t* img, my1image_t* res,
 		res->data[loop] = temp;
 	}
 	res->mask = IMASK_GRAY;
-	return res;
-}
-/*----------------------------------------------------------------------------*/
-void image_double_threshold(my1image_t *img, my1image_t *res, int hi, int lo)
-{
-	int loop, size = img->length;
-	int curr, weak = WHITE>>1, that, rows, cols;
-	image_make(res,img->height,img->width);
-	/* separate into 3 */
-	for (loop=0;loop<size;loop++)
-	{
-		/* get current edge value */
-		curr = img->data[loop];
-		/* sort that */
-		if (curr>hi) curr = WHITE; /* strong edge */
-		else if (curr>lo) curr = weak; /* weak edge */
-		else curr = BLACK; /* no edge */
-		/* assign new value */
-		res->data[loop] = curr;
-	}
-	/* suppress weak edge if not connected to strong one */
-	for (loop=0;loop<res->length;loop++)
-	{
-		curr = res->data[loop];
-		if (curr!=weak) continue;
-		that = loop-res->width-1;
-		for (rows=0;rows<3;rows++)
-		{
-			for (cols=0;cols<3;cols++,that++)
-			{
-				if (that<0||that>=res->length||that==loop)
-					continue;
-				if (res->data[that]==WHITE)
-				{
-					curr = WHITE;
-					break;
-				}
-			}
-			that += res->width;
-		}
-		if (curr!=WHITE) curr = BLACK;
-		res->data[loop] = curr;
-	}
-	res->mask = IMASK_GRAY;
-}
-/*----------------------------------------------------------------------------*/
-my1image_t* filter_canny(my1image_t* img, my1image_t* res,
-	my1image_filter_t* filter)
-{
-	/** WORK IN PROGRESS */
-	my1image_buffer_t buff;
-	/* initialize buffer stuctures */
-	buffer_init(&buff);
-	/* should i run gaussian? */
-	img = filter_gauss(img,buff.curr,0x0);
-	/* calculate directional edge */
-	img = filter_sobel(img,buff.next,filter);
-	/* non-maximum suppression */
-	img = filter_suppress(img,buff.curr,filter);
-	/* hi-lo threshold? try-and-error values for now! */
-	image_double_threshold(img,res,164,82);
-	/* cleanup */
-	buffer_free(&buff);
 	return res;
 }
 /*----------------------------------------------------------------------------*/

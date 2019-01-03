@@ -22,6 +22,7 @@ typedef struct _my1image_view_t
 	guint idstat, idstxt, idtime; /* gtk stuffs */
 	int width, height; /* current view size */
 	int gohist, doquit; /* histogram/quit request flag */
+	int goquit; /* flag to call gtk_quit_main in on_done_all */
 	/* gofull and aspect should be set BEFORE image_view_make */
 	int gofull, isfull; /* full screen request/status flag  */
 	int aspect; /* flag to keep aspect ratio! */

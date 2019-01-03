@@ -254,7 +254,7 @@ void capture_file(my1video_capture_t* vgrab, char *filename)
 		image_make(&vgrab->video->image,
 			vgrab->video->height,vgrab->video->width);
 		/* capture_form_frame always convert rgb? */
-		vgrab->video->image.mask = IMASK_COLOR24;
+		vgrab->video->image.mask = IMASK_COLOR;
 		image_set_frame(&vgrab->video->image,vgrab->buffer);
 		vgrab->video->frame = &vgrab->video->image;
 		do
@@ -295,7 +295,7 @@ void capture_live(my1video_capture_t* vgrab, char *camname)
 		image_make(&vgrab->video->image,
 			vgrab->video->height,vgrab->video->width);
 		/* capture_form_frame always convert rgb? */
-		vgrab->video->image.mask = IMASK_COLOR24;
+		vgrab->video->image.mask = IMASK_COLOR;
 		image_set_frame(&vgrab->video->image,vgrab->buffer);
 		vgrab->video->frame = &vgrab->video->image;
 	}
@@ -344,7 +344,7 @@ void capture_grab(my1video_capture_t* vgrab)
 		image_make(&vgrab->video->image,
 			vgrab->video->height,vgrab->video->width);
 		/* capture_form_frame always convert rgb? */
-		vgrab->video->image.mask = IMASK_COLOR24;
+		vgrab->video->image.mask = IMASK_COLOR;
 		image_set_frame(&vgrab->video->image,vgrab->buffer);
 		vgrab->video->frame = &vgrab->video->image;
 		vgrab->video->flags |= VIDEO_FLAG_NEW_FRAME;

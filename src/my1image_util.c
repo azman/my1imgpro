@@ -361,7 +361,7 @@ void image_get_histogram(my1image_t *image, my1image_histogram_t *hist)
 		temp = image->data[loop];
 		hist->count[temp]++;
 	}
-	/* get index for highest count */
+	/* get index for highest/lowest count */
 	temp = hist->count[0];
 	hist->chkvalue = temp;
 	hist->chkindex = -1;

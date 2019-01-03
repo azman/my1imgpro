@@ -39,10 +39,9 @@ typedef struct _my1image_test_t
 	my1image_t currimage, *image;
 	my1image_view_t view;
 	my1image_buffer_t work;
-	my1image_filter_t ifilter_gray, ifilter_laplace1, ifilter_laplace2,
-		ifilter_sobelx, ifilter_sobely, ifilter_sobel,
-		ifilter_gauss, ifilter_maxscale, ifilter_suppress,
-		ifilter_threshold, ifilter_canny;
+	my1image_filter_t ifilter_gray, ifilter_laplace,
+		ifilter_sobelx, ifilter_sobely, ifilter_sobel, ifilter_gauss,
+		ifilter_maxscale, ifilter_suppress, ifilter_threshold;
 	my1image_filter_t *pfilter;
 }
 my1image_test_t;
@@ -54,8 +53,7 @@ void image_test_init(my1image_test_t* test)
 	image_view_init(&test->view);
 	buffer_init(&test->work);
 	filter_init(&test->ifilter_gray,filter_gray,&test->work);
-	filter_init(&test->ifilter_laplace1,filter_laplace_1,&test->work);
-	filter_init(&test->ifilter_laplace2,filter_laplace_2,&test->work);
+	filter_init(&test->ifilter_laplace,filter_laplace,&test->work);
 	filter_init(&test->ifilter_sobelx,filter_sobel_x,&test->work);
 	filter_init(&test->ifilter_sobely,filter_sobel_y,&test->work);
 	filter_init(&test->ifilter_sobel,filter_sobel,&test->work);
@@ -63,10 +61,8 @@ void image_test_init(my1image_test_t* test)
 	filter_init(&test->ifilter_maxscale,filter_maxscale,&test->work);
 	filter_init(&test->ifilter_suppress,filter_suppress,&test->work);
 	filter_init(&test->ifilter_threshold,filter_threshold,&test->work);
-	filter_init(&test->ifilter_canny,filter_canny,&test->work);
 	test->ifilter_sobel.data = (void*) &test->work.xtra;
 	test->ifilter_suppress.data = (void*) &test->work.xtra;
-	test->ifilter_canny.data = (void*) &test->work.xtra;
 	test->pfilter = 0x0;
 }
 /*----------------------------------------------------------------------------*/
@@ -76,13 +72,14 @@ void image_test_free(my1image_test_t* test)
 	image_view_free(&test->view);
 	buffer_free(&test->work);
 	filter_free(&test->ifilter_gray);
-	filter_free(&test->ifilter_laplace1);
-	filter_free(&test->ifilter_laplace2);
+	filter_free(&test->ifilter_laplace);
 	filter_free(&test->ifilter_sobelx);
 	filter_free(&test->ifilter_sobely);
 	filter_free(&test->ifilter_sobel);
 	filter_free(&test->ifilter_gauss);
-	filter_free(&test->ifilter_canny);
+	filter_free(&test->ifilter_maxscale);
+	filter_free(&test->ifilter_suppress);
+	filter_free(&test->ifilter_threshold);
 }
 /*----------------------------------------------------------------------------*/
 void print_image_info(my1image_t* image)
@@ -101,7 +98,7 @@ void about(void)
 	printf("  --view  : show image (with user interface options)\n");
 	printf("  --help  : show this message - overrides ALL above options\n");
 	printf("Filters available (grayscale implied):\n");
-	printf("  laplace1, laplace2, sobelx, sobely, sobel, gauss, canny\n\n");
+	printf("  laplace, sobelx, sobely, sobel, gauss, canny\n\n");
 }
 /*----------------------------------------------------------------------------*/
 void set_menu_position(GtkMenu *menu, gint *x, gint *y,
@@ -120,7 +117,7 @@ gboolean on_key_press(GtkWidget *widget, GdkEventKey *kevent, gpointer data)
 	{
 		/** g_message("%d, %c", kevent->keyval, kevent->keyval); */
 		if(kevent->keyval == GDK_KEY_Escape||
-			kevent->keyval == GDK_KEY_q||q->view.doquit)
+			kevent->keyval == GDK_KEY_q)
 		{
 			gtk_main_quit();
 			return TRUE;
@@ -194,18 +191,10 @@ void on_image_invert(my1image_test_t *q)
 	image_view_draw(&q->view,q->image);
 }
 /*----------------------------------------------------------------------------*/
-void on_image_laplace1(my1image_test_t *q)
+void on_image_laplace(my1image_test_t *q)
 {
 	q->pfilter = filter_insert(0x0,&q->ifilter_gray);
-	q->pfilter = filter_insert(q->pfilter,&q->ifilter_laplace1);
-	q->image = image_filter(q->image,q->pfilter);
-	image_view_draw(&q->view,q->image);
-}
-/*----------------------------------------------------------------------------*/
-void on_image_laplace2(my1image_test_t *q)
-{
-	q->pfilter = filter_insert(0x0,&q->ifilter_gray);
-	q->pfilter = filter_insert(q->pfilter,&q->ifilter_laplace2);
+	q->pfilter = filter_insert(q->pfilter,&q->ifilter_laplace);
 	q->image = image_filter(q->image,q->pfilter);
 	image_view_draw(&q->view,q->image);
 }
@@ -263,14 +252,6 @@ void on_image_threshold(my1image_test_t *q)
 {
 	q->pfilter = filter_insert(0x0,&q->ifilter_gray);
 	q->pfilter = filter_insert(q->pfilter,&q->ifilter_threshold);
-	q->image = image_filter(q->image,q->pfilter);
-	image_view_draw(&q->view,q->image);
-}
-/*----------------------------------------------------------------------------*/
-void on_image_canny(my1image_test_t *q)
-{
-	q->pfilter = filter_insert(0x0,&q->ifilter_gray);
-	q->pfilter = filter_insert(q->pfilter,&q->ifilter_canny);
 	q->image = image_filter(q->image,q->pfilter);
 	image_view_draw(&q->view,q->image);
 }
@@ -485,16 +466,10 @@ void image_test_menu(my1image_test_t* test)
 	/* sub menu? */
 	menu_subs = gtk_menu_new();
 	/* laplace1 menu */
-	menu_item = gtk_menu_item_new_with_mnemonic("Laplace _1");
+	menu_item = gtk_menu_item_new_with_mnemonic("_Laplace");
 	gtk_menu_shell_append(GTK_MENU_SHELL(menu_subs),menu_item);
 	g_signal_connect_swapped(G_OBJECT(menu_item),"activate",
-		G_CALLBACK(on_image_laplace1),(gpointer)test);
-	gtk_widget_show(menu_item);
-	/* laplace2 menu */
-	menu_item = gtk_menu_item_new_with_mnemonic("Laplace _2");
-	gtk_menu_shell_append(GTK_MENU_SHELL(menu_subs),menu_item);
-	g_signal_connect_swapped(G_OBJECT(menu_item),"activate",
-		G_CALLBACK(on_image_laplace2),(gpointer)test);
+		G_CALLBACK(on_image_laplace),(gpointer)test);
 	gtk_widget_show(menu_item);
 	/* sobelx menu */
 	menu_item = gtk_menu_item_new_with_mnemonic("Sobel _X");
@@ -521,7 +496,7 @@ void image_test_menu(my1image_test_t* test)
 		G_CALLBACK(on_image_gaussian),(gpointer)test);
 	gtk_widget_show(menu_item);
 	/* maxscale menu */
-	menu_item = gtk_menu_item_new_with_mnemonic("_Max-Rescale");
+	menu_item = gtk_menu_item_new_with_mnemonic("_MaxScale");
 	gtk_menu_shell_append(GTK_MENU_SHELL(menu_subs),menu_item);
 	g_signal_connect_swapped(G_OBJECT(menu_item),"activate",
 		G_CALLBACK(on_image_maxscale),(gpointer)test);
@@ -537,12 +512,6 @@ void image_test_menu(my1image_test_t* test)
 	gtk_menu_shell_append(GTK_MENU_SHELL(menu_subs),menu_item);
 	g_signal_connect_swapped(G_OBJECT(menu_item),"activate",
 		G_CALLBACK(on_image_threshold),(gpointer)test);
-	gtk_widget_show(menu_item);
-	/* canny menu */
-	menu_item = gtk_menu_item_new_with_mnemonic("_Canny");
-	gtk_menu_shell_append(GTK_MENU_SHELL(menu_subs),menu_item);
-	g_signal_connect_swapped(G_OBJECT(menu_item),"activate",
-		G_CALLBACK(on_image_canny),(gpointer)test);
 	gtk_widget_show(menu_item);
 	/* temp menu to insert as sub-menu */
 	menu_temp = gtk_menu_item_new_with_mnemonic("_Filters");
@@ -670,11 +639,11 @@ int main(int argc, char* argv[])
 					continue;
 				}
 				/* then check for command! */
-				if(!strcmp(argv[loop],"laplace1"))
+				if(!strcmp(argv[loop],"laplace"))
 				{
 					if (!q.pfilter)
 						q.pfilter = filter_insert(q.pfilter,&q.ifilter_gray);
-					q.pfilter = filter_insert(q.pfilter,&q.ifilter_laplace1);
+					q.pfilter = filter_insert(q.pfilter,&q.ifilter_laplace);
 				}
 				else if(!strcmp(argv[loop],"sobelx"))
 				{
@@ -694,23 +663,11 @@ int main(int argc, char* argv[])
 						q.pfilter = filter_insert(q.pfilter,&q.ifilter_gray);
 					q.pfilter = filter_insert(q.pfilter,&q.ifilter_sobel);
 				}
-				else if(!strcmp(argv[loop],"laplace2"))
-				{
-					if (!q.pfilter)
-						q.pfilter = filter_insert(q.pfilter,&q.ifilter_gray);
-					q.pfilter = filter_insert(q.pfilter,&q.ifilter_laplace2);
-				}
 				else if(!strcmp(argv[loop],"gauss"))
 				{
 					if (!q.pfilter)
 						q.pfilter = filter_insert(q.pfilter,&q.ifilter_gray);
 					q.pfilter = filter_insert(q.pfilter,&q.ifilter_gauss);
-				}
-				else if(!strcmp(argv[loop],"canny"))
-				{
-					if (!q.pfilter)
-						q.pfilter = filter_insert(q.pfilter,&q.ifilter_gray);
-					q.pfilter = filter_insert(q.pfilter,&q.ifilter_canny);
 				}
 				else
 				{
@@ -847,6 +804,8 @@ int main(int argc, char* argv[])
 		q.image = q.work.curr;
 		/* initialize gui */
 		gtk_init(&argc,&argv);
+		/* setup auto-quit on close */
+		q.view.goquit = 1;
 		/* make image_view */
 		image_view_make(&q.view,q.image);
 		image_view_draw(&q.view,q.image);

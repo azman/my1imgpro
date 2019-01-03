@@ -60,9 +60,8 @@ my1image_t* image_size_this(my1image_t* image, my1image_t* check,
 /*----------------------------------------------------------------------------*/
 /* image color stuffs */
 /*----------------------------------------------------------------------------*/
-#define IMASK_COLOR24 0x00FFFFFF
-#define IMASK_COLOR IMASK_COLOR24
-#define IMASK_GRAY 0x00
+#define IMASK_GRAY    0x00000000
+#define IMASK_COLOR   0x00FFFFFF
 #define IMASK_COLOR_R 0x00FF0000
 #define IMASK_COLOR_G 0x0000FF00
 #define IMASK_COLOR_B 0x000000FF
