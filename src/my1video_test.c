@@ -1,5 +1,5 @@
 /*----------------------------------------------------------------------------*/
-#include "my1video_dev.h"
+#include "my1video_main.h"
 /*----------------------------------------------------------------------------*/
 #include <stdio.h>
 /*----------------------------------------------------------------------------*/
@@ -30,15 +30,15 @@ static char showkeys[] =
 /*----------------------------------------------------------------------------*/
 /** externally-defined filter functions */
 extern my1image_t* filter_gray(my1image_t* img, my1image_t* res,
-	my1image_filter_t* filter);
-extern my1image_t* filter_laplace_1(my1image_t* img, my1image_t* res,
-	my1image_filter_t* filter);
+	my1vpass_t* filter);
+extern my1image_t* filter_laplace(my1image_t* img, my1image_t* res,
+	my1vpass_t* filter);
 /*----------------------------------------------------------------------------*/
 void video_draw_index(void* data)
 {
 	my1image_view_t* view = (my1image_view_t*) data;
 	my1video_t* video = (my1video_t*)view->draw_more_data;
-	my1video_capture_t* vgrab = (my1video_capture_t*)video->capture;
+	my1vgrab_t* vgrab = (my1video_capture_t*)video->capture;
 	gchar *buff = 0x0;
 	if (video->count<0) return;
 	cairo_set_source_rgb(view->dodraw,0.0,0.0,1.0);
@@ -53,11 +53,9 @@ void video_draw_index(void* data)
 /*----------------------------------------------------------------------------*/
 int main(int argc, char* argv[])
 {
-	my1video_t cMain;
-	my1video_capture_t cCapture;
-	my1video_display_t cDisplay;
-	my1image_filter_t grayfilter;
-	my1image_filter_t edgefilter;
+	my1vmain_t vmain;
+	my1vpass_t grayfilter;
+	my1vpass_t edgefilter;
 	int loop, stop = 0;
 	char *pfilename = 0x0, *pdevice = 0x0;
 	/* print tool info */
@@ -106,38 +104,34 @@ int main(int argc, char* argv[])
 	}
 	/* initialize gui */
 	gtk_init(&argc,&argv);
-	/* initialize main structures */
-	video_init(&cMain);
-	capture_init(&cCapture,&cMain);
-	display_init(&cDisplay,&cMain);
-	cDisplay.view.draw_more = &video_draw_index;
-	cDisplay.view.draw_more_data = (void*)&cMain;
+	/* initialize */
+	video_main_init(&vmain);
+	vmain.vview.view.draw_more = &video_draw_index;
+	vmain.vview.view.draw_more_data = (void*)&vmain;
 	/* setup filters */
 	filter_init(&grayfilter,filter_gray,0x0);
 	filter_init(&edgefilter,filter_laplace,0x0);
-	video_filter_insert(&cMain,&grayfilter);
-	video_filter_insert(&cMain,&edgefilter);
+	video_filter_insert(&vmain.video,&grayfilter);
+	video_filter_insert(&vmain.video,&edgefilter);
 	/* setup devices */
 	if (pfilename)
-		capture_file(&cCapture,pfilename);
+		capture_file(&vmain.vgrab,pfilename);
 	else if (pdevice)
-		capture_live(&cCapture,pdevice);
+		capture_live(&vmain.vgrab,pdevice);
 	/* setup display */
-	display_make(&cDisplay);
-	display_draw(&cDisplay);
-	display_name(&cDisplay, "MY1 Video Test",0x0);
+	display_make(&vmain.vview);
+	display_draw(&vmain.vview);
+	display_name(&vmain.vview, "MY1 Video Test",0x0);
 	/* tell them */
 	printf("Starting main capture loop.\n\n%s",showkeys);
 	/* setup display/capture cycle */
-	display_loop(&cDisplay,DEFAULT_LOOP_TIME);
+	display_loop(&vmain.vview,DEFAULT_LOOP_TIME);
 	/* main loop */
 	gtk_main();
 	/* clean up */
 	filter_free(&edgefilter);
 	filter_free(&grayfilter);
-	display_free(&cDisplay);
-	capture_free(&cCapture);
-	video_free(&cMain);
+	video_main_free(&vmain);
 	/* we are done */
 	printf("\n");
 	return 0;

@@ -7,7 +7,7 @@ OBJSIMG += my1image_work.o my1image_view.o $(TESTIMG).o
 TESTVIS = my1video_test
 OBJSVIS = my1image.o my1image_util.o
 OBJSVIS += my1image_work.o my1image_view.o
-OBJSVIS += my1video.o my1video_dev.o $(TESTVIS).o
+OBJSVIS += my1video.o my1video_main.o $(TESTVIS).o
 
 CFLAGS += -Wall
 LFLAGS += -lm

@@ -1,6 +1,6 @@
 /*----------------------------------------------------------------------------*/
-#ifndef __MY1VIDEO_DEVH__
-#define __MY1VIDEO_DEVH__
+#ifndef __MY1VIDEO_MAINH__
+#define __MY1VIDEO_MAINH__
 /*----------------------------------------------------------------------------*/
 #include "my1video.h"
 /*----------------------------------------------------------------------------*/
@@ -63,6 +63,23 @@ void display_loop(my1video_display_t* vview, int delms);
 void display_draw(my1video_display_t* vview);
 void display_name(my1video_display_t* vview,
 	const char *name,const char *icon);
+/*----------------------------------------------------------------------------*/
+typedef my1video_capture_t my1vgrab_t;
+typedef my1video_display_t my1vview_t;
+/*----------------------------------------------------------------------------*/
+typedef struct _my1video_main_t
+{
+	my1video_t video;
+	my1vgrab_t vgrab;
+	my1vview_t vview;
+	void* data;
+}
+my1video_main_t;
+/*----------------------------------------------------------------------------*/
+typedef my1video_main_t my1vmain_t;
+/*----------------------------------------------------------------------------*/
+void video_main_init(my1vmain_t* vmain);
+void video_main_free(my1vmain_t* vmain);
 /*----------------------------------------------------------------------------*/
 #endif
 /*----------------------------------------------------------------------------*/

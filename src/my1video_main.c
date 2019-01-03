@@ -1,5 +1,5 @@
 /*----------------------------------------------------------------------------*/
-#include "my1video_dev.h"
+#include "my1video_main.h"
 /*----------------------------------------------------------------------------*/
 #include <libswscale/swscale.h>
 #include <libavutil/imgutils.h>
@@ -529,5 +529,19 @@ void display_name(my1video_display_t* vview,const char *name,const char *icon)
 		if (vview->pixbuf)
 			gtk_window_set_icon(GTK_WINDOW(vview->view.window),vview->pixbuf);
 	}
+}
+/*----------------------------------------------------------------------------*/
+void video_main_init(my1vmain_t* vmain)
+{
+	video_init(&vmain->video);
+	capture_init(&vmain->vgrab,&vmain->video);
+	display_init(&vmain->vview,&vmain->video);
+}
+/*----------------------------------------------------------------------------*/
+void video_main_free(my1vmain_t* vmain)
+{
+	display_free(&vmain->vview);
+	capture_free(&vmain->vgrab);
+	video_free(&vmain->video);
 }
 /*----------------------------------------------------------------------------*/
