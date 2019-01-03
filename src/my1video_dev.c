@@ -374,6 +374,7 @@ void display_init(my1video_display_t* vview, my1video_t* video)
 {
 	vview->pixbuf = 0x0;
 	vview->timer = 0;
+	vview->inkey = 0;
 	vview->delms = FRAME_NEXT_MS;
 	vview->chkinput = 0x0;
 	vview->chkinput_data = 0x0;
@@ -420,28 +421,28 @@ gboolean on_display_timer(gpointer data)
 	my1video_display_t* vview = (my1video_display_t*)video->display;
 	guint keyval = (guint)video->inkey;
 	capture_grab(vgrab);
-	if(video->flags&VIDEO_FLAG_NEW_FRAME)
+	if (video->flags&VIDEO_FLAG_NEW_FRAME)
 	{
 		video_post_frame(video);
 		video_filter_frame(video);
 		display_draw((my1video_display_t*)video->display);
 	}
-	if(keyval == GDK_KEY_Escape||
+	if (keyval == GDK_KEY_Escape||
 		keyval == GDK_KEY_q || vview->view.doquit)
 	{
 		gtk_main_quit();
 	}
-	else if(keyval == GDK_KEY_c)
+	else if (keyval == GDK_KEY_c)
 	{
 		video_play(video);
 		image_view_stat_time(&vview->view,"Play",MESG_SHOWTIME);
 	}
-	else if(keyval == GDK_KEY_s)
+	else if (keyval == GDK_KEY_s)
 	{
 		video_stop(video);
 		image_view_stat_time(&vview->view,"Stop",MESG_SHOWTIME);
 	}
-	else if(keyval == GDK_KEY_space)
+	else if (keyval == GDK_KEY_space)
 	{
 		if (video->index!=video->count||video->flags&VIDEO_FLAG_LOOP)
 		{
@@ -452,12 +453,12 @@ gboolean on_display_timer(gpointer data)
 				image_view_stat_time(&vview->view,"Play",MESG_SHOWTIME);
 		}
 	}
-	else if(keyval == GDK_KEY_f)
+	else if (keyval == GDK_KEY_f)
 	{
 		video_next_frame(video);
 		image_view_stat_time(&vview->view,"Next",MESG_SHOWTIME);
 	}
-	else if(keyval == GDK_KEY_b)
+	else if (keyval == GDK_KEY_b)
 	{
 		if (video->count<0)
 		{
@@ -470,7 +471,7 @@ gboolean on_display_timer(gpointer data)
 			image_view_stat_time(&vview->view,"Previous",MESG_SHOWTIME);
 		}
 	}
-	else if(keyval == GDK_KEY_l)
+	else if (keyval == GDK_KEY_l)
 	{
 		video_loop(video);
 		if (video->flags&VIDEO_FLAG_LOOP)
@@ -478,7 +479,7 @@ gboolean on_display_timer(gpointer data)
 		else
 			image_view_stat_time(&vview->view,"Looping OFF",MESG_SHOWTIME);
 	}
-	else if(keyval == GDK_KEY_z)
+	else if (keyval == GDK_KEY_z)
 	{
 		video_skip_filter(video);
 		if (video->flags&VIDEO_FLAG_NO_FILTER)
@@ -486,8 +487,9 @@ gboolean on_display_timer(gpointer data)
 		else
 			image_view_stat_time(&vview->view,"Filter OFF",MESG_SHOWTIME);
 	}
-	else
+	else if (keyval)
 	{
+		vview->inkey = keyval;
 		if (vview->chkinput)
 			vview->chkinput((void*)vview);
 	}

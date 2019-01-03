@@ -47,7 +47,7 @@ typedef void (*pchkinput)(void*);
 typedef struct _my1video_display_t
 {
 	GdkPixbuf *pixbuf;
-	guint timer;
+	guint timer,inkey;
 	int delms;
 	pchkinput chkinput;
 	void* chkinput_data;
