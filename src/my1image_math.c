@@ -121,7 +121,7 @@ my1num_t* matrix_get_row(my1matrix_t* mat, int row)
 	return (my1num_t*) &(mat->data[row*mat->width]);
 }
 /*----------------------------------------------------------------------------*/
-void image_get_matrix(my1image_t *img, my1matrix_t *mat, my1area_t *reg)
+void image_get_matrix(my1image_t *img, my1matrix_t *mat, my1image_area_t *reg)
 {
 	int iloop, jloop, xoff = 0, yoff = 0;
 	int row = img->height, col = img->width;
@@ -144,7 +144,7 @@ void image_get_matrix(my1image_t *img, my1matrix_t *mat, my1area_t *reg)
 	}
 }
 /*----------------------------------------------------------------------------*/
-void image_set_matrix(my1image_t *img, my1matrix_t *mat, my1area_t *reg)
+void image_set_matrix(my1image_t *img, my1matrix_t *mat, my1image_area_t *reg)
 {
 	int iloop, jloop, xoff = 0, yoff = 0;
 	int row = img->height, col = img->width;

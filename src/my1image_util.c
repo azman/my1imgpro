@@ -309,7 +309,8 @@ void filter_free(my1image_filter_t* pfilter)
 	pfilter->last = 0x0;
 }
 /*----------------------------------------------------------------------------*/
-my1filter_t* filter_insert(my1filter_t* pstack, my1filter_t* pcheck)
+my1image_filter_t* filter_insert(my1image_filter_t* pstack,
+	my1image_filter_t* pcheck)
 {
 	pcheck->next = 0x0;
 	pcheck->last = 0x0;
@@ -326,7 +327,7 @@ my1filter_t* filter_insert(my1filter_t* pstack, my1filter_t* pcheck)
 	return pstack;
 }
 /*----------------------------------------------------------------------------*/
-my1image_t* image_filter(my1image_t* image, my1filter_t* pfilter)
+my1image_t* image_filter(my1image_t* image, my1image_filter_t* pfilter)
 {
 	while (pfilter)
 	{

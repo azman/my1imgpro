@@ -38,7 +38,7 @@ typedef my1image_t* (*pfilter_t)(my1image_t* curr, my1image_t* next,
 typedef struct _my1image_filter_t
 {
 	char name[FILTER_NAMESIZE];
-	void *data; /* pointer to user-defined data - sent to pfilter_t */
+	void *data; /* pointer to user-defined data */
 	void *parent; /* pointer to parent object */
 	my1image_buffer_t *buffer; /* external shared buffer */
 	my1image_t *docopy; /* if supplied, copy to this struct! */
@@ -56,12 +56,6 @@ typedef struct _my1image_histogram_t
 	int count[GRAYLEVEL]; /* grayscale level count */
 }
 my1image_histogram_t;
-/*----------------------------------------------------------------------------*/
-typedef my1image_area_t my1area_t;
-typedef my1image_mask_t my1mask_t;
-typedef my1image_buffer_t my1buffer_t;
-typedef my1image_filter_t my1filter_t;
-typedef my1image_histogram_t my1histogram_t;
 /*----------------------------------------------------------------------------*/
 /* mask management functions */
 int* image_mask_init(my1image_mask_t *mask, int size);

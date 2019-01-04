@@ -236,7 +236,7 @@ void image_view_draw(my1image_view_t* iview, my1image_t* that)
 			image_init(&temp);
 			if (iview->aspect)
 			{
-				my1area_t area;
+				my1image_area_t area;
 				int ymax = iview->ishow->height, xmax = iview->ishow->width;
 				image_make(&temp,chkh,chkw);
 				area.height = ymax;
