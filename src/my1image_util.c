@@ -88,7 +88,7 @@ void image_convolution(my1image_t *img, my1image_t *res, my1image_mask_t *mask)
 	}
 }
 /*----------------------------------------------------------------------------*/
-void image_get_region(my1image_t *img, my1image_t *sub, my1image_area_t *reg)
+void image_get_area(my1image_t *img, my1image_t *sub, my1image_area_t *reg)
 {
 	int iloop, jloop, xoff = 0, yoff = 0;
 	int row = img->height, col = img->width;
@@ -108,7 +108,7 @@ void image_get_region(my1image_t *img, my1image_t *sub, my1image_area_t *reg)
 	}
 }
 /*----------------------------------------------------------------------------*/
-void image_set_region(my1image_t *img, my1image_t *sub, my1image_area_t *reg)
+void image_set_area(my1image_t *img, my1image_t *sub, my1image_area_t *reg)
 {
 	int iloop, jloop, xoff = 0, yoff = 0;
 	int row = img->height, col = img->width;
@@ -128,26 +128,7 @@ void image_set_region(my1image_t *img, my1image_t *sub, my1image_area_t *reg)
 	}
 }
 /*----------------------------------------------------------------------------*/
-void image_fill_region(my1image_t *img, my1image_area_t *reg, int val)
-{
-	int iloop, jloop, xoff = 0, yoff = 0;
-	int row = img->height, col = img->width;
-	if (reg)
-	{
-		yoff = reg->yset;
-		row = reg->height;
-		xoff = reg->xset;
-		col = reg->width;
-	}
-	for (iloop=0;iloop<row;iloop++)
-	{
-		int* pImg = image_row_data(img,iloop+yoff);
-		for (jloop=0;jloop<col;jloop++)
-			pImg[jloop+xoff] = val;
-	}
-}
-/*----------------------------------------------------------------------------*/
-void image_mask_region(my1image_t *img, my1image_area_t *reg, int inv)
+void image_area_select(my1image_t *img, my1image_area_t *reg, int val, int inv)
 {
 	int irow, icol, rows = img->height, cols = img->width;
 	int yoff = 0, xoff = 0, ymax = rows, xmax = cols;
@@ -165,13 +146,13 @@ void image_mask_region(my1image_t *img, my1image_area_t *reg, int inv)
 		{
 			if ((irow<yoff||irow>=ymax)||(icol<xoff||icol>=xmax))
 			{
-				/* outside of mask region - mask if invert requested */
-				if (inv) pImg[icol] = BLACK;
+				/* outside aoi - fill val if no invert request */
+				if (!inv) pImg[icol] = val;
 			}
 			else
 			{
-				/* inside mask region - mask if no invert request */
-				if (!inv) pImg[icol] = BLACK;
+				/* inside aoi - fill val if invert requested */
+				if (inv) pImg[icol] = val;
 			}
 		}
 	}

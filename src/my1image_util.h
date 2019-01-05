@@ -65,10 +65,9 @@ void image_mask_make(my1image_mask_t *mask, int size, int *pval);
 void image_correlation(my1image_t *img, my1image_t *res, my1image_mask_t *mask);
 void image_convolution(my1image_t *img, my1image_t *res, my1image_mask_t *mask);
 /* region@sub-image management functions */
-void image_get_region(my1image_t *img, my1image_t *sub, my1image_area_t *reg);
-void image_set_region(my1image_t *img, my1image_t *sub, my1image_area_t *reg);
-void image_fill_region(my1image_t *img, my1image_area_t *reg, int val);
-void image_mask_region(my1image_t *img, my1image_area_t *reg, int inv);
+void image_get_area(my1image_t *img, my1image_t *sub, my1image_area_t *reg);
+void image_set_area(my1image_t *img, my1image_t *sub, my1image_area_t *reg);
+void image_area_select(my1image_t *img, my1image_area_t *reg, int val, int inv);
 void image_size_aspect(my1image_t *img, my1image_area_t *reg);
 /* double buffered image for processing */
 void buffer_init(my1image_buffer_t* ibuff);

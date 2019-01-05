@@ -252,7 +252,7 @@ void image_view_draw(my1image_view_t* iview, my1image_t* that)
 					area.xset = (xmax-area.width)>>1;
 					image_make(&temp,ymax,xmax);
 					image_fill(&temp,BLACK);
-					image_set_region(&temp,iview->ishow,&area);
+					image_set_area(&temp,iview->ishow,&area);
 					iview->ishow = &temp;
 				}
 			}
