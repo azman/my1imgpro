@@ -536,6 +536,8 @@ void video_main_init(my1vmain_t* vmain)
 	video_init(&vmain->video);
 	capture_init(&vmain->vgrab,&vmain->video);
 	display_init(&vmain->vview,&vmain->video);
+	vmain->type = VIDEO_SOURCE_NONE;
+	vmain->data = 0x0;
 }
 /*----------------------------------------------------------------------------*/
 void video_main_free(my1vmain_t* vmain)
@@ -543,5 +545,31 @@ void video_main_free(my1vmain_t* vmain)
 	display_free(&vmain->vview);
 	capture_free(&vmain->vgrab);
 	video_free(&vmain->video);
+}
+/*----------------------------------------------------------------------------*/
+void video_main_capture(my1vmain_t* vmain, char* vsrc, int type)
+{
+	/* setup capture */
+	switch (type)
+	{
+		case VIDEO_SOURCE_LIVE:
+			vmain->type = type;
+			capture_live(&vmain->vgrab,vsrc);
+			break;
+		case VIDEO_SOURCE_FILE:
+			vmain->type = type;
+			capture_file(&vmain->vgrab,vsrc);
+			break;
+		default:
+			vmain->type = VIDEO_SOURCE_NONE;
+			return;
+	}
+}
+/*----------------------------------------------------------------------------*/
+void video_main_display(my1vmain_t* vmain, char* name)
+{
+	display_make(&vmain->vview);
+	display_draw(&vmain->vview);
+	display_name(&vmain->vview,name,0x0);
 }
 /*----------------------------------------------------------------------------*/

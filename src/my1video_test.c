@@ -53,8 +53,8 @@ void video_draw_index(void* data)
 /*----------------------------------------------------------------------------*/
 int main(int argc, char* argv[])
 {
-	int loop, stop = 0;
-	char *pfilename = 0x0, *pdevice = 0x0;
+	int loop, stop = 0, type = VIDEO_SOURCE_NONE;
+	char *psource = 0x0;
 	my1vpass_t* ppass = 0x0;
 	my1vmain_t vmain;
 	my1vpass_t grayfilter;
@@ -67,15 +67,16 @@ int main(int argc, char* argv[])
 	{
 		if (!strcmp(argv[loop],"--live"))
 		{
-			if (pdevice)
+			if (psource)
 			{
-				printf("Multiple source? (%s&%s)\n",pdevice,argv[loop]);
+				printf("Multiple source? (%s&%s)\n",psource,argv[loop]);
 				stop++;
 			}
 			else if (loop<argc-1) /* still with param! */
 			{
 				/* on linux this should be /dev/video0 or something... */
-				pdevice = argv[++loop];
+				psource = argv[++loop];
+				type = VIDEO_SOURCE_LIVE;
 			}
 			else
 			{
@@ -85,20 +86,21 @@ int main(int argc, char* argv[])
 		}
 		else
 		{
-			if (pfilename)
+			if (psource)
 			{
-				printf("Multiple source? (%s&%s)\n",pfilename,argv[loop]);
+				printf("Multiple source? (%s&%s)\n",psource,argv[loop]);
 				stop++;
 			}
 			else
 			{
-				pfilename = argv[loop];
+				psource = argv[loop];
+				type = VIDEO_SOURCE_FILE;
 			}
 		}
 	}
 	if (stop) return -stop;
 	/* check video source */
-	if (!pfilename&&!pdevice)
+	if (!psource)
 	{
 		printf("No video source requested!\n");
 		exit(-1);
@@ -119,15 +121,10 @@ int main(int argc, char* argv[])
 	ppass = filter_insert(ppass,&grayfilter);
 	ppass = filter_insert(ppass,&edgefilter);
 	video_filter_insert(&vmain.video,ppass);
-	/* setup devices */
-	if (pfilename)
-		capture_file(&vmain.vgrab,pfilename);
-	else if (pdevice)
-		capture_live(&vmain.vgrab,pdevice);
+	/* setup capture */
+	video_main_capture(&vmain,psource,type);
 	/* setup display */
-	display_make(&vmain.vview);
-	display_draw(&vmain.vview);
-	display_name(&vmain.vview, "MY1 Video Test",0x0);
+	video_main_display(&vmain,"MY1Video Tool");
 	/* tell them */
 	printf("Starting main capture loop.\n\n%s",showkeys);
 	/* setup display/capture cycle */

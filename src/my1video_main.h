@@ -7,8 +7,6 @@
 #include <libavformat/avformat.h>
 #include "my1image_view.h"
 /*----------------------------------------------------------------------------*/
-#define DEFAULT_TITLE "MY1 Video Tool"
-/*----------------------------------------------------------------------------*/
 typedef struct SwsContext AVswsContext;
 /*----------------------------------------------------------------------------*/
 #define STRBUF_SIZE 4096
@@ -67,11 +65,16 @@ void display_name(my1video_display_t* vview,
 typedef my1video_capture_t my1vgrab_t;
 typedef my1video_display_t my1vview_t;
 /*----------------------------------------------------------------------------*/
+#define VIDEO_SOURCE_NONE 0x00
+#define VIDEO_SOURCE_LIVE 0x01
+#define VIDEO_SOURCE_FILE 0x02
+/*----------------------------------------------------------------------------*/
 typedef struct _my1video_main_t
 {
 	my1video_t video;
 	my1vgrab_t vgrab;
 	my1vview_t vview;
+	int type;
 	void* data;
 }
 my1video_main_t;
@@ -80,6 +83,8 @@ typedef my1video_main_t my1vmain_t;
 /*----------------------------------------------------------------------------*/
 void video_main_init(my1vmain_t* vmain);
 void video_main_free(my1vmain_t* vmain);
+void video_main_capture(my1vmain_t* vmain, char* vsrc, int type);
+void video_main_display(my1vmain_t* vmain, char* name);
 /*----------------------------------------------------------------------------*/
 #endif
 /*----------------------------------------------------------------------------*/
