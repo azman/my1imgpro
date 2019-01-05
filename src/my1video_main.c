@@ -417,15 +417,18 @@ void display_make(my1video_display_t* vview)
 gboolean on_display_timer(gpointer data)
 {
 	my1video_t* video = (my1video_t*) data;
-	my1video_capture_t* vgrab = (my1video_capture_t*)video->capture;
-	my1video_display_t* vview = (my1video_display_t*)video->display;
+	my1vmain_t* vmain = (my1vmain_t*)video->parent_;
+	my1vgrab_t* vgrab = (my1vgrab_t*)video->capture;
+	my1vview_t* vview = (my1vview_t*)video->display;
 	guint keyval = (guint)video->inkey;
-	capture_grab(vgrab);
+	if (vgrab->fcontext) capture_grab(vgrab);
+	else if (vmain->grabber)
+		vmain->grabber(vmain->grabber_data);
 	if (video->flags&VIDEO_FLAG_NEW_FRAME)
 	{
-		video_post_frame(video);
 		video_filter_frame(video);
-		display_draw((my1video_display_t*)video->display);
+		video_post_frame(video);
+		display_draw(vview);
 	}
 	if (keyval == GDK_KEY_Escape||
 		keyval == GDK_KEY_q || vview->view.doquit)
@@ -534,10 +537,13 @@ void display_name(my1video_display_t* vview,const char *name,const char *icon)
 void video_main_init(my1vmain_t* vmain)
 {
 	video_init(&vmain->video);
+	vmain->video.parent_ = (void*)vmain;
 	capture_init(&vmain->vgrab,&vmain->video);
 	display_init(&vmain->vview,&vmain->video);
 	vmain->type = VIDEO_SOURCE_NONE;
 	vmain->data = 0x0;
+	vmain->grabber = 0x0;
+	vmain->grabber_data = 0x0;
 }
 /*----------------------------------------------------------------------------*/
 void video_main_free(my1vmain_t* vmain)
@@ -571,5 +577,10 @@ void video_main_display(my1vmain_t* vmain, char* name)
 	display_make(&vmain->vview);
 	display_draw(&vmain->vview);
 	display_name(&vmain->vview,name,0x0);
+}
+/*----------------------------------------------------------------------------*/
+void video_main_loop(my1vmain_t* vmain, int loopms)
+{
+	display_loop(&vmain->vview,loopms);
 }
 /*----------------------------------------------------------------------------*/

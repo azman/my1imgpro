@@ -30,6 +30,7 @@ typedef struct _my1video_t
 	int inkey; /* input key? */
 	void *display; /* pointer to display object */
 	void *capture; /* pointer to capture object */
+	void *parent_; /* pointer to parent object */
 }
 my1video_t;
 /*----------------------------------------------------------------------------*/

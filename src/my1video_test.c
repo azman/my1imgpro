@@ -128,7 +128,7 @@ int main(int argc, char* argv[])
 	/* tell them */
 	printf("Starting main capture loop.\n\n%s",showkeys);
 	/* setup display/capture cycle */
-	display_loop(&vmain.vview,DEFAULT_LOOP_TIME);
+	video_main_loop(&vmain,DEFAULT_LOOP_TIME);
 	/* main loop */
 	gtk_main();
 	/* clean up */

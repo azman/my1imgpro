@@ -59,8 +59,7 @@ void display_free(my1video_display_t* vview);
 void display_make(my1video_display_t* vview);
 void display_loop(my1video_display_t* vview, int delms);
 void display_draw(my1video_display_t* vview);
-void display_name(my1video_display_t* vview,
-	const char *name,const char *icon);
+void display_name(my1video_display_t* vview, const char *name,const char *icon);
 /*----------------------------------------------------------------------------*/
 typedef my1video_capture_t my1vgrab_t;
 typedef my1video_display_t my1vview_t;
@@ -69,6 +68,8 @@ typedef my1video_display_t my1vview_t;
 #define VIDEO_SOURCE_LIVE 0x01
 #define VIDEO_SOURCE_FILE 0x02
 /*----------------------------------------------------------------------------*/
+typedef void (*pgrabber)(void*);
+/*----------------------------------------------------------------------------*/
 typedef struct _my1video_main_t
 {
 	my1video_t video;
@@ -76,6 +77,8 @@ typedef struct _my1video_main_t
 	my1vview_t vview;
 	int type;
 	void* data;
+	pgrabber grabber; /* pointer to custom frame grabber function */
+	void *grabber_data; /* data for grabbber! */
 }
 my1video_main_t;
 /*----------------------------------------------------------------------------*/
@@ -85,6 +88,7 @@ void video_main_init(my1vmain_t* vmain);
 void video_main_free(my1vmain_t* vmain);
 void video_main_capture(my1vmain_t* vmain, char* vsrc, int type);
 void video_main_display(my1vmain_t* vmain, char* name);
+void video_main_loop(my1vmain_t* vmain, int loopms);
 /*----------------------------------------------------------------------------*/
 #endif
 /*----------------------------------------------------------------------------*/

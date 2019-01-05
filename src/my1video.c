@@ -20,6 +20,7 @@ void video_init(my1video_t *video)
 	video->inkey = 0;
 	video->capture = 0x0;
 	video->display = 0x0;
+	video->parent_ = 0x0;
 }
 /*----------------------------------------------------------------------------*/
 void video_free(my1video_t *video)
