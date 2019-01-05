@@ -53,11 +53,12 @@ void video_draw_index(void* data)
 /*----------------------------------------------------------------------------*/
 int main(int argc, char* argv[])
 {
+	int loop, stop = 0;
+	char *pfilename = 0x0, *pdevice = 0x0;
+	my1vpass_t* ppass = 0x0;
 	my1vmain_t vmain;
 	my1vpass_t grayfilter;
 	my1vpass_t edgefilter;
-	int loop, stop = 0;
-	char *pfilename = 0x0, *pdevice = 0x0;
 	/* print tool info */
 	printf("\n%s - %s (%s)\n",MY1APP_PROGNAME,MY1APP_PROGINFO,MY1APP_PROGVERS);
 	printf("  => by azman@my1matrix.org\n\n");
@@ -111,8 +112,13 @@ int main(int argc, char* argv[])
 	/* setup filters */
 	filter_init(&grayfilter,filter_gray,0x0);
 	filter_init(&edgefilter,filter_laplace,0x0);
+/*
 	video_filter_insert(&vmain.video,&grayfilter);
 	video_filter_insert(&vmain.video,&edgefilter);
+*/
+	ppass = filter_insert(ppass,&grayfilter);
+	ppass = filter_insert(ppass,&edgefilter);
+	video_filter_insert(&vmain.video,ppass);
 	/* setup devices */
 	if (pfilename)
 		capture_file(&vmain.vgrab,pfilename);

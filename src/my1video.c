@@ -90,16 +90,18 @@ void video_skip_filter(my1video_t *video)
 /*----------------------------------------------------------------------------*/
 void video_filter_insert(my1video_t *video, my1vpass_t *vpass)
 {
-	my1vpass_t* ptask = vpass;
-	/* link buffer and parent */
-	while (ptask)
+	my1vpass_t* ptask;
+	while (vpass)
 	{
-		/* must use video buffer */
-		ptask->buffer = &video->vbuff;
-		ptask->parent = (void*) video;
-		ptask = ptask->next;
+		/* link buffer and parent */
+		vpass->buffer = &video->vbuff;
+		vpass->parent = (void*) video;
+		/* keep a copy to insert */
+		ptask = vpass;
+		vpass = vpass->next;
+		/* insert video filter */
+		video->filter = filter_insert(video->filter,ptask);
 	}
-	video->filter = filter_insert(video->filter,vpass);
 }
 /*----------------------------------------------------------------------------*/
 void video_filter_frame(my1video_t *video)
