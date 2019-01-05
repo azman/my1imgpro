@@ -149,9 +149,16 @@ gboolean on_mouse_click(GtkWidget *widget, GdkEventButton *event, gpointer data)
 		else if (event->button == LEFT_CLICK)
 		{
 			int temp = event->x + event->y * q->view.ishow->width;
-			gchar *buff = g_strdup_printf("[PIXEL] %08X {%08X} @ (%d,%d)",
-				q->view.ishow->data[temp]&q->view.ishow->mask,
-				q->view.ishow->mask,(int)event->x,(int)event->y);
+			int mask = q->view.ishow->mask;
+			int data = q->view.ishow->data[temp] & mask;
+			gchar *buff;
+			my1rgb_t *chk;
+			my1hsv_t that;
+			data = color_swap(data);
+			chk = (my1rgb_t*)&data;
+			that = rgb2hsv(*chk);
+			buff = g_strdup_printf("[PIXEL] %08X{%08X}<%d>@(%d,%d)",
+				data,mask,that.h,(int)event->x,(int)event->y);
 			image_view_stat_time(&q->view,(char*)buff,3);
 			g_free(buff);
 		}

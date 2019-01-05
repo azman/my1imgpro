@@ -93,6 +93,8 @@ void decode_rgb(int data, cbyte *r, cbyte *g, cbyte *b);
 /* enforce gray/color value */
 int gray2color(int data);
 int color2gray(int data);
+/* swap b and r channels */
+int color_swap(int data);
 /*----------------------------------------------------------------------------*/
 /* image color (hsv) stuffs */
 /*----------------------------------------------------------------------------*/

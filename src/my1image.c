@@ -561,6 +561,15 @@ int color2gray(int data)
 	return gray4rgb(r,g,b);
 }
 /*----------------------------------------------------------------------------*/
+int color_swap(int data)
+{
+	my1rgb_t *buff = (my1rgb_t*) &data;
+	int temp = buff->r;
+	buff->r = buff->b;
+	buff->b = (cbyte) temp;
+	return data;
+}
+/*----------------------------------------------------------------------------*/
 my1hsv_t rgb2hsv(my1rgb_t rgb)
 {
 	my1hsv_t hsv;
