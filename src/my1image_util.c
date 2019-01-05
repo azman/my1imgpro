@@ -301,9 +301,6 @@ my1image_filter_t* filter_insert(my1image_filter_t* pstack,
 		return pcheck;
 	}
 	pstack->last->next = pcheck;
-	/* in case pcheck is another stack, look for last */
-	while (pcheck->next)
-		pcheck = pcheck->next;
 	pstack->last = pcheck;
 	return pstack;
 }
