@@ -356,17 +356,6 @@ my1image_t* filter_threshold(my1image_t* img, my1image_t* res,
 	return res;
 }
 /*----------------------------------------------------------------------------*/
-typedef void (*pfsetup_t)(my1image_filter_t* filter);
-/*----------------------------------------------------------------------------*/
-typedef struct _filter_info_t
-{
-	char *name;
-	pfilter_t filter;
-	pfsetup_t fsetup;
-	pfclean_t fclean;
-}
-filter_info_t;
-/*----------------------------------------------------------------------------*/
 static const filter_info_t MY1_IFILTER_DB[] =
 {
 	{ IFNAME_GRAYSCALE, filter_gray, 0x0, 0x0 },
@@ -382,22 +371,6 @@ static const filter_info_t MY1_IFILTER_DB[] =
 };
 /*----------------------------------------------------------------------------*/
 const int IFILTER_DB_SIZE = sizeof(MY1_IFILTER_DB)/sizeof(filter_info_t);
-/*----------------------------------------------------------------------------*/
-my1image_filter_t* info_create_filter(filter_info_t* info)
-{
-	size_t size = sizeof(my1image_filter_t);
-	my1image_filter_t* that = (my1image_filter_t*)malloc(size);
-	if (that)
-	{
-		filter_init(that,info->filter,0x0);
-		strncpy(that->name,info->name,FILTER_NAMESIZE);
-		if (info->fsetup)
-			info->fsetup(that);
-		that->doinit = info->fsetup;
-		that->dofree = info->fclean;
-	}
-	return that;
-}
 /*----------------------------------------------------------------------------*/
 my1image_filter_t* image_work_create(char* name)
 {

@@ -50,6 +50,15 @@ typedef struct _my1image_filter_t
 }
 my1image_filter_t;
 /*----------------------------------------------------------------------------*/
+typedef struct _filter_info_t
+{
+	char name[FILTER_NAMESIZE];
+	pfilter_t filter;
+	pfsetup_t fsetup;
+	pfclean_t fclean;
+}
+filter_info_t;
+/*----------------------------------------------------------------------------*/
 typedef struct _my1image_histogram_t
 {
 	int threshold; /* suggested threshold value? */
@@ -91,6 +100,8 @@ my1image_filter_t* filter_search(my1image_filter_t* ppass, char *name);
 /* allow filters to be on heap (dynamic allocation) */
 my1image_filter_t* filter_clone(my1image_filter_t* ppass);
 void filter_clean(my1image_filter_t* ppass); /* destroys all instances */
+/* malloc'ed filter structure */
+my1image_filter_t* info_create_filter(filter_info_t* info);
 /* apply filter on image */
 my1image_t* image_filter(my1image_t* image, my1image_filter_t* pfilter);
 /* grayscale histogram utility */

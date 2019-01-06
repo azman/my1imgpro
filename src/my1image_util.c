@@ -369,6 +369,22 @@ void filter_clean(my1image_filter_t* ppass)
 	}
 }
 /*----------------------------------------------------------------------------*/
+my1image_filter_t* info_create_filter(filter_info_t* info)
+{
+	size_t size = sizeof(my1image_filter_t);
+	my1image_filter_t* that = (my1image_filter_t*)malloc(size);
+	if (that)
+	{
+		filter_init(that,info->filter,0x0);
+		strncpy(that->name,info->name,FILTER_NAMESIZE);
+		if (info->fsetup)
+			info->fsetup(that);
+		that->doinit = info->fsetup;
+		that->dofree = info->fclean;
+	}
+	return that;
+}
+/*----------------------------------------------------------------------------*/
 my1image_t* image_filter(my1image_t* image, my1image_filter_t* pfilter)
 {
 	while (pfilter)
