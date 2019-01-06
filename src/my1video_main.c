@@ -449,11 +449,16 @@ gboolean on_display_timer(gpointer data)
 	{
 		if (video->index!=video->count||video->flags&VIDEO_FLAG_LOOP)
 		{
-			video_hold(video);
 			if (video->flags&VIDEO_FLAG_IS_PAUSED)
-				image_view_stat_time(&vview->view,"Paused",MESG_SHOWTIME);
-			else
+			{
+				video_hold(video,0);
 				image_view_stat_time(&vview->view,"Play",MESG_SHOWTIME);
+			}
+			else
+			{
+				video_hold(video,1);
+				image_view_stat_time(&vview->view,"Paused",MESG_SHOWTIME);
+			}
 		}
 	}
 	else if (keyval == GDK_KEY_f)
@@ -476,19 +481,29 @@ gboolean on_display_timer(gpointer data)
 	}
 	else if (keyval == GDK_KEY_l)
 	{
-		video_loop(video);
 		if (video->flags&VIDEO_FLAG_LOOP)
-			image_view_stat_time(&vview->view,"Looping ON",MESG_SHOWTIME);
-		else
+		{
+			video_loop(video,0);
 			image_view_stat_time(&vview->view,"Looping OFF",MESG_SHOWTIME);
+		}
+		else
+		{
+			video_loop(video,1);
+			image_view_stat_time(&vview->view,"Looping ON",MESG_SHOWTIME);
+		}
 	}
 	else if (keyval == GDK_KEY_z)
 	{
-		video_skip_filter(video);
 		if (video->flags&VIDEO_FLAG_NO_FILTER)
-			image_view_stat_time(&vview->view,"Filter OFF",MESG_SHOWTIME);
-		else
+		{
+			video_skip_filter(video,0);
 			image_view_stat_time(&vview->view,"Filter ON",MESG_SHOWTIME);
+		}
+		else
+		{
+			video_skip_filter(video,1);
+			image_view_stat_time(&vview->view,"Filter OFF",MESG_SHOWTIME);
+		}
 	}
 	else if (keyval)
 	{

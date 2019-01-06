@@ -10,7 +10,7 @@
 #define MY1APP_PROGVERS "build"
 #endif
 #ifndef MY1APP_PROGINFO
-#define MY1APP_PROGINFO "Basic Video Tool Library"
+#define MY1APP_PROGINFO "MY1Video Test Program"
 #endif
 /*----------------------------------------------------------------------------*/
 static char showkeys[] =
@@ -108,7 +108,7 @@ int main(int argc, char* argv[])
 	/* setup capture */
 	video_main_capture(&vmain,psource,type);
 	/* setup display */
-	video_main_display(&vmain,"MY1Video Tool");
+	video_main_display(&vmain,MY1APP_PROGINFO);
 	/* tell them */
 	printf("Starting main capture loop.\n\n%s",showkeys);
 	/* setup display/capture cycle */

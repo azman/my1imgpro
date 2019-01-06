@@ -39,11 +39,11 @@ void video_free(my1video_t *video);
 /* these functions manipulate index/flags only! */
 void video_play(my1video_t *video);
 void video_stop(my1video_t *video);
-void video_hold(my1video_t *video); /* pause/unpause */
-void video_loop(my1video_t *video); /* toggle loop flag */
+void video_hold(my1video_t *video, int hold);
+void video_loop(my1video_t *video, int loop);
 void video_next_frame(my1video_t *video);
 void video_prev_frame(my1video_t *video);
-void video_skip_filter(my1video_t *video); /* toggle filter mask */
+void video_skip_filter(my1video_t *video, int skip);
 /* filtering effect */
 void video_filter_insert(my1video_t *video,my1vpass_t *vpass);
 void video_filter_frame(my1video_t *video);

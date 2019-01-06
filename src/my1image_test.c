@@ -928,6 +928,7 @@ int main(int argc, char* argv[])
 		/* make image_view */
 		image_view_make(&q.view,q.image);
 		image_view_draw(&q.view,q.image);
+		image_view_name(&q.view,MY1APP_PROGINFO);
 		/* allow histogram */
 		image_view_make_hist(&q.view);
 		/* show info on status bar */

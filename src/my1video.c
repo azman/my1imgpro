@@ -51,22 +51,25 @@ void video_stop(my1video_t *video)
 	}
 }
 /*----------------------------------------------------------------------------*/
-void video_hold(my1video_t *video)
+void video_hold(my1video_t *video, int hold)
 {
-	video->flags ^= VIDEO_FLAG_IS_PAUSED; /* toggle pause flag */
-	if (!(video->flags&VIDEO_FLAG_IS_PAUSED))
+	if (hold)
 	{
-		/* update if no longer paused! and no stepping! */
-		video->flags |= VIDEO_FLAG_DO_UPDATE;
-		video->flags &= ~VIDEO_FLAG_STEP;
+		video->flags |= VIDEO_FLAG_IS_PAUSED;
+		video->flags &= ~VIDEO_FLAG_DO_UPDATE;
 	}
 	else
-		video->flags &= ~VIDEO_FLAG_DO_UPDATE;
+	{
+		video->flags &= ~VIDEO_FLAG_IS_PAUSED;
+		video->flags &= ~VIDEO_FLAG_STEP;
+		video->flags |= VIDEO_FLAG_DO_UPDATE;
+	}
 }
 /*----------------------------------------------------------------------------*/
-void video_loop(my1video_t *video)
+void video_loop(my1video_t *video, int loop)
 {
-	video->flags ^= VIDEO_FLAG_LOOP; /* toggle loop flag */
+	if (loop) video->flags |= VIDEO_FLAG_LOOP;
+	else video->flags &= ~VIDEO_FLAG_LOOP;
 }
 /*----------------------------------------------------------------------------*/
 void video_next_frame(my1video_t *video)
@@ -85,9 +88,10 @@ void video_prev_frame(my1video_t *video)
 	video->flags |= VIDEO_FLAG_DO_UPDATE;
 }
 /*----------------------------------------------------------------------------*/
-void video_skip_filter(my1video_t *video)
+void video_skip_filter(my1video_t *video, int skip)
 {
-	video->flags ^= VIDEO_FLAG_NO_FILTER; /* toggle flag to skip filter */
+	if (skip) video->flags |= VIDEO_FLAG_NO_FILTER;
+	else video->flags &= ~VIDEO_FLAG_NO_FILTER;
 }
 /*----------------------------------------------------------------------------*/
 void video_filter_insert(my1video_t *video, my1vpass_t *vpass)
