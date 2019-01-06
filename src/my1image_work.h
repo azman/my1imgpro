@@ -5,6 +5,7 @@
 #include "my1image_util.h"
 /*----------------------------------------------------------------------------*/
 #define IFNAME_GRAYSCALE "grayscale"
+#define IFNAME_INVERT "invert"
 #define IFNAME_RESIZE "resize"
 #define IFNAME_LAPLACE "laplace"
 #define IFNAME_SOBELX "sobelx"

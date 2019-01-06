@@ -10,19 +10,44 @@
 my1image_t* filter_gray(my1image_t* img, my1image_t* res,
 	my1image_filter_t* filter)
 {
-	int loop;
+	int loop, size = img->length;
 	image_make(res,img->height,img->width);
 	if (img->mask==IMASK_COLOR)
 	{
-		for(loop=0;loop<img->length;loop++)
+		for(loop=0;loop<size;loop++)
 			res->data[loop] = color2gray(img->data[loop]);
 	}
 	else
 	{
-		for (loop=0;loop<img->length;loop++)
+		for(loop=0;loop<size;loop++)
 			res->data[loop] = img->data[loop];
 	}
 	res->mask = IMASK_GRAY;
+	return res;
+}
+/*----------------------------------------------------------------------------*/
+my1image_t* filter_invert(my1image_t* img, my1image_t* res,
+	my1image_filter_t* filter)
+{
+	int loop, size = img->length;
+	image_make(res,img->height,img->width);
+	if (img->mask==IMASK_COLOR)
+	{
+		cbyte r, g, b;
+		for(loop=0;loop<size;loop++)
+		{
+			decode_rgb(img->data[loop],&r,&g,&b);
+			r = WHITE - r; g = WHITE - g; b = WHITE - b;
+			res->data[loop] = encode_rgb(r,g,b);
+		}
+	}
+	else
+	{
+		for(loop=0;loop<size;loop++)
+			res->data[loop] = img->data[loop];
+		image_invert(res);
+	}
+	res->mask = img->mask;
 	return res;
 }
 /*----------------------------------------------------------------------------*/
@@ -359,6 +384,7 @@ my1image_t* filter_threshold(my1image_t* img, my1image_t* res,
 static const filter_info_t MY1_IFILTER_DB[] =
 {
 	{ IFNAME_GRAYSCALE, filter_gray, 0x0, 0x0 },
+	{ IFNAME_INVERT, filter_invert, 0x0, 0x0 },
 	{ IFNAME_RESIZE, filter_resize, filter_resize_init, filter_resize_free },
 	{ IFNAME_LAPLACE, filter_laplace, 0x0, 0x0 },
 	{ IFNAME_SOBELX, filter_sobel_x, 0x0, 0x0 },
