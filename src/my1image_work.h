@@ -4,28 +4,20 @@
 /*----------------------------------------------------------------------------*/
 #include "my1image_util.h"
 /*----------------------------------------------------------------------------*/
-my1image_t* filter_gray(my1image_t* img, my1image_t* res,
-	my1image_filter_t* filter);
-my1image_t* filter_resize(my1image_t* img, my1image_t* res,
-	my1image_filter_t* filter);
-my1image_t* image_mask_this(my1image_t* img,my1image_t* res,
-	int mask_size, int data_size, int* pdata);
-my1image_t* filter_laplace(my1image_t* img, my1image_t* res,
-	my1image_filter_t* filter);
-my1image_t* filter_sobel_x(my1image_t* img, my1image_t* res,
-	my1image_filter_t* filter);
-my1image_t* filter_sobel_y(my1image_t* img, my1image_t* res,
-	my1image_filter_t* filter);
-my1image_t* filter_sobel(my1image_t* img, my1image_t* res,
-	my1image_filter_t* filter);
-my1image_t* filter_gauss(my1image_t* img, my1image_t* res,
-	my1image_filter_t* filter);
-my1image_t* filter_maxscale(my1image_t* img, my1image_t* res,
-	my1image_filter_t* filter);
-my1image_t* filter_suppress(my1image_t* img, my1image_t* res,
-	my1image_filter_t* filter);
-my1image_t* filter_threshold(my1image_t* img, my1image_t* res,
-	my1image_filter_t* filter);
+#define IFNAME_GRAYSCALE "grayscale"
+#define IFNAME_RESIZE "resize"
+#define IFNAME_LAPLACE "laplace"
+#define IFNAME_SOBELX "sobelx"
+#define IFNAME_SOBELY "sobely"
+#define IFNAME_SOBEL "sobel"
+#define IFNAME_GAUSS "gauss"
+#define IFNAME_MAXSCALE "maxscale"
+#define IFNAME_SUPPRESS "suppress"
+#define IFNAME_THRESHOLD "threshold"
+/*----------------------------------------------------------------------------*/
+/* creates a malloc'ed my1image_filter_t instance */
+my1image_filter_t* image_work_create(char* name);
+my1image_filter_t* image_work_create_all(void);
 /*----------------------------------------------------------------------------*/
 #endif
 /*----------------------------------------------------------------------------*/

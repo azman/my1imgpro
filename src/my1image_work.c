@@ -1,8 +1,11 @@
 /*----------------------------------------------------------------------------*/
 #include "my1image_work.h"
 /*----------------------------------------------------------------------------*/
-/* need for sqrt in sobel */
+/* needed for sqrt in sobel */
 #include <math.h>
+/* needed in image_work_create */
+#include <stdlib.h>
+#include <string.h>
 /*----------------------------------------------------------------------------*/
 my1image_t* filter_gray(my1image_t* img, my1image_t* res,
 	my1image_filter_t* filter)
@@ -28,6 +31,19 @@ my1image_t* filter_resize(my1image_t* img, my1image_t* res,
 {
 	my1image_area_t *size = (my1image_area_t*) filter->data;
 	return image_size_this(img,res,size->height,size->width);
+}
+/*----------------------------------------------------------------------------*/
+void filter_resize_init(my1image_filter_t* filter)
+{
+	filter->data = malloc(sizeof(my1image_area_t));
+	if (filter->data)
+		image_area_init((my1image_area_t*)filter->data);
+}
+/*----------------------------------------------------------------------------*/
+void filter_resize_free(my1image_filter_t* filter)
+{
+	if (filter->data)
+		free((void*)filter->data);
 }
 /*----------------------------------------------------------------------------*/
 my1image_t* image_mask_this(my1image_t* img, my1image_t* res,
@@ -78,6 +94,8 @@ my1image_t* filter_sobel(my1image_t* img, my1image_t* res,
 {
 	my1image_t buff1, buff2, *chk = (my1image_t*) filter->data;
 	int irow, icol, x, y, z, p;
+	/* assign to default if not specified */
+	if (!chk&&filter->buffer) chk = &filter->buffer->xtra;
 	/* initialize buffer structures */
 	image_init(&buff1);
 	image_init(&buff2);
@@ -266,6 +284,9 @@ my1image_t* filter_suppress(my1image_t* img, my1image_t* res,
 {
 	int loop, size = img->length, curr, buff;
 	my1image_t *chk = (my1image_t*) filter->data;
+	/* assign to default if not specified */
+	if (!chk&&filter->buffer) chk = &filter->buffer->xtra;
+	if (!chk) return img;
 	image_make(res,img->height,img->width);
 	for (loop=0;loop<size;loop++)
 	{
@@ -333,5 +354,80 @@ my1image_t* filter_threshold(my1image_t* img, my1image_t* res,
 	}
 	res->mask = IMASK_GRAY;
 	return res;
+}
+/*----------------------------------------------------------------------------*/
+typedef void (*pfsetup_t)(my1image_filter_t* filter);
+/*----------------------------------------------------------------------------*/
+typedef struct _filter_info_t
+{
+	char *name;
+	pfilter_t filter;
+	pfsetup_t fsetup;
+	pfclean_t fclean;
+}
+filter_info_t;
+/*----------------------------------------------------------------------------*/
+static const filter_info_t MY1_IFILTER_DB[] =
+{
+	{ IFNAME_GRAYSCALE, filter_gray, 0x0, 0x0 },
+	{ IFNAME_RESIZE, filter_resize, filter_resize_init, filter_resize_free },
+	{ IFNAME_LAPLACE, filter_laplace, 0x0, 0x0 },
+	{ IFNAME_SOBELX, filter_sobel_x, 0x0, 0x0 },
+	{ IFNAME_SOBELY, filter_sobel_y, 0x0, 0x0 },
+	{ IFNAME_SOBEL, filter_sobel, 0x0, 0x0 },
+	{ IFNAME_GAUSS, filter_gauss, 0x0, 0x0 },
+	{ IFNAME_MAXSCALE, filter_maxscale, 0x0, 0x0 },
+	{ IFNAME_SUPPRESS, filter_suppress, 0x0, 0x0 },
+	{ IFNAME_THRESHOLD, filter_threshold, 0x0, 0x0 }
+};
+/*----------------------------------------------------------------------------*/
+const int IFILTER_DB_SIZE = sizeof(MY1_IFILTER_DB)/sizeof(filter_info_t);
+/*----------------------------------------------------------------------------*/
+my1image_filter_t* info_create_filter(filter_info_t* info)
+{
+	size_t size = sizeof(my1image_filter_t);
+	my1image_filter_t* that = (my1image_filter_t*)malloc(size);
+	if (that)
+	{
+		filter_init(that,info->filter,0x0);
+		strncpy(that->name,info->name,FILTER_NAMESIZE);
+		if (info->fsetup)
+			info->fsetup(that);
+		that->doinit = info->fsetup;
+		that->dofree = info->fclean;
+	}
+	return that;
+}
+/*----------------------------------------------------------------------------*/
+my1image_filter_t* image_work_create(char* name)
+{
+	my1image_filter_t* that = 0x0;
+	filter_info_t* info;
+	int loop;
+	for(loop=0;loop<IFILTER_DB_SIZE;loop++)
+	{
+		info = (filter_info_t*)&MY1_IFILTER_DB[loop];
+		if(!strncmp(name,info->name,FILTER_NAMESIZE))
+		{
+			that = info_create_filter(info);
+			break;
+		}
+	}
+	return that;
+}
+/*----------------------------------------------------------------------------*/
+my1image_filter_t* image_work_create_all(void)
+{
+	my1image_filter_t *that = 0x0, *temp;
+	filter_info_t* info;
+	int loop;
+	for(loop=0;loop<IFILTER_DB_SIZE;loop++)
+	{
+		info = (filter_info_t*)&MY1_IFILTER_DB[loop];
+		temp = info_create_filter(info);
+		if (temp)
+			that = filter_insert(that,temp);
+	}
+	return that;
 }
 /*----------------------------------------------------------------------------*/

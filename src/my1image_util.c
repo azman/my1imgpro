@@ -2,6 +2,7 @@
 #include "my1image_util.h"
 /*----------------------------------------------------------------------------*/
 #include <stdlib.h> /* for malloc and free? */
+#include <string.h>
 /*----------------------------------------------------------------------------*/
 int* image_mask_init(my1image_mask_t *mask, int size)
 {
@@ -126,6 +127,14 @@ void image_set_area(my1image_t *img, my1image_t *sub, my1image_area_t *reg)
 		for (jloop=0;jloop<col;jloop++)
 			pImg[jloop+xoff] = pSub[jloop];
 	}
+}
+/*----------------------------------------------------------------------------*/
+void image_area_init(my1image_area_t *reg)
+{
+	reg->yset = 0;
+	reg->xset = 0;
+	reg->height = 0;
+	reg->width = 0;
 }
 /*----------------------------------------------------------------------------*/
 void image_area_select(my1image_t *img, my1image_area_t *reg, int val, int inv)
@@ -272,17 +281,24 @@ void filter_init(my1image_filter_t* pfilter,
 {
 	pfilter->name[0] = 0x0; /* anonymous */
 	pfilter->data = 0x0;
-	pfilter->parent = 0x0;
 	pfilter->buffer = buffer;
 	pfilter->docopy = 0x0;
 	pfilter->filter = filter;
+	pfilter->doinit = 0x0; /* used in cloning? */
+	pfilter->dofree = 0x0;
 	pfilter->next = 0x0;
 	pfilter->last = 0x0;
 }
 /*----------------------------------------------------------------------------*/
 void filter_free(my1image_filter_t* pfilter)
 {
-	/* no resource to release, just prepare for new filter chaining */
+	if (pfilter->dofree)
+		pfilter->dofree(pfilter);
+}
+/*----------------------------------------------------------------------------*/
+void filter_unlink(my1image_filter_t* pfilter)
+{
+	/* simply prepare for new filter chaining */
 	pfilter->docopy = 0x0;
 	if (pfilter->next)
 		filter_free(pfilter->next);
@@ -303,6 +319,54 @@ my1image_filter_t* filter_insert(my1image_filter_t* pstack,
 	pstack->last->next = pcheck;
 	pstack->last = pcheck;
 	return pstack;
+}
+/*----------------------------------------------------------------------------*/
+my1image_filter_t* filter_search(my1image_filter_t* ppass, char *name)
+{
+	int size;
+	my1image_filter_t* ipass = 0x0;
+	while (ppass)
+	{
+		if (ppass->name)
+		{
+			size = strlen(ppass->name);
+			if (!strncmp(ppass->name,name,size))
+			{
+				ipass = ppass;
+				break;
+			}
+		}
+		ppass = ppass->next;
+	}
+	return ipass;
+}
+/*----------------------------------------------------------------------------*/
+my1image_filter_t* filter_clone(my1image_filter_t* ppass)
+{
+	size_t size = sizeof(my1image_filter_t);
+	my1image_filter_t* that = (my1image_filter_t*)malloc(size);
+	if (that)
+	{
+		filter_init(that,ppass->filter,ppass->buffer);
+		strncpy(that->name,ppass->name,FILTER_NAMESIZE);
+		that->doinit = ppass->doinit;
+		if (that->doinit)
+			that->doinit(that);
+		that->dofree = ppass->dofree;
+	}
+	return that;
+}
+/*----------------------------------------------------------------------------*/
+void filter_clean(my1image_filter_t* ppass)
+{
+	my1image_filter_t* ipass;
+	while (ppass)
+	{
+		ipass = ppass;
+		ppass = ppass->next;
+		filter_free(ipass);
+		free((void*)ipass);
+	}
 }
 /*----------------------------------------------------------------------------*/
 my1image_t* image_filter(my1image_t* image, my1image_filter_t* pfilter)

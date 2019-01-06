@@ -3,15 +3,11 @@
 #include <stdlib.h>
 #include <string.h>
 /*----------------------------------------------------------------------------*/
-#include "my1image_file.h"
-#include "my1image_util.h"
-#include "my1image_math.h"
+#include <gdk/gdkkeysyms.h>
+/*----------------------------------------------------------------------------*/
 #include "my1image_work.h"
 #include "my1image_view.h"
-/*----------------------------------------------------------------------------*/
-#define _PI_ 3.14159265
-#define _FULL_PI_ (_PI_*2)
-#define _HALF_PI_ (_PI_/2)
+#include "my1image_file.h"
 /*----------------------------------------------------------------------------*/
 #define ERROR_MAX 5
 /*----------------------------------------------------------------------------*/
@@ -27,24 +23,19 @@
 #define MY1APP_PROGVERS "build"
 #endif
 #ifndef MY1APP_PROGINFO
-#define MY1APP_PROGINFO "Basic Image Tool Library"
+#define MY1APP_PROGINFO "MY1Image Test Program"
 #endif
 /*----------------------------------------------------------------------------*/
 #define ERROR_GENERAL 0
 #define ERROR_NOFILE -1
-/*----------------------------------------------------------------------------*/
-#include <gtk/gtk.h>
-#include <gdk/gdkkeysyms.h>
 /*----------------------------------------------------------------------------*/
 typedef struct _my1image_test_t
 {
 	my1image_t currimage, *image;
 	my1image_view_t view;
 	my1image_buffer_t work;
-	my1image_filter_t ifilter_gray, ifilter_laplace,
-		ifilter_sobelx, ifilter_sobely, ifilter_sobel, ifilter_gauss,
-		ifilter_maxscale, ifilter_suppress, ifilter_threshold;
-	my1image_filter_t *pfilter;
+	my1image_filter_t *pflist;
+	my1image_filter_t *pfcurr;
 }
 my1image_test_t;
 /*----------------------------------------------------------------------------*/
@@ -54,18 +45,8 @@ void image_test_init(my1image_test_t* test)
 	test->image = 0x0;
 	image_view_init(&test->view);
 	buffer_init(&test->work);
-	filter_init(&test->ifilter_gray,filter_gray,&test->work);
-	filter_init(&test->ifilter_laplace,filter_laplace,&test->work);
-	filter_init(&test->ifilter_sobelx,filter_sobel_x,&test->work);
-	filter_init(&test->ifilter_sobely,filter_sobel_y,&test->work);
-	filter_init(&test->ifilter_sobel,filter_sobel,&test->work);
-	filter_init(&test->ifilter_gauss,filter_gauss,&test->work);
-	filter_init(&test->ifilter_maxscale,filter_maxscale,&test->work);
-	filter_init(&test->ifilter_suppress,filter_suppress,&test->work);
-	filter_init(&test->ifilter_threshold,filter_threshold,&test->work);
-	test->ifilter_sobel.data = (void*) &test->work.xtra;
-	test->ifilter_suppress.data = (void*) &test->work.xtra;
-	test->pfilter = 0x0;
+	test->pflist = image_work_create_all();
+	test->pfcurr = 0x0;
 }
 /*----------------------------------------------------------------------------*/
 void image_test_free(my1image_test_t* test)
@@ -73,15 +54,45 @@ void image_test_free(my1image_test_t* test)
 	image_free(&test->currimage);
 	image_view_free(&test->view);
 	buffer_free(&test->work);
-	filter_free(&test->ifilter_gray);
-	filter_free(&test->ifilter_laplace);
-	filter_free(&test->ifilter_sobelx);
-	filter_free(&test->ifilter_sobely);
-	filter_free(&test->ifilter_sobel);
-	filter_free(&test->ifilter_gauss);
-	filter_free(&test->ifilter_maxscale);
-	filter_free(&test->ifilter_suppress);
-	filter_free(&test->ifilter_threshold);
+	if (test->pflist)
+		filter_clean(test->pflist);
+	if (test->pfcurr)
+		filter_clean(test->pfcurr);
+}
+/*----------------------------------------------------------------------------*/
+void image_test_load(my1image_test_t* test, char* name)
+{
+	my1image_filter_t *ipass, *tpass = 0x0;
+	ipass = filter_search(test->pflist,name);
+	if (ipass) tpass = filter_clone(ipass);
+	if (tpass)
+	{
+		tpass->buffer = &test->work;
+		test->pfcurr = filter_insert(test->pfcurr,tpass);
+	}
+}
+/*----------------------------------------------------------------------------*/
+void image_test_filter(my1image_test_t* test)
+{
+	if (test->pfcurr)
+	{
+#if 0
+		/* debug! */
+		int size = 0;
+		my1image_filter_t* ppass = test->pfcurr;
+		printf("Filtering:\n");
+		while (ppass)
+		{
+			printf("- {%s}\n",ppass->name);
+			ppass = ppass->next;
+			size++;
+		}
+		printf("Done:%d.\n",size);
+#endif
+		test->image = image_filter(test->image,test->pfcurr);
+		filter_clean(test->pfcurr);
+		test->pfcurr = 0x0;
+	}
 }
 /*----------------------------------------------------------------------------*/
 void print_image_info(my1image_t* image)
@@ -178,8 +189,7 @@ void on_image_original(my1image_test_t *q)
 /*----------------------------------------------------------------------------*/
 void on_image_grayscale(my1image_test_t *q)
 {
-	q->pfilter = filter_insert(0x0,&q->ifilter_gray);
-	q->image = image_filter(q->image,q->pfilter);
+	image_grayscale(q->image);
 	image_view_draw(&q->view,q->image);
 }
 /*----------------------------------------------------------------------------*/
@@ -200,76 +210,77 @@ void on_image_invert(my1image_test_t *q)
 	image_view_draw(&q->view,q->image);
 }
 /*----------------------------------------------------------------------------*/
-void on_image_laplace(my1image_test_t *q)
-{
-	q->pfilter = filter_insert(0x0,&q->ifilter_gray);
-	q->pfilter = filter_insert(q->pfilter,&q->ifilter_laplace);
-	q->image = image_filter(q->image,q->pfilter);
-	image_view_draw(&q->view,q->image);
-}
-/*----------------------------------------------------------------------------*/
-void on_image_sobelx(my1image_test_t *q)
-{
-	q->pfilter = filter_insert(0x0,&q->ifilter_gray);
-	q->pfilter = filter_insert(q->pfilter,&q->ifilter_sobelx);
-	q->image = image_filter(q->image,q->pfilter);
-	image_view_draw(&q->view,q->image);
-}
-/*----------------------------------------------------------------------------*/
-void on_image_sobely(my1image_test_t *q)
-{
-	q->pfilter = filter_insert(0x0,&q->ifilter_gray);
-	q->pfilter = filter_insert(q->pfilter,&q->ifilter_sobely);
-	q->image = image_filter(q->image,q->pfilter);
-	image_view_draw(&q->view,q->image);
-}
-/*----------------------------------------------------------------------------*/
-void on_image_sobel(my1image_test_t *q)
-{
-	q->pfilter = filter_insert(0x0,&q->ifilter_gray);
-	q->pfilter = filter_insert(q->pfilter,&q->ifilter_sobel);
-	q->image = image_filter(q->image,q->pfilter);
-	image_view_draw(&q->view,q->image);
-}
-/*----------------------------------------------------------------------------*/
-void on_image_gaussian(my1image_test_t *q)
-{
-	q->pfilter = filter_insert(0x0,&q->ifilter_gray);
-	q->pfilter = filter_insert(q->pfilter,&q->ifilter_gauss);
-	q->image = image_filter(q->image,q->pfilter);
-	image_view_draw(&q->view,q->image);
-}
-/*----------------------------------------------------------------------------*/
-void on_image_maxscale(my1image_test_t *q)
-{
-	q->pfilter = filter_insert(0x0,&q->ifilter_gray);
-	q->pfilter = filter_insert(q->pfilter,&q->ifilter_maxscale);
-	q->image = image_filter(q->image,q->pfilter);
-	image_view_draw(&q->view,q->image);
-}
-/*----------------------------------------------------------------------------*/
-void on_image_suppress(my1image_test_t *q)
-{
-	q->pfilter = filter_insert(0x0,&q->ifilter_gray);
-	q->pfilter = filter_insert(q->pfilter,&q->ifilter_sobel);
-	q->pfilter = filter_insert(q->pfilter,&q->ifilter_suppress);
-	q->image = image_filter(q->image,q->pfilter);
-	image_view_draw(&q->view,q->image);
-}
-/*----------------------------------------------------------------------------*/
-void on_image_threshold(my1image_test_t *q)
-{
-	q->pfilter = filter_insert(0x0,&q->ifilter_gray);
-	q->pfilter = filter_insert(q->pfilter,&q->ifilter_threshold);
-	q->image = image_filter(q->image,q->pfilter);
-	image_view_draw(&q->view,q->image);
-}
-/*----------------------------------------------------------------------------*/
 void on_image_normalize(my1image_test_t *q)
 {
 	image_grayscale(q->image);
 	image_normalize(q->image);
 	image_view_draw(&q->view,q->image);
+}
+/*----------------------------------------------------------------------------*/
+void on_image_laplace(my1image_test_t *test)
+{
+	image_test_load(test,IFNAME_GRAYSCALE);
+	image_test_load(test,IFNAME_LAPLACE);
+	image_test_filter(test);
+	image_view_draw(&test->view,test->image);
+}
+/*----------------------------------------------------------------------------*/
+void on_image_sobelx(my1image_test_t *test)
+{
+	image_test_load(test,IFNAME_GRAYSCALE);
+	image_test_load(test,IFNAME_SOBELX);
+	image_test_filter(test);
+	image_view_draw(&test->view,test->image);
+}
+/*----------------------------------------------------------------------------*/
+void on_image_sobely(my1image_test_t *test)
+{
+	image_test_load(test,IFNAME_GRAYSCALE);
+	image_test_load(test,IFNAME_SOBELY);
+	image_test_filter(test);
+	image_view_draw(&test->view,test->image);
+}
+/*----------------------------------------------------------------------------*/
+void on_image_sobel(my1image_test_t *test)
+{
+	image_test_load(test,IFNAME_GRAYSCALE);
+	image_test_load(test,IFNAME_SOBEL);
+	image_test_load(test,"dummy");
+	image_test_filter(test);
+	image_view_draw(&test->view,test->image);
+}
+/*----------------------------------------------------------------------------*/
+void on_image_gaussian(my1image_test_t *test)
+{
+	image_test_load(test,IFNAME_GRAYSCALE);
+	image_test_load(test,IFNAME_GAUSS);
+	image_test_filter(test);
+	image_view_draw(&test->view,test->image);
+}
+/*----------------------------------------------------------------------------*/
+void on_image_maxscale(my1image_test_t *test)
+{
+	image_test_load(test,IFNAME_GRAYSCALE);
+	image_test_load(test,IFNAME_MAXSCALE);
+	image_test_filter(test);
+	image_view_draw(&test->view,test->image);
+}
+/*----------------------------------------------------------------------------*/
+void on_image_suppress(my1image_test_t *test)
+{
+	image_test_load(test,IFNAME_GRAYSCALE);
+	image_test_load(test,IFNAME_SOBEL);
+	image_test_load(test,IFNAME_SUPPRESS);
+	image_test_filter(test);
+	image_view_draw(&test->view,test->image);
+}
+/*----------------------------------------------------------------------------*/
+void on_image_threshold(my1image_test_t *test)
+{
+	image_test_load(test,IFNAME_GRAYSCALE);
+	image_test_load(test,IFNAME_THRESHOLD);
+	image_test_filter(test);
+	image_view_draw(&test->view,test->image);
 }
 /*----------------------------------------------------------------------------*/
 void on_image_rotate_ccw90(my1image_test_t *q)
@@ -702,33 +713,33 @@ int main(int argc, char* argv[])
 				/* then check for command! */
 				if(!strcmp(argv[loop],"laplace"))
 				{
-					if (!q.pfilter)
-						q.pfilter = filter_insert(q.pfilter,&q.ifilter_gray);
-					q.pfilter = filter_insert(q.pfilter,&q.ifilter_laplace);
+					if (!q.pfcurr)
+						image_test_load(&q,IFNAME_GRAYSCALE);
+					image_test_load(&q,IFNAME_LAPLACE);
 				}
 				else if(!strcmp(argv[loop],"sobelx"))
 				{
-					if (!q.pfilter)
-						q.pfilter = filter_insert(q.pfilter,&q.ifilter_gray);
-					q.pfilter = filter_insert(q.pfilter,&q.ifilter_sobelx);
+					if (!q.pfcurr)
+						image_test_load(&q,IFNAME_GRAYSCALE);
+					image_test_load(&q,IFNAME_SOBELX);
 				}
 				else if(!strcmp(argv[loop],"sobely"))
 				{
-					if (!q.pfilter)
-						q.pfilter = filter_insert(q.pfilter,&q.ifilter_gray);
-					q.pfilter = filter_insert(q.pfilter,&q.ifilter_sobely);
+					if (!q.pfcurr)
+						image_test_load(&q,IFNAME_GRAYSCALE);
+					image_test_load(&q,IFNAME_SOBELY);
 				}
 				else if(!strcmp(argv[loop],"sobel"))
 				{
-					if (!q.pfilter)
-						q.pfilter = filter_insert(q.pfilter,&q.ifilter_gray);
-					q.pfilter = filter_insert(q.pfilter,&q.ifilter_sobel);
+					if (!q.pfcurr)
+						image_test_load(&q,IFNAME_GRAYSCALE);
+					image_test_load(&q,IFNAME_SOBEL);
 				}
 				else if(!strcmp(argv[loop],"gauss"))
 				{
-					if (!q.pfilter)
-						q.pfilter = filter_insert(q.pfilter,&q.ifilter_gray);
-					q.pfilter = filter_insert(q.pfilter,&q.ifilter_gauss);
+					if (!q.pfcurr)
+						image_test_load(&q,IFNAME_GRAYSCALE);
+					image_test_load(&q,IFNAME_GAUSS);
 				}
 				else
 				{
@@ -855,9 +866,9 @@ int main(int argc, char* argv[])
 		printf("Input image: %s\n",pname);
 		print_image_info(q.image);
 		/* run image filter, if requested */
-		if (q.pfilter)
+		if (q.pfcurr)
 		{
-			q.image = image_filter(q.image,q.pfilter);
+			image_test_filter(&q);
 			image_absolute(q.image);
 			image_cliphi(q.image,WHITE);
 		}
