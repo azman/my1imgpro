@@ -486,9 +486,9 @@ gboolean on_display_timer(gpointer data)
 	{
 		video_skip_filter(video);
 		if (video->flags&VIDEO_FLAG_NO_FILTER)
-			image_view_stat_time(&vview->view,"Filter ON",MESG_SHOWTIME);
-		else
 			image_view_stat_time(&vview->view,"Filter OFF",MESG_SHOWTIME);
+		else
+			image_view_stat_time(&vview->view,"Filter ON",MESG_SHOWTIME);
 	}
 	else if (keyval)
 	{
