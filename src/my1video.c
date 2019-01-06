@@ -6,7 +6,7 @@ void video_init(my1video_t *video)
 	image_init(&video->image);
 	video->frame = 0x0; /* frame is pure pointer! */
 	buffer_init(&video->vbuff);
-	video->filter = 0x0;
+	video->ppass = 0x0;
 	video->count = -1; video->index = -1;
 	video->width = 0; video->height = 0;
 	video->flags = 0; /* reset flags */
@@ -27,6 +27,7 @@ void video_free(my1video_t *video)
 {
 	image_free(&video->image);
 	buffer_free(&video->vbuff);
+	/* assume filters are static OR cleared externally */
 }
 /*----------------------------------------------------------------------------*/
 void video_play(my1video_t *video)
@@ -96,19 +97,19 @@ void video_filter_insert(my1video_t *video, my1vpass_t *vpass)
 	{
 		/* link buffer and parent */
 		vpass->buffer = &video->vbuff;
-		vpass->parent = (void*) video;
 		/* keep a copy to insert */
 		ptask = vpass;
 		vpass = vpass->next;
 		/* insert video filter */
-		video->filter = filter_insert(video->filter,ptask);
+		video->ppass = filter_insert(video->ppass,ptask);
 	}
 }
 /*----------------------------------------------------------------------------*/
 void video_filter_frame(my1video_t *video)
 {
 	if (video->flags&VIDEO_FLAG_NO_FILTER) return;
-	video->frame = image_filter(video->frame,video->filter);
+	if (!video->ppass) return;
+	video->frame = image_filter(video->frame,video->ppass);
 }
 /*----------------------------------------------------------------------------*/
 void video_post_frame(my1video_t *video)

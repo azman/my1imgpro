@@ -22,7 +22,7 @@ typedef struct _my1video_t
 	my1image_t image; /* internal buffer */
 	my1image_t *frame; /* pure pointer to buffered or filtered image */
 	my1vbuff_t vbuff; /* video double buffering for video filter */
-	my1vpass_t *filter; /* video/image filter */
+	my1vpass_t *ppass; /* video/image filter */
 	int count; /* frame count in video file (-1 for live?) */
 	int index; /* frame index for video file */
 	int width, height; /* set to desired size */

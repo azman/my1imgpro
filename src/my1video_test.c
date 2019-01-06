@@ -28,12 +28,6 @@ static char showkeys[] =
 	"\t---------------------------\n"
 };
 /*----------------------------------------------------------------------------*/
-/** externally-defined filter functions */
-extern my1image_t* filter_gray(my1image_t* img, my1image_t* res,
-	my1vpass_t* filter);
-extern my1image_t* filter_laplace(my1image_t* img, my1image_t* res,
-	my1vpass_t* filter);
-/*----------------------------------------------------------------------------*/
 void video_draw_index(void* data)
 {
 	my1image_view_t* view = (my1image_view_t*) data;
@@ -55,10 +49,7 @@ int main(int argc, char* argv[])
 {
 	int loop, stop = 0, type = VIDEO_SOURCE_NONE;
 	char *psource = 0x0;
-	my1vpass_t* ppass = 0x0;
 	my1vmain_t vmain;
-	my1vpass_t grayfilter;
-	my1vpass_t edgefilter;
 	/* print tool info */
 	printf("\n%s - %s (%s)\n",MY1APP_PROGNAME,MY1APP_PROGINFO,MY1APP_PROGVERS);
 	printf("  => by azman@my1matrix.org\n\n");
@@ -112,15 +103,8 @@ int main(int argc, char* argv[])
 	vmain.vview.view.draw_more = &video_draw_index;
 	vmain.vview.view.draw_more_data = (void*)&vmain;
 	/* setup filters */
-	filter_init(&grayfilter,filter_gray,0x0);
-	filter_init(&edgefilter,filter_laplace,0x0);
-/*
-	video_filter_insert(&vmain.video,&grayfilter);
-	video_filter_insert(&vmain.video,&edgefilter);
-*/
-	ppass = filter_insert(ppass,&grayfilter);
-	ppass = filter_insert(ppass,&edgefilter);
-	video_filter_insert(&vmain.video,ppass);
+	video_main_pass_load(&vmain,IFNAME_GRAYSCALE);
+	video_main_pass_load(&vmain,IFNAME_LAPLACE);
 	/* setup capture */
 	video_main_capture(&vmain,psource,type);
 	/* setup display */
@@ -132,8 +116,6 @@ int main(int argc, char* argv[])
 	/* main loop */
 	gtk_main();
 	/* clean up */
-	filter_free(&edgefilter);
-	filter_free(&grayfilter);
 	video_main_free(&vmain);
 	/* we are done */
 	printf("\n");

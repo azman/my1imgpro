@@ -3,6 +3,7 @@
 #define __MY1VIDEO_MAINH__
 /*----------------------------------------------------------------------------*/
 #include "my1video.h"
+#include "my1image_work.h"
 /*----------------------------------------------------------------------------*/
 #include <libavformat/avformat.h>
 #include "my1image_view.h"
@@ -75,6 +76,7 @@ typedef struct _my1video_main_t
 	my1video_t video;
 	my1vgrab_t vgrab;
 	my1vview_t vview;
+	my1vpass_t *plist;
 	int type;
 	void* data;
 	pgrabber grabber; /* pointer to custom frame grabber function */
@@ -89,6 +91,8 @@ void video_main_free(my1vmain_t* vmain);
 void video_main_capture(my1vmain_t* vmain, char* vsrc, int type);
 void video_main_display(my1vmain_t* vmain, char* name);
 void video_main_loop(my1vmain_t* vmain, int loopms);
+void video_main_pass_load(my1vmain_t* vmain, char* name);
+void video_main_pass_done(my1vmain_t* vmain);
 /*----------------------------------------------------------------------------*/
 #endif
 /*----------------------------------------------------------------------------*/

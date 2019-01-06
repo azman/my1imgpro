@@ -540,6 +540,7 @@ void video_main_init(my1vmain_t* vmain)
 	vmain->video.parent_ = (void*)vmain;
 	capture_init(&vmain->vgrab,&vmain->video);
 	display_init(&vmain->vview,&vmain->video);
+	vmain->plist = image_work_create_all();;
 	vmain->type = VIDEO_SOURCE_NONE;
 	vmain->data = 0x0;
 	vmain->grabber = 0x0;
@@ -548,6 +549,10 @@ void video_main_init(my1vmain_t* vmain)
 /*----------------------------------------------------------------------------*/
 void video_main_free(my1vmain_t* vmain)
 {
+	/* using dynamically created filters */
+	video_main_pass_done(vmain);
+	if (vmain->plist)
+		filter_clean(vmain->plist);
 	display_free(&vmain->vview);
 	capture_free(&vmain->vgrab);
 	video_free(&vmain->video);
@@ -582,5 +587,21 @@ void video_main_display(my1vmain_t* vmain, char* name)
 void video_main_loop(my1vmain_t* vmain, int loopms)
 {
 	display_loop(&vmain->vview,loopms);
+}
+/*----------------------------------------------------------------------------*/
+void video_main_pass_load(my1vmain_t* vmain, char* name)
+{
+	my1vpass_t *ipass, *tpass = 0x0;
+	if (!vmain->plist) return;
+	ipass = filter_search(vmain->plist,name);
+	if (ipass) tpass = filter_clone(ipass);
+	if (tpass) video_filter_insert(&vmain->video,tpass);
+}
+/*----------------------------------------------------------------------------*/
+void video_main_pass_done(my1vmain_t* vmain)
+{
+	if (!vmain->video.ppass) return;
+	filter_clean(vmain->video.ppass);
+	vmain->video.ppass = 0x0;
 }
 /*----------------------------------------------------------------------------*/
