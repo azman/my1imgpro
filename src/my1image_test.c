@@ -382,12 +382,16 @@ void on_file_open_main(my1image_test_t* test)
 		else
 		{
 			/* successful image file open */
-			buffer_size(&test->work,that.height,that.width);
 			image_copy(test->work.curr,&that);
-			test->image = image_size_this(test->work.curr,test->work.next,
-				MAX_HEIGHT,MAX_WIDTH);
-			if (test->image!=test->work.curr)
-				buffer_swap(&test->work);
+			test->image = test->work.curr;
+			/* limit size if it gets too big? */
+			if (test->image->width>MAX_WIDTH||test->image->height>MAX_HEIGHT)
+			{
+				test->image = image_size_this(test->work.curr,test->work.next,
+					MAX_HEIGHT,MAX_WIDTH);
+				if (test->image!=test->work.curr)
+					buffer_swap(&test->work);
+			}
 			image_copy(&test->currimage,test->image); /* keep original */
 			image_view_draw(&test->view,test->image);
 			/* show info on status bar */
@@ -917,10 +921,16 @@ int main(int argc, char* argv[])
 		gchar *buff;
 		/* check size for gui */
 		image_copy(q.work.curr,&q.currimage);
-		image_size_this(q.work.curr,&q.currimage,MAX_HEIGHT,MAX_WIDTH);
-		buffer_size_all(&q.work,q.currimage.height,q.currimage.width);
-		image_copy(q.work.curr,&q.currimage);
 		q.image = q.work.curr;
+		/* limit size if it gets too big? */
+		if (q.image->width>MAX_WIDTH||q.image->height>MAX_HEIGHT)
+		{
+			q.image = image_size_this(q.image,q.work.next,MAX_HEIGHT,MAX_WIDTH);
+			if (q.image!=q.work.curr)
+				buffer_swap(&q.work);
+			/* keep original copy */
+			image_copy(&q.currimage,q.image);
+		}
 		/* initialize gui */
 		gtk_init(&argc,&argv);
 		/* setup auto-quit on close */
