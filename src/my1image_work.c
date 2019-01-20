@@ -26,6 +26,63 @@ my1image_t* filter_gray(my1image_t* img, my1image_t* res,
 	return res;
 }
 /*----------------------------------------------------------------------------*/
+my1image_t* filter_color_blue(my1image_t* img, my1image_t* res,
+	my1image_filter_t* filter)
+{
+	int loop, size = img->length;
+	image_make(res,img->height,img->width);
+	if (img->mask==IMASK_COLOR)
+	{
+		for(loop=0;loop<size;loop++)
+			res->data[loop] = img->data[loop]&IMASK_COLOR_B;
+	}
+	else
+	{
+		for(loop=0;loop<size;loop++)
+			res->data[loop] = img->data[loop]&IMASK_COLOR_B;
+	}
+	res->mask = IMASK_COLOR;
+	return res;
+}
+/*----------------------------------------------------------------------------*/
+my1image_t* filter_color_green(my1image_t* img, my1image_t* res,
+	my1image_filter_t* filter)
+{
+	int loop, size = img->length;
+	image_make(res,img->height,img->width);
+	if (img->mask==IMASK_COLOR)
+	{
+		for(loop=0;loop<size;loop++)
+			res->data[loop] = img->data[loop]&IMASK_COLOR_G;
+	}
+	else
+	{
+		for(loop=0;loop<size;loop++)
+			res->data[loop] = (img->data[loop]<<8)&IMASK_COLOR_G;
+	}
+	res->mask = IMASK_COLOR;
+	return res;
+}
+/*----------------------------------------------------------------------------*/
+my1image_t* filter_color_red(my1image_t* img, my1image_t* res,
+	my1image_filter_t* filter)
+{
+	int loop, size = img->length;
+	image_make(res,img->height,img->width);
+	if (img->mask==IMASK_COLOR)
+	{
+		for(loop=0;loop<size;loop++)
+			res->data[loop] = img->data[loop]&IMASK_COLOR_R;
+	}
+	else
+	{
+		for(loop=0;loop<size;loop++)
+			res->data[loop] = (img->data[loop]<<16)&IMASK_COLOR_R;
+	}
+	res->mask = IMASK_COLOR;
+	return res;
+}
+/*----------------------------------------------------------------------------*/
 my1image_t* filter_invert(my1image_t* img, my1image_t* res,
 	my1image_filter_t* filter)
 {
@@ -384,6 +441,9 @@ my1image_t* filter_threshold(my1image_t* img, my1image_t* res,
 static const filter_info_t MY1_IFILTER_DB[] =
 {
 	{ IFNAME_GRAYSCALE, filter_gray, 0x0, 0x0 },
+	{ IFNAME_COLORBLUE, filter_color_blue, 0x0, 0x0 },
+	{ IFNAME_COLORGREEN, filter_color_green, 0x0, 0x0 },
+	{ IFNAME_COLORRED, filter_color_red, 0x0, 0x0 },
 	{ IFNAME_INVERT, filter_invert, 0x0, 0x0 },
 	{ IFNAME_RESIZE, filter_resize, filter_resize_init, filter_resize_free },
 	{ IFNAME_LAPLACE, filter_laplace, 0x0, 0x0 },

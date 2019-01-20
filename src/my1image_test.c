@@ -193,6 +193,27 @@ void on_image_grayscale(my1image_test_t *q)
 	image_view_draw(&q->view,q->image);
 }
 /*----------------------------------------------------------------------------*/
+void on_image_blue(my1image_test_t *test)
+{
+	image_test_load(test,IFNAME_COLORBLUE);
+	image_test_filter(test);
+	image_view_draw(&test->view,test->image);
+}
+/*----------------------------------------------------------------------------*/
+void on_image_green(my1image_test_t *test)
+{
+	image_test_load(test,IFNAME_COLORGREEN);
+	image_test_filter(test);
+	image_view_draw(&test->view,test->image);
+}
+/*----------------------------------------------------------------------------*/
+void on_image_red(my1image_test_t *test)
+{
+	image_test_load(test,IFNAME_COLORRED);
+	image_test_filter(test);
+	image_view_draw(&test->view,test->image);
+}
+/*----------------------------------------------------------------------------*/
 void on_image_invert(my1image_test_t *q)
 {
 	if (q->image->mask==IMASK_COLOR)
@@ -489,6 +510,24 @@ void image_test_menu(my1image_test_t* test)
 	gtk_widget_show(menu_temp);
 	/* sub menu? */
 	menu_subs = gtk_menu_new();
+	/* color filter menu */
+	menu_item = gtk_menu_item_new_with_mnemonic("Color:_Blue");
+	gtk_menu_shell_append(GTK_MENU_SHELL(menu_subs),menu_item);
+	g_signal_connect_swapped(G_OBJECT(menu_item),"activate",
+		G_CALLBACK(on_image_blue),(gpointer)test);
+	gtk_widget_show(menu_item);
+	/* color filter menu */
+	menu_item = gtk_menu_item_new_with_mnemonic("Color:Gr_een");
+	gtk_menu_shell_append(GTK_MENU_SHELL(menu_subs),menu_item);
+	g_signal_connect_swapped(G_OBJECT(menu_item),"activate",
+		G_CALLBACK(on_image_green),(gpointer)test);
+	gtk_widget_show(menu_item);
+	/* color filter menu */
+	menu_item = gtk_menu_item_new_with_mnemonic("Color:Re_d");
+	gtk_menu_shell_append(GTK_MENU_SHELL(menu_subs),menu_item);
+	g_signal_connect_swapped(G_OBJECT(menu_item),"activate",
+		G_CALLBACK(on_image_red),(gpointer)test);
+	gtk_widget_show(menu_item);
 	/* laplace1 menu */
 	menu_item = gtk_menu_item_new_with_mnemonic("_Laplace");
 	gtk_menu_shell_append(GTK_MENU_SHELL(menu_subs),menu_item);
