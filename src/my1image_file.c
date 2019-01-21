@@ -178,26 +178,34 @@ int image_save_bmp(my1image_t *image, char *filename)
 {
 	FILE *bmpfile;
 	unsigned int headSize, fileSize;
-	unsigned int vectorSize;
+	unsigned int vectorSize, paletteSize = 0;
 	int row, col, temp, buff, length, bytepp = 1;
 	unsigned char *pChar, someChar, r, g, b;
 	unsigned char bmpID[BMP_ID_SIZE];
 	my1image_bmp_head_t head;
 	my1image_bmp_info_t info;
-	/* check if color image - palette NOT possible! */
-	if (image->mask==IMASK_COLOR) bytepp = 3;
+	/* check if color image */
+	if (image->mask==IMASK_COLOR)
+	{
+		bytepp = 3;
+	}
+	else
+	{
+		/* use palette for grayscale */
+		paletteSize = sizeof(int)*GRAYLEVEL_COUNT;
+	}
 	/* calculate filesize */
 	length = image->width*bytepp;
 	while (length%4) length++;
 	vectorSize = length*image->height;
 	headSize = BMP_ID_SIZE+BMP_HEAD_SIZE+BMP_INFO_SIZE;
-	fileSize = headSize + vectorSize;
+	fileSize = headSize + vectorSize + paletteSize;
 	/* populate BMP header */
 	bmpID[0] = 'B';
 	bmpID[1] = 'M';
 	head.bmpSize = fileSize;
 	head.bmpReserved = 0;
-	head.bmpOffset = headSize;
+	head.bmpOffset = headSize + paletteSize;
 	/* populate BMP info */
 	info.bmpInfoSize = BMP_INFO_SIZE;
 	info.bmpWidth = image->width;
@@ -208,7 +216,7 @@ int image_save_bmp(my1image_t *image, char *filename)
 	info.bmpDataSize = vectorSize;
 	info.bmpHResolution = 0; /** not used? */
 	info.bmpVResolution = 0; /** not used? */
-	info.bmpColorCount = 0;
+	info.bmpColorCount = paletteSize>0?GRAYLEVEL_COUNT:0;
 	info.bmpIColorCount = 0;
 #ifdef MY1DEBUG
 	printf("\n");
@@ -226,6 +234,7 @@ int image_save_bmp(my1image_t *image, char *filename)
 	printf("Data offset: %u bytes\n", head.bmpOffset);
 	printf("Bits per pixel: %d, Colors: %d\n",
 		info.bmpBitsPerPixel, info.bmpColorCount);
+	printf("Palette Size: %d bytes\n", paletteSize);
 	printf("\n");
 #endif
 	/* try to open file for write! */
@@ -240,6 +249,16 @@ int image_save_bmp(my1image_t *image, char *filename)
 	/* write bitmap info */
 	pChar = (unsigned char*) &info;
 	fwrite(pChar,BMP_INFO_SIZE,1,bmpfile);
+	/* write palette if created */
+	if (paletteSize>0)
+	{
+		pChar = (unsigned char*) &col;
+		for (row=0;row<GRAYLEVEL_COUNT;row++)
+		{
+			col = gray2color(row);
+			fwrite(pChar,sizeof(int),1,bmpfile);
+		}
+	}
 	/* write data! */
 	/** my origin is topleft but bmp origin is bottomleft! */
 	pChar = (unsigned char*) &someChar;
