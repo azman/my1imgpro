@@ -1,6 +1,9 @@
 /*----------------------------------------------------------------------------*/
 #include "my1video_main.h"
 /*----------------------------------------------------------------------------*/
+/** need this to save a frame from video to file! */
+#include "my1image_file.h"
+/*----------------------------------------------------------------------------*/
 #include <libswscale/swscale.h>
 #include <libavutil/imgutils.h>
 #include <libavdevice/avdevice.h>
@@ -491,6 +494,15 @@ gboolean on_display_timer(gpointer data)
 			video_loop(video,1);
 			image_view_stat_time(&vview->view,"Looping ON",MESG_SHOWTIME);
 		}
+	}
+	else if (keyval == GDK_KEY_g)
+	{
+		/* stop video on grabbing */
+		video_stop(video);
+		if (image_save(video->frame,"vgrab.pnm"))
+			image_view_stat_time(&vview->view,"Grab failed!",MESG_SHOWTIME);
+		else
+			image_view_stat_time(&vview->view,"Frame saved!",MESG_SHOWTIME);
 	}
 	else if (keyval == GDK_KEY_z)
 	{

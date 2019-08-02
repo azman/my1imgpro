@@ -5,7 +5,7 @@ TESTIMG = my1image_test
 OBJSIMG = my1image.o my1image_util.o my1image_file.o
 OBJSIMG += my1image_work.o my1image_view.o $(TESTIMG).o
 TESTVIS = my1video_test
-OBJSVIS = my1image.o my1image_util.o
+OBJSVIS = my1image.o my1image_util.o my1image_file.o
 OBJSVIS += my1image_work.o my1image_view.o
 OBJSVIS += my1video.o my1video_main.o $(TESTVIS).o
 
@@ -51,4 +51,4 @@ ${TESTVIS}: $(OBJSVIS)
 	$(CC) $(CFLAGS) $(DFLAGS) $(TFLAGS) $(VFLAGS) -o $@ $<
 
 clean:
-	-$(RM) $(TESTIMG) $(OBJSIMG) $(TESTVIS) $(OBJSVIS) *.o
+	-$(RM) $(TESTIMG) $(OBJSIMG) $(TESTVIS) $(OBJSVIS) *.o *.pnm
