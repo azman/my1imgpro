@@ -7,6 +7,7 @@
 /*----------------------------------------------------------------------------*/
 #include "my1image_work.h"
 #include "my1image_view.h"
+#include "my1image_hist.h"
 #include "my1image_file.h"
 /*----------------------------------------------------------------------------*/
 #define ERROR_MAX 5
@@ -33,17 +34,28 @@ typedef struct _my1image_test_t
 {
 	my1image_t currimage, *image;
 	my1image_view_t view;
+	my1image_hist_t hist;
 	my1image_buffer_t work;
 	my1image_filter_t *pflist;
 	my1image_filter_t *pfcurr;
 }
 my1image_test_t;
 /*----------------------------------------------------------------------------*/
+void image_test_histogram(void* data)
+{
+	my1image_view_t* view = (my1image_view_t*) data;
+	my1image_hist_t* hist = (my1image_hist_t*) view->draw_more_data;
+	image_hist_show(hist);
+}
+/*----------------------------------------------------------------------------*/
 void image_test_init(my1image_test_t* test)
 {
 	image_init(&test->currimage);
 	test->image = 0x0;
 	image_view_init(&test->view);
+	image_hist_init(&test->hist,&test->view);
+	test->view.draw_more = (void*) &image_test_histogram;
+	test->view.draw_more_data = (void*) &test->hist;
 	buffer_init(&test->work);
 	test->pflist = image_work_create_all();
 	test->pfcurr = 0x0;
@@ -53,6 +65,7 @@ void image_test_free(my1image_test_t* test)
 {
 	image_free(&test->currimage);
 	image_view_free(&test->view);
+	image_hist_free(&test->hist);
 	buffer_free(&test->work);
 	if (test->pflist)
 		filter_clean(test->pflist);
@@ -330,9 +343,9 @@ void on_image_flip_h(my1image_test_t *q)
 /*----------------------------------------------------------------------------*/
 void on_toggle_histogram(my1image_test_t *q, GtkCheckMenuItem *menu_item)
 {
-	q->view.gohist = !q->view.gohist;
-	gtk_check_menu_item_set_active(menu_item,q->view.gohist?TRUE:FALSE);
-	image_view_show_hist(&q->view);
+	q->hist.dohide = !q->hist.dohide;
+	gtk_check_menu_item_set_active(menu_item,q->hist.dohide?FALSE:TRUE);
+	image_hist_show(&q->hist);
 }
 /*----------------------------------------------------------------------------*/
 void image_test_events(my1image_test_t* test)
@@ -979,7 +992,7 @@ int main(int argc, char* argv[])
 		image_view_draw(&q.view,q.image);
 		image_view_name(&q.view,MY1APP_PROGINFO);
 		/* allow histogram */
-		image_view_make_hist(&q.view);
+		image_hist_make(&q.hist);
 		/* show info on status bar */
 		buff = g_strdup_printf("Size:%dx%d Mask:0x%08x",
 			q.image->width,q.image->height,q.image->mask);

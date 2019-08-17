@@ -3,7 +3,7 @@
 
 TESTIMG = my1image_test
 OBJSIMG = my1image.o my1image_util.o my1image_file.o
-OBJSIMG += my1image_work.o my1image_view.o $(TESTIMG).o
+OBJSIMG += my1image_work.o my1image_view.o my1image_hist.o $(TESTIMG).o
 TESTVIS = my1video_test
 OBJSVIS = my1image.o my1image_util.o my1image_file.o
 OBJSVIS += my1image_work.o my1image_view.o

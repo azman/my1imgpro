@@ -2,26 +2,18 @@
 #ifndef __MY1IMAGE_VIEWH__
 #define __MY1IMAGE_VIEWH__
 /*----------------------------------------------------------------------------*/
-#include "my1image.h"
 #include "my1image_util.h"
 /*----------------------------------------------------------------------------*/
 #include <gtk/gtk.h>
-/*----------------------------------------------------------------------------*/
-#define HISTSIZE_WIDTH 640
-#define HISTSIZE_HEIGHT 480
-#define HISTSIZE_BORDER 30
-#define HISTSIZE_BCHART 1
-#define HISTSIZE_BCHART_SKIP 1
 /*----------------------------------------------------------------------------*/
 typedef void (*pdraw_more)(void*);
 /*----------------------------------------------------------------------------*/
 typedef struct _my1image_view_t
 {
-	GtkWidget *window, *canvas, *domenu;
-	GtkWidget *donext, *dohist, *dostat, *dostxt;
-	guint idstat, idstxt, idtime; /* gtk stuffs */
+	GtkWidget *window, *canvas, *domenu, *dostat;
+	guint idstat, idtime; /* gtk stuffs */
 	int width, height; /* current view size */
-	int gohist, doquit; /* histogram/quit request flag */
+	int doquit; /* quit request flag */
 	int goquit; /* flag to call gtk_quit_main in on_done_all */
 	/* gofull and aspect should be set BEFORE image_view_make */
 	int gofull, isfull; /* full screen request/status flag  */
@@ -33,7 +25,6 @@ typedef struct _my1image_view_t
 	my1image_t *ishow; /* pointer to image on display */
 	my1image_t buff; /* local buffer coz gdk uses abgr, not argb! */
 	my1image_t size; /* local buffer for fullscreen! */
-	my1image_histogram_t hist; /* histogram */
 }
 my1image_view_t;
 /*----------------------------------------------------------------------------*/
@@ -42,8 +33,6 @@ void image_view_free(my1image_view_t* iview);
 void image_view_make(my1image_view_t* iview, my1image_t* that);
 void image_view_draw(my1image_view_t* iview, my1image_t* that);
 void image_view_name(my1image_view_t* iview, const char* name);
-void image_view_make_hist(my1image_view_t* iview); /* to enable histogram */
-void image_view_show_hist(my1image_view_t* iview);
 void image_view_stat_show(my1image_view_t* iview, const char* mesg);
 void image_view_stat_time(my1image_view_t* iview, const char* mesg, int secs);
 guint image_view_stat_push(my1image_view_t* iview, const char* mesg);
