@@ -154,6 +154,12 @@ gboolean on_key_press(GtkWidget *widget, GdkEventKey *kevent, gpointer data)
 				&set_menu_position,(gpointer)q->view.window,0x0,0x0);
 			return TRUE;
 		}
+		else if(kevent->keyval == GDK_KEY_F||kevent->keyval == GDK_KEY_f)
+		{
+			q->view.gofull = !q->view.gofull;
+			image_view_full(&q->view,q->view.gofull);
+			return TRUE;
+		}
 	}
 	return FALSE;
 }
@@ -701,7 +707,7 @@ void hsv_get_stat(my1hsv_t hsv, hsv_stat_t* hsv_stat)
 int main(int argc, char* argv[])
 {
 	int loop, domax = ERROR_MAX, error = 0, dohsv = 0;
-	int view = 0, help = 0;
+	int view = 0, help = 0, full = 0;
 	char *psave = 0x0, *pname = 0x0, *pdata = 0x0;
 	my1image_test_t q;
 	/* print tool info */
@@ -748,6 +754,10 @@ int main(int argc, char* argv[])
 				else if(!strcmp(argv[loop],"--view"))
 				{
 					view = 1;
+				}
+				else if(!strcmp(argv[loop],"--full"))
+				{
+					full = 1;
 				}
 				else if(!strcmp(argv[loop],"--help"))
 				{
@@ -987,6 +997,7 @@ int main(int argc, char* argv[])
 		gtk_init(&argc,&argv);
 		/* setup auto-quit on close */
 		q.view.goquit = 1;
+		if (full) q.view.gofull = 1;
 		/* make image_view */
 		image_view_make(&q.view,q.image);
 		image_view_draw(&q.view,q.image);

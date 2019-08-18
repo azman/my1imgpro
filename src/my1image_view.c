@@ -14,8 +14,6 @@ void image_view_init(my1image_view_t* iview)
 	iview->doquit = 0;
 	iview->goquit = 0;
 	iview->gofull = 0;
-	iview->isfull = 0;
-	iview->aspect = 1;
 	iview->draw_more = 0x0;
 	iview->draw_more_data = 0x0;
 	iview->dodraw = 0x0;
@@ -29,6 +27,12 @@ void image_view_free(my1image_view_t* iview)
 {
 	image_free(&iview->buff);
 	image_free(&iview->size);
+}
+/*----------------------------------------------------------------------------*/
+void image_view_full(my1image_view_t* iview, int full)
+{
+	if (full) gtk_window_fullscreen(GTK_WINDOW(iview->window));
+	else gtk_window_unfullscreen(GTK_WINDOW(iview->window));
 }
 /*----------------------------------------------------------------------------*/
 gboolean on_done_all(GtkWidget *widget, GdkEvent *event, gpointer data)
@@ -45,12 +49,17 @@ gboolean on_draw_expose(GtkWidget *widget, GdkEventExpose *event,
 	gpointer user_data)
 {
 	my1image_view_t* view = (my1image_view_t*) user_data;
-	GdkWindowState state = gdk_window_get_state(view->window->window);
-	if (state&GDK_WINDOW_STATE_FULLSCREEN)
-		view->isfull = 1;
-	else
-		view->isfull = 0;
 	image_view_draw(view,view->image);
+	return TRUE;
+}
+/*----------------------------------------------------------------------------*/
+gboolean on_canvas_resize(GtkWidget *widget, GtkAllocation *allocation,
+	gpointer user_data)
+{
+/**
+	my1image_view_t* view = (my1image_view_t*) user_data;
+	printf("Resize: %d x %d\n",allocation->width,allocation->height);
+*/
 	return TRUE;
 }
 /*----------------------------------------------------------------------------*/
@@ -76,10 +85,9 @@ void image_view_make(my1image_view_t* iview, my1image_t* that)
 	gtk_window_set_default_size(GTK_WINDOW(iview->window),
 		iview->width,iview->height);
 	gtk_window_set_position(GTK_WINDOW(iview->window),GTK_WIN_POS_CENTER);
-	gtk_window_set_resizable(GTK_WINDOW(iview->window),FALSE);
+	/**gtk_window_set_resizable(GTK_WINDOW(iview->window),FALSE);*/
 	/* check if we need to go full screen */
-	if (iview->gofull)
-		gtk_window_fullscreen(GTK_WINDOW(iview->window));
+	image_view_full(iview,iview->gofull);
 	/* container box */
 	vbox = gtk_vbox_new(FALSE, 0);
 	gtk_container_add(GTK_CONTAINER(iview->window),vbox);
@@ -88,16 +96,21 @@ void image_view_make(my1image_view_t* iview, my1image_t* that)
 	gtk_widget_set_size_request(iview->canvas,iview->width,iview->height);
 	gtk_box_pack_start(GTK_BOX(vbox),iview->canvas,TRUE,TRUE,0);
 	gtk_widget_grab_focus(iview->canvas); /* just in case */
- 	/* create status bar */
-	iview->dostat = gtk_statusbar_new();
-	iview->idstat = gtk_statusbar_get_context_id(
-		(GtkStatusbar*)iview->dostat,"MY1ImageViewStat");
-	gtk_box_pack_start(GTK_BOX(vbox),iview->dostat,FALSE,FALSE,0);
+ 	/* create status bar - if NOT starting in fullscreen mode! */
+ 	if (!iview->gofull)
+ 	{
+		iview->dostat = gtk_statusbar_new();
+		iview->idstat = gtk_statusbar_get_context_id(
+			(GtkStatusbar*)iview->dostat,"MY1ImageViewStat");
+		gtk_box_pack_start(GTK_BOX(vbox),iview->dostat,FALSE,FALSE,0);
+	}
 	/* connect event handlers */
 	g_signal_connect(G_OBJECT(iview->window),"delete-event",
 		G_CALLBACK(on_done_all),(gpointer)iview);
 	g_signal_connect(G_OBJECT(iview->canvas),"expose-event",
 		G_CALLBACK(on_draw_expose),(gpointer)iview);
+	g_signal_connect(G_OBJECT(iview->canvas),"size-allocate",
+		G_CALLBACK(on_canvas_resize),(gpointer)iview);
 	/* show main window */
 	gtk_widget_show_all(iview->window);
 }
@@ -110,54 +123,14 @@ void image_view_draw(my1image_view_t* iview, my1image_t* that)
 	if (that) iview->image = that;
 	/* must have image - and canvas! */
 	if (!iview->image||!iview->canvas) return;
-	/* check the need to resize window */
-	if (iview->width!=iview->image->width||iview->height!=iview->image->height)
-	{
-		iview->width = iview->image->width;
-		iview->height = iview->image->height;
-		gtk_widget_set_size_request(iview->canvas,iview->width,iview->height);
-		image_make(&iview->buff,iview->height,iview->width);
-	}
 	/* colormode abgr32 for gdk function */
 	image_copy_color2bgr(&iview->buff,iview->image);
 	iview->ishow = &iview->buff;
-	/* check if we are in fullscreen mode? */
-	if (iview->isfull)
-	{
-		/* check canvas size and the need to resize */
-		chkw = iview->canvas->allocation.width;
-		chkh = iview->canvas->allocation.height;
-		if (chkw!=iview->width||chkh!=iview->height)
-		{
-			my1image_t temp;
-			image_init(&temp);
-			if (iview->aspect)
-			{
-				my1image_area_t area;
-				int ymax = iview->ishow->height, xmax = iview->ishow->width;
-				image_make(&temp,chkh,chkw);
-				area.height = ymax;
-				area.width = xmax;
-				image_size_aspect(&temp,&area);
-				if (area.height!=ymax||area.width!=xmax)
-				{
-					ymax = area.height;
-					xmax = area.width;
-					area.height = iview->ishow->height;
-					area.width = iview->ishow->width;
-					area.yset = (ymax-area.height)>>1;
-					area.xset = (xmax-area.width)>>1;
-					image_make(&temp,ymax,xmax);
-					image_fill(&temp,BLACK);
-					image_set_area(&temp,iview->ishow,&area);
-					iview->ishow = &temp;
-				}
-			}
-			gtk_widget_set_size_request(iview->canvas,chkw,chkh);
-			iview->ishow = image_size_this(iview->ishow,&iview->size,chkh,chkw);
-			image_free(&temp);
-		}
-	}
+	/* check canvas size and the need to resize */
+	chkw = iview->canvas->allocation.width;
+	chkh = iview->canvas->allocation.height;
+	if (chkw!=iview->ishow->width||chkh!=iview->ishow->height)
+		iview->ishow = image_size_this(iview->ishow,&iview->size,chkh,chkw);
 	/* draw! */
 	iview->dodraw = gdk_cairo_create(iview->canvas->window);
 	dotemp = gdk_pixbuf_new_from_data((const guchar*)iview->ishow->data,

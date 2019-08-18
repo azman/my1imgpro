@@ -15,9 +15,7 @@ typedef struct _my1image_view_t
 	int width, height; /* current view size */
 	int doquit; /* quit request flag */
 	int goquit; /* flag to call gtk_quit_main in on_done_all */
-	/* gofull and aspect should be set BEFORE image_view_make */
-	int gofull, isfull; /* full screen request/status flag  */
-	int aspect; /* flag to keep aspect ratio! */
+	int gofull; /* full screen request/status flag  */
 	pdraw_more draw_more; /* user draw function */
 	void* draw_more_data; /* data for user draw function */
 	cairo_t *dodraw; /* cairo drawing, needed by draw_more! */
@@ -30,6 +28,7 @@ my1image_view_t;
 /*----------------------------------------------------------------------------*/
 void image_view_init(my1image_view_t* iview);
 void image_view_free(my1image_view_t* iview);
+void image_view_full(my1image_view_t* iview, int full);
 void image_view_make(my1image_view_t* iview, my1image_t* that);
 void image_view_draw(my1image_view_t* iview, my1image_t* that);
 void image_view_name(my1image_view_t* iview, const char* name);
