@@ -14,6 +14,7 @@ void image_view_init(my1image_view_t* iview)
 	iview->doquit = 0;
 	iview->goquit = 0;
 	iview->gofull = 0;
+	iview->aspect = 1;
 	iview->draw_more = 0x0;
 	iview->draw_more_data = 0x0;
 	iview->dodraw = 0x0;
@@ -130,7 +131,35 @@ void image_view_draw(my1image_view_t* iview, my1image_t* that)
 	chkw = iview->canvas->allocation.width;
 	chkh = iview->canvas->allocation.height;
 	if (chkw!=iview->ishow->width||chkh!=iview->ishow->height)
+	{
+		my1image_t temp;
+		image_init(&temp);
+		if (iview->aspect)
+		{
+			my1image_area_t area;
+			int ymax = iview->ishow->height;
+			int xmax = iview->ishow->width;
+			image_make(&temp,chkh,chkw);
+			area.height = ymax;
+			area.width = xmax;
+			image_size_aspect(&temp,&area);
+			if (area.height!=ymax||area.width!=xmax)
+			{
+				ymax = area.height;
+				xmax = area.width;
+				area.height = iview->ishow->height;
+				area.width = iview->ishow->width;
+				area.yset = (ymax-area.height)>>1;
+				area.xset = (xmax-area.width)>>1;
+				image_make(&temp,ymax,xmax);
+				image_fill(&temp,BLACK);
+				image_set_area(&temp,iview->ishow,&area);
+				iview->ishow = &temp;
+			}
+		}
 		iview->ishow = image_size_this(iview->ishow,&iview->size,chkh,chkw);
+		image_free(&temp);
+	}
 	/* draw! */
 	iview->dodraw = gdk_cairo_create(iview->canvas->window);
 	dotemp = gdk_pixbuf_new_from_data((const guchar*)iview->ishow->data,
