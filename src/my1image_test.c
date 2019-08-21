@@ -202,7 +202,8 @@ void on_image_original(my1image_test_t *q)
 	image_make(q->image,q->currimage.height,q->currimage.width);
 	image_copy(q->image,&q->currimage);
 	q->image->mask = q->currimage.mask;
-	image_view_draw(&q->view,q->image);
+	image_view_make(&q->view,q->image);
+	image_view_draw(&q->view,q->image); /* force redraw - in case no resize! */
 	image_view_stat_time(&q->view,"Original Image restored!",1);
 }
 /*----------------------------------------------------------------------------*/
@@ -433,6 +434,7 @@ void on_file_open_main(my1image_test_t* test)
 					buffer_swap(&test->work);
 			}
 			image_copy(&test->currimage,test->image); /* keep original */
+			image_view_make(&test->view,test->image);
 			image_view_draw(&test->view,test->image);
 			/* show info on status bar */
 			buff = g_strdup_printf("[CHECK] %s",filename);
@@ -1000,7 +1002,6 @@ int main(int argc, char* argv[])
 		if (full) q.view.gofull = 1;
 		/* make image_view */
 		image_view_make(&q.view,q.image);
-		image_view_draw(&q.view,q.image);
 		image_view_name(&q.view,MY1APP_PROGINFO);
 		/* allow histogram */
 		image_hist_make(&q.hist);
