@@ -19,15 +19,12 @@ void image_view_init(my1image_view_t* iview)
 	iview->draw_more_data = 0x0;
 	iview->dodraw = 0x0;
 	iview->image = 0x0;
-	iview->ishow = 0x0;
 	image_init(&iview->buff);
-	image_init(&iview->size);
 }
 /*----------------------------------------------------------------------------*/
 void image_view_free(my1image_view_t* iview)
 {
 	image_free(&iview->buff);
-	image_free(&iview->size);
 }
 /*----------------------------------------------------------------------------*/
 void image_view_full(my1image_view_t* iview, int full)
@@ -71,13 +68,11 @@ void image_view_make(my1image_view_t* iview, my1image_t* that)
 	if (that) iview->image = that;
 	/* must have image */
 	if (!iview->image) return;
-	/* check default size */
-	if (iview->width!=iview->image->width||iview->height!=iview->image->height)
-	{
+	/* check the need to resize */
+	if (iview->width!=iview->image->width)
 		iview->width = iview->image->width;
+	if (iview->height!=iview->image->height)
 		iview->height = iview->image->height;
-		image_make(&iview->buff,iview->height,iview->width);
-	}
 	/* create window */
 	if (!iview->window)
 	{
@@ -134,17 +129,17 @@ void image_view_draw(my1image_view_t* iview, my1image_t* that)
 {
 	GdkPixbuf *dotemp;
 	int chkh, chkw;
+	my1image_t mods, *show;
 	/* check if assigned new image */
 	if (that) iview->image = that;
 	/* must have image - and canvas! */
 	if (!iview->image||!iview->canvas) return;
-	/* colormode abgr32 for gdk function */
-	image_copy_color2bgr(&iview->buff,iview->image);
-	iview->ishow = &iview->buff;
+	show = iview->image;
+	image_init(&mods);
 	/* check canvas size and the need to resize */
 	chkw = iview->canvas->allocation.width;
 	chkh = iview->canvas->allocation.height;
-	if (chkw!=iview->ishow->width||chkh!=iview->ishow->height)
+	if (chkw!=show->width||chkh!=show->height)
 	{
 /*
 		my1image_t temp;
@@ -174,17 +169,24 @@ void image_view_draw(my1image_view_t* iview, my1image_t* that)
 		}
 		image_free(&temp);
 */
-		iview->ishow = image_size_this(iview->ishow,&iview->size,chkh,chkw);
+		show = image_size_this(show,&mods,chkh,chkw);
+		/**printf("Dosize: %d x %d (%p)\n",show->width,show->height,show);*/
 	}
+	/* colormode abgr32 for gdk function */
+	image_make(&iview->buff,iview->height,iview->width);
+	image_copy_color2bgr(&iview->buff,show);
+	show = &iview->buff;
 	/* draw! */
 	iview->dodraw = gdk_cairo_create(iview->canvas->window);
-	dotemp = gdk_pixbuf_new_from_data((const guchar*)iview->ishow->data,
-		GDK_COLORSPACE_RGB,TRUE,8,iview->ishow->width,iview->ishow->height,
-		iview->ishow->width<<2,0x0,0x0);
+	dotemp = gdk_pixbuf_new_from_data((const guchar*)show->data,
+		GDK_COLORSPACE_RGB,TRUE,8,show->width,show->height,
+		show->width<<2,0x0,0x0);
+	/*printf("Redraw: %d x %d (%p)\n",show->width,show->height,show);*/
 	gdk_cairo_set_source_pixbuf(iview->dodraw,dotemp,0,0);
 	cairo_paint(iview->dodraw);
 	if (iview->draw_more) iview->draw_more((void*)iview);
 	cairo_destroy(iview->dodraw);
+	image_free(&mods);
 }
 /*----------------------------------------------------------------------------*/
 void image_view_name(my1image_view_t* iview,const char* name)

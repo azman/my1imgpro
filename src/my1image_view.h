@@ -21,9 +21,7 @@ typedef struct _my1image_view_t
 	void* draw_more_data; /* data for user draw function */
 	cairo_t *dodraw; /* cairo drawing, needed by draw_more! */
 	my1image_t *image; /* pure pointer to image object */
-	my1image_t *ishow; /* pointer to image on display */
 	my1image_t buff; /* local buffer coz gdk uses abgr, not argb! */
-	my1image_t size; /* local buffer for fullscreen! */
 }
 my1image_view_t;
 /*----------------------------------------------------------------------------*/

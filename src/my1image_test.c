@@ -178,9 +178,9 @@ gboolean on_mouse_click(GtkWidget *widget, GdkEventButton *event, gpointer data)
 		}
 		else if (event->button == LEFT_CLICK)
 		{
-			int temp = event->x + event->y * q->view.ishow->width;
-			int mask = q->view.ishow->mask;
-			int data = q->view.ishow->data[temp] & mask;
+			int temp = event->x + event->y * q->view.buff.width;
+			int mask = q->view.buff.mask;
+			int data = q->view.buff.data[temp] & mask;
 			gchar *buff;
 			my1rgb_t *chk;
 			my1hsv_t that;
@@ -199,9 +199,7 @@ gboolean on_mouse_click(GtkWidget *widget, GdkEventButton *event, gpointer data)
 /*----------------------------------------------------------------------------*/
 void on_image_original(my1image_test_t *q)
 {
-	image_make(q->image,q->currimage.height,q->currimage.width);
 	image_copy(q->image,&q->currimage);
-	q->image->mask = q->currimage.mask;
 	image_view_make(&q->view,q->image);
 	image_view_draw(&q->view,q->image); /* force redraw - in case no resize! */
 	image_view_stat_time(&q->view,"Original Image restored!",1);
@@ -460,7 +458,7 @@ void on_file_save_main(my1image_test_t* test)
 		int error;
 		gchar *filename, *buff = 0x0;
 		filename = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(dosave));
-		if ((error=image_save(test->image,filename))<0)
+		if ((error=image_save(&test->view.buff,filename))<0)
 		{
 			switch (error)
 			{
