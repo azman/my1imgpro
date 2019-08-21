@@ -8,6 +8,7 @@ TESTVIS = my1video_test
 OBJSVIS = my1image.o my1image_util.o my1image_file.o
 OBJSVIS += my1image_work.o my1image_view.o
 OBJSVIS += my1video.o my1video_main.o $(TESTVIS).o
+CHKSIZE = resizer
 
 CFLAGS += -Wall
 LFLAGS += -lm
@@ -38,6 +39,9 @@ new: clean main
 
 debug: new
 
+$(CHKSIZE): my1image.o my1image_file.o my1image_resize.o
+	$(LD) $(CFLAGS) $(DFLAGS) -o $@ $+ $(LFLAGS) $(GFLAGS)
+
 ${TESTIMG}: $(OBJSIMG)
 	$(LD) $(CFLAGS) $(DFLAGS) -o $@ $+ $(LFLAGS) $(GFLAGS)
 
@@ -51,4 +55,4 @@ ${TESTVIS}: $(OBJSVIS)
 	$(CC) $(CFLAGS) $(DFLAGS) $(TFLAGS) $(VFLAGS) -o $@ $<
 
 clean:
-	-$(RM) $(TESTIMG) $(OBJSIMG) $(TESTVIS) $(OBJSVIS) *.o *.pnm
+	-$(RM) $(TESTIMG) $(OBJSIMG) $(TESTVIS) $(OBJSVIS) $(CHKSIZE) *.o *.pnm

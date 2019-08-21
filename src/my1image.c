@@ -337,6 +337,7 @@ my1image_t* image_size_down(my1image_t* image, my1image_t* check,
 	/* update all rows and cols in check */
 	for(loop=0;loop<check->length;loop++)
 	{
+		if (!buff3.data[loop]) continue;
 		/* get average */
 		temp = check->data[loop] / buff3.data[loop];
 		if (temp>WHITE) temp = WHITE;
@@ -386,13 +387,108 @@ my1image_t* image_size_up(my1image_t* image, my1image_t* check,
 	return check;
 }
 /*----------------------------------------------------------------------------*/
+my1image_t* image_size_size(my1image_t* image, my1image_t* check,
+	int height, int width)
+{
+	int rows, cols, loop = 0;
+	int irow, icol, temp, chkg, chkb;
+	int zrow, zcol, trow, tcol;
+	my1image_t buff1, buff2, buff3;
+	cbyte r,g,b;
+	/* prepare buffer - main/buff for color sum, xtra for count*/
+	image_init(&buff1);
+	image_init(&buff2);
+	image_init(&buff3);
+	image_make(&buff1,height,width);
+	image_make(&buff2,height,width);
+	image_make(&buff3,height,width);
+	if (image->mask==IMASK_COLOR)
+	{
+		/* used for color channels */
+		image_fill(&buff1,0);
+		image_fill(&buff2,0);
+	}
+	image_fill(&buff3,0);
+	/* prepare output image */
+	image_make(check,height,width);
+	image_fill(check,0);
+	/* browse all rows and cols in image */
+	for(rows=0;rows<image->height;rows++)
+	{
+		for(cols=0;cols<image->width;cols++,loop++)
+		{
+			/* check where this pixel fits in the target image */
+			irow = rows*check->height/image->height;
+			icol = cols*check->width/image->width;
+			/* validate position */
+			if (irow>=check->height||icol>=check->width)
+				continue;
+			/* get index */
+			temp = irow*check->width+icol;
+			if (image->mask==IMASK_COLOR)
+			{
+				decode_rgb(image->data[loop],&r,&g,&b);
+				check->data[temp] += (int)r;
+				buff1.data[temp] += (int)g;
+				buff2.data[temp] += (int)b;
+			}
+			else check->data[temp] += image->data[loop];
+			/* update count */
+			buff3.data[temp]++;
+			/* check multiple targets */
+			if (check->height>image->height||check->width>image->width)
+			{
+				trow = (rows+1)*check->height/image->height;
+				tcol = (cols+1)*check->width/image->width;
+				for (zrow=irow;zrow<trow&&zrow<check->height;zrow++)
+				{
+					for (zcol=icol;zcol<tcol&&zcol<check->width;zcol++)
+					{
+						if (zrow==irow&&zcol==icol) continue;
+						temp = zrow*check->width+zcol;
+						if (image->mask==IMASK_COLOR)
+						{
+							check->data[temp] += (int)r;
+							buff1.data[temp] += (int)g;
+							buff2.data[temp] += (int)b;
+						}
+						else check->data[temp] += image->data[loop];
+						buff3.data[temp]++;
+					}
+				}
+			}
+		}
+	}
+	check->mask = image->mask;
+	/* update all rows and cols in check */
+	for(loop=0;loop<check->length;loop++)
+	{
+		if (!buff3.data[loop]) continue;
+		/* get average */
+		temp = check->data[loop] / buff3.data[loop];
+		if (temp>WHITE) temp = WHITE;
+		if (check->mask==IMASK_COLOR)
+		{
+			chkg = buff1.data[loop] / buff3.data[loop];
+			if (chkg>WHITE) chkg = WHITE;
+			chkb = buff2.data[loop] / buff3.data[loop];
+			if (chkb>WHITE) chkb = WHITE;
+			/* reassign color */
+			temp = encode_rgb((cbyte)temp,(cbyte)chkg,(cbyte)chkb);
+		}
+		check->data[loop] = temp;
+	}
+	image_free(&buff3);
+	image_free(&buff2);
+	image_free(&buff1);
+	return check;
+}
+/*----------------------------------------------------------------------------*/
 my1image_t* image_size_this(my1image_t* image, my1image_t* check,
 	int height, int width)
 {
-	if (image->height<height&&image->width<width)
-		return image_size_up(image,check,height,width);
-	if (image->height>height&&image->width>width)
-		return image_size_down(image,check,height,width);
+	if (image->height!=height||image->width!=width)
+		return image_size_size(image,check,height,width);
 	image_copy(check,image);
 	return check;
 }
