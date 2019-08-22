@@ -997,7 +997,10 @@ int main(int argc, char* argv[])
 		gtk_init(&argc,&argv);
 		/* setup auto-quit on close */
 		q.view.goquit = 1;
+		/* setup fullscreen if requested */
 		if (full) q.view.gofull = 1;
+		/* maintain aspect ratio when resizing */
+		q.view.aspect = 1;
 		/* make image_view */
 		image_view_make(&q.view,q.image);
 		image_view_name(&q.view,MY1APP_PROGINFO);

@@ -137,6 +137,14 @@ void image_area_init(my1image_area_t *reg)
 	reg->width = 0;
 }
 /*----------------------------------------------------------------------------*/
+void image_area_make(my1image_area_t *reg, int y, int x, int h, int w)
+{
+	reg->yset = y;
+	reg->xset = x;
+	reg->height = h;
+	reg->width = w;
+}
+/*----------------------------------------------------------------------------*/
 void image_area_select(my1image_t *img, my1image_area_t *reg, int val, int inv)
 {
 	int irow, icol, rows = img->height, cols = img->width;
@@ -169,68 +177,47 @@ void image_area_select(my1image_t *img, my1image_area_t *reg, int val, int inv)
 /*----------------------------------------------------------------------------*/
 void image_size_aspect(my1image_t *img, my1image_area_t *reg)
 {
-	int rows = img->height, cols = img->width;
+	int ysrc = img->height, xsrc = img->width;
 	int ymax = reg->height, xmax = reg->width;
 	int ychk, xchk;
 	/* classify */
-	if (rows>xmax) /* assume cols>xmax */
+	if (ysrc>ymax)
 	{
-		/* create region bigger than scalable */
-		ychk = xmax*rows/cols;
-		if (ychk>ymax)
+		if (xsrc>xmax&&(((double)xsrc/xmax)>=((double)ysrc/ymax)))
 		{
-			reg->yset = -((ychk-ymax)>>1);
-			reg->height = ychk;
-			reg->xset = 0;
-			reg->width = xmax;
+			ychk = xmax*ysrc/xsrc; /* fix x, get new y */
+			image_area_make(reg,((ymax-ychk)>>1),0,ychk,xmax);
 		}
 		else
 		{
-			xchk = ymax*cols/rows;
-			if (xchk>xmax)
-			{
-				reg->yset = 0;
-				reg->height = ymax;
-				reg->xset = -((xchk-xmax)>>1);
-				reg->width = xchk;
-			}
-			else
-			{
-				reg->yset = -((ychk-ymax)>>1);
-				reg->height = ymax;
-				reg->xset = -((xchk-xmax)>>1);
-				reg->width = xmax;
-			}
+			xchk = ymax*xsrc/ysrc; /* fix y, get new x */
+			image_area_make(reg,0,((xmax-xchk)>>1),ymax,xchk);
 		}
 	}
-	else if (rows<xmax) /* assume cols<xmax */
+	else if (ysrc<ymax)
 	{
-		/* create region smaller than scalable */
-		ychk = xmax*rows/cols;
-		if (ychk<ymax)
+		if (xsrc<xmax&&(((double)xmax/xsrc)>=((double)ymax/ysrc)))
 		{
-			reg->yset = (ymax-ychk)>>1;
-			reg->height = ychk;
-			reg->xset = 0;
-			reg->width = xmax;
+			xchk = ymax*xsrc/ysrc; /* fix y, get new x */
+			image_area_make(reg,0,((xmax-xchk)>>1),ymax,xchk);
 		}
 		else
 		{
-			xchk = ymax*cols/rows;
-			if (xchk<xmax)
-			{
-				reg->yset = 0;
-				reg->height = ymax;
-				reg->xset = (xmax-xchk)>>1;
-				reg->width = xchk;
-			}
-			else
-			{
-				reg->yset = (ymax-ychk)>>1;
-				reg->height = ymax;
-				reg->xset = (xmax-cols)>>1;
-				reg->width = xmax;
-			}
+			ychk = xmax*ysrc/xsrc; /* fix x, get new y */
+			image_area_make(reg,((ymax-ychk)>>1),0,ychk,xmax);
+		}
+	}
+	else if (xsrc!=xmax)
+	{
+		if (xsrc<xmax)
+		{
+			xchk = ymax*xsrc/ysrc; /* fix y, get new x */
+			image_area_make(reg,0,((xmax-xchk)>>1),ymax,xchk);
+		}
+		else
+		{
+			ychk = xmax*ysrc/xsrc; /* fix x, get new y */
+			image_area_make(reg,((ymax-ychk)>>1),0,ychk,xmax);
 		}
 	}
 }

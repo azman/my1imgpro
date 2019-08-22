@@ -14,7 +14,7 @@ void image_view_init(my1image_view_t* iview)
 	iview->doquit = 0;
 	iview->goquit = 0;
 	iview->gofull = 0;
-	iview->aspect = 1;
+	iview->aspect = 0;
 	iview->draw_more = 0x0;
 	iview->draw_more_data = 0x0;
 	iview->dodraw = 0x0;
@@ -129,7 +129,8 @@ void image_view_draw(my1image_view_t* iview, my1image_t* that)
 {
 	GdkPixbuf *dotemp;
 	int chkh, chkw;
-	my1image_t mods, *show;
+	my1image_t mods, temp, *show;
+	my1image_area_t area;
 	/* check if assigned new image */
 	if (that) iview->image = that;
 	/* must have image - and canvas! */
@@ -141,36 +142,24 @@ void image_view_draw(my1image_view_t* iview, my1image_t* that)
 	chkh = iview->canvas->allocation.height;
 	if (chkw!=show->width||chkh!=show->height)
 	{
-/*
-		my1image_t temp;
 		image_init(&temp);
 		if (iview->aspect)
 		{
-			my1image_area_t area;
-			int ymax = iview->ishow->height;
-			int xmax = iview->ishow->width;
-			image_make(&temp,chkh,chkw);
-			area.height = ymax;
-			area.width = xmax;
-			image_size_aspect(&temp,&area);
-			if (area.height!=ymax||area.width!=xmax)
+			image_area_make(&area,0,0,chkh,chkw);
+			image_size_aspect(show,&area);
+			if (area.height!=chkh||area.width!=chkw)
 			{
-				ymax = area.height;
-				xmax = area.width;
-				area.height = iview->ishow->height;
-				area.width = iview->ishow->width;
-				area.yset = (ymax-area.height)>>1;
-				area.xset = (xmax-area.width)>>1;
-				image_make(&temp,ymax,xmax);
-				image_fill(&temp,BLACK);
-				image_set_area(&temp,iview->ishow,&area);
-				iview->ishow = &temp;
+				image_size_this(show,&mods,area.height,area.width);
+				image_make(&temp,chkh,chkw);
+				image_fill(&temp,encode_rgb(0,0,0));
+				temp.mask = IMASK_COLOR;
+				image_set_area(&temp,&mods,&area);
+				show = &temp;
 			}
 		}
-		image_free(&temp);
-*/
 		show = image_size_this(show,&mods,chkh,chkw);
 		/**printf("Dosize: %d x %d (%p)\n",show->width,show->height,show);*/
+		image_free(&temp);
 	}
 	/* colormode abgr32 for gdk function */
 	image_make(&iview->buff,iview->height,iview->width);
