@@ -140,6 +140,14 @@ void image_view_draw(my1image_view_t* iview, my1image_t* that)
 	/* check canvas size and the need to resize */
 	chkw = iview->canvas->allocation.width;
 	chkh = iview->canvas->allocation.height;
+/* another way to do that...
+	{
+		GtkAllocation alloc;
+		gtk_widget_get_allocation(iview->canvas,&alloc);
+		chkw = alloc.width;
+		chkh = alloc.height;
+	}
+*/
 	if (chkw!=show->width||chkh!=show->height)
 	{
 		image_init(&temp);
