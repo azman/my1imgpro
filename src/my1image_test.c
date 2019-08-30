@@ -166,7 +166,7 @@ gboolean on_key_press(GtkWidget *widget, GdkEventKey *kevent, gpointer data)
 /*----------------------------------------------------------------------------*/
 gboolean on_mouse_click(GtkWidget *widget, GdkEventButton *event, gpointer data)
 {
-	const gint RIGHT_CLICK = 3, LEFT_CLICK = 1;
+	const gint RIGHT_CLICK = 3, MIDDLE_CLICK = 2, LEFT_CLICK = 1;
 	if (event->type == GDK_BUTTON_PRESS)
 	{
 		my1image_test_t *q = (my1image_test_t*) data;
@@ -175,6 +175,15 @@ gboolean on_mouse_click(GtkWidget *widget, GdkEventButton *event, gpointer data)
 			GtkWidget* menu = (GtkWidget*) q->view.domenu;
 			gtk_menu_popup(GTK_MENU(menu),0x0,0x0,0x0,0x0,
 				event->button,event->time);
+		}
+		else if (event->button == MIDDLE_CLICK)
+		{
+			/* show info on status bar */
+			gchar *buff;
+			buff = g_strdup_printf("Size:%dx%d Mask:0x%08x",
+				q->view.buff.width,q->view.buff.height,q->view.buff.mask);
+			image_view_stat_time(&q->view,(char*)buff,5);
+			g_free(buff);
 		}
 		else if (event->button == LEFT_CLICK)
 		{
@@ -980,7 +989,6 @@ int main(int argc, char* argv[])
 	/* check request for ui */
 	if (view)
 	{
-		gchar *buff;
 		/* check size for gui */
 		image_copy(q.work.curr,&q.currimage);
 		q.image = q.work.curr;
@@ -1006,11 +1014,6 @@ int main(int argc, char* argv[])
 		image_view_name(&q.view,MY1APP_PROGINFO);
 		/* allow histogram */
 		image_hist_make(&q.hist);
-		/* show info on status bar */
-		buff = g_strdup_printf("Size:%dx%d Mask:0x%08x",
-			q.image->width,q.image->height,q.image->mask);
-		image_view_stat_time(&q.view,(char*)buff,5);
-		g_free(buff);
 		/* event handlers */
 		image_test_events(&q);
 		/* menu stuff */

@@ -17,6 +17,7 @@ typedef struct _my1image_view_t
 	int goquit; /* flag to call gtk_quit_main in on_done_all */
 	int gofull; /* full screen request/status flag  */
 	int aspect; /* request to maintain aspect ratio? */
+	int nostat; /* request for no status bar */
 	pdraw_more draw_more; /* user draw function */
 	void* draw_more_data; /* data for user draw function */
 	cairo_t *dodraw; /* cairo drawing, needed by draw_more! */
