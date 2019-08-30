@@ -362,6 +362,13 @@ void on_toggle_histogram(my1image_test_t *q, GtkCheckMenuItem *menu_item)
 	image_hist_show(&q->hist);
 }
 /*----------------------------------------------------------------------------*/
+void on_toggle_aspectratio(my1image_test_t *q, GtkCheckMenuItem *menu_item)
+{
+	q->view.aspect = !q->view.aspect;
+	gtk_check_menu_item_set_active(menu_item,q->view.aspect?TRUE:FALSE);
+	image_view_draw(&q->view,q->image);
+}
+/*----------------------------------------------------------------------------*/
 void image_test_events(my1image_test_t* test)
 {
 	g_signal_connect(G_OBJECT(test->view.window),"key_press_event",
@@ -662,6 +669,12 @@ void image_test_menu(my1image_test_t* test)
 	g_signal_connect_swapped(G_OBJECT(menu_item),"activate",
 		G_CALLBACK(on_toggle_histogram),(gpointer)test);
 	gtk_widget_show(menu_item);
+	/* test menu item */
+	menu_item = gtk_check_menu_item_new_with_label("Keep Aspect");
+	gtk_menu_shell_append(GTK_MENU_SHELL(menu_main),menu_item);
+	g_signal_connect_swapped(G_OBJECT(menu_item),"activate",
+		G_CALLBACK(on_toggle_aspectratio),(gpointer)test);
+	gtk_widget_show(menu_item);
 	/* quit menu item */
 	menu_item = gtk_menu_item_new_with_mnemonic("_Quit");
 	gtk_menu_shell_append(GTK_MENU_SHELL(menu_main),menu_item);
@@ -716,7 +729,7 @@ void hsv_get_stat(my1hsv_t hsv, hsv_stat_t* hsv_stat)
 int main(int argc, char* argv[])
 {
 	int loop, domax = ERROR_MAX, error = 0, dohsv = 0;
-	int view = 0, help = 0, full = 0;
+	int view = 0, help = 0;
 	char *psave = 0x0, *pname = 0x0, *pdata = 0x0;
 	my1image_test_t q;
 	/* print tool info */
@@ -763,10 +776,6 @@ int main(int argc, char* argv[])
 				else if(!strcmp(argv[loop],"--view"))
 				{
 					view = 1;
-				}
-				else if(!strcmp(argv[loop],"--full"))
-				{
-					full = 1;
 				}
 				else if(!strcmp(argv[loop],"--help"))
 				{
@@ -1005,10 +1014,6 @@ int main(int argc, char* argv[])
 		gtk_init(&argc,&argv);
 		/* setup auto-quit on close */
 		q.view.goquit = 1;
-		/* setup fullscreen if requested */
-		if (full) q.view.gofull = 1;
-		/* maintain aspect ratio when resizing */
-		q.view.aspect = 1;
 		/* make image_view */
 		image_view_make(&q.view,q.image);
 		image_view_name(&q.view,MY1APP_PROGINFO);

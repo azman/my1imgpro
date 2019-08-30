@@ -127,6 +127,7 @@ void image_view_make(my1image_view_t* iview, my1image_t* that)
 /*----------------------------------------------------------------------------*/
 void image_view_draw(my1image_view_t* iview, my1image_t* that)
 {
+	GtkAllocation alloc;
 	GdkPixbuf *dotemp;
 	int chkh, chkw;
 	my1image_t mods, temp, *show;
@@ -138,17 +139,10 @@ void image_view_draw(my1image_view_t* iview, my1image_t* that)
 	show = iview->image;
 	image_init(&mods);
 	/* check canvas size and the need to resize */
-	chkw = iview->canvas->allocation.width;
-	chkh = iview->canvas->allocation.height;
-/* another way to do that...
-	{
-		GtkAllocation alloc;
-		gtk_widget_get_allocation(iview->canvas,&alloc);
-		chkw = alloc.width;
-		chkh = alloc.height;
-	}
-	printf("DoDraw: %d x %d\n",chkw,chkh);
-*/
+	gtk_widget_get_allocation(iview->canvas,&alloc);
+	chkw = alloc.width;
+	chkh = alloc.height;
+	/**printf("DoDraw: %d x %d\n",chkw,chkh);*/
 	if (chkw!=show->width||chkh!=show->height)
 	{
 		image_init(&temp);
