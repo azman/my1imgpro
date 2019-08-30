@@ -32,6 +32,7 @@
 /*----------------------------------------------------------------------------*/
 typedef struct _my1image_test_t
 {
+	int dosize, maxh, maxw;
 	my1image_t currimage, *image;
 	my1image_view_t view;
 	my1image_hist_t hist;
@@ -50,6 +51,9 @@ void image_test_histogram(void* data)
 /*----------------------------------------------------------------------------*/
 void image_test_init(my1image_test_t* test)
 {
+	test->dosize = 0;
+	test->maxh = MAX_HEIGHT;
+	test->maxw = MAX_WIDTH;
 	image_init(&test->currimage);
 	test->image = 0x0;
 	image_view_init(&test->view);
@@ -106,6 +110,25 @@ void image_test_filter(my1image_test_t* test)
 		filter_clean(test->pfcurr);
 		test->pfcurr = 0x0;
 	}
+}
+/*----------------------------------------------------------------------------*/
+void image_test_that(my1image_test_t* test, my1image_t* that)
+{
+	image_copy(test->work.curr,that);
+	test->image = test->work.curr;
+	if (test->dosize)
+	{
+		if (test->image->width>test->maxw||test->image->height>test->maxh)
+		{
+			test->image = image_size_this(test->work.curr,test->work.next,
+				test->maxh,test->maxw);
+			if (test->image!=test->work.curr)
+				buffer_swap(&test->work);
+		}
+	}
+	image_copy(&test->currimage,test->image); /* keep original */
+	image_view_make(&test->view,test->image);
+	image_view_draw(&test->view,test->image);
 }
 /*----------------------------------------------------------------------------*/
 void print_image_info(my1image_t* image)
@@ -336,7 +359,7 @@ void on_image_rotate_ccw90(my1image_test_t *q)
 	image_turn(q->work.curr,q->work.next,IMAGE_TURN_090);
 	buffer_swap(&q->work);
 	q->image = q->work.curr;
-	image_view_draw(&q->view,q->image);
+	image_view_make(&q->view,q->image);
 }
 /*----------------------------------------------------------------------------*/
 void on_image_flip_v(my1image_test_t *q)
@@ -369,6 +392,13 @@ void on_toggle_aspectratio(my1image_test_t *q, GtkCheckMenuItem *menu_item)
 	image_view_draw(&q->view,q->image);
 }
 /*----------------------------------------------------------------------------*/
+void on_limit_size(my1image_test_t *q, GtkCheckMenuItem *menu_item)
+{
+	q->dosize = !q->dosize;
+	gtk_check_menu_item_set_active(menu_item,q->dosize?TRUE:FALSE);
+	image_test_that(q,&q->currimage);
+}
+/*----------------------------------------------------------------------------*/
 void image_test_events(my1image_test_t* test)
 {
 	g_signal_connect(G_OBJECT(test->view.window),"key_press_event",
@@ -385,7 +415,7 @@ void on_file_open_main(my1image_test_t* test)
 	{
 		int error;
 		my1image_t that;
-		gchar *filename, *buff = 0x0;
+		gchar *filename, *buff, *temp = 0x0;
 		filename = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(doopen));
 		image_init(&that);
 		if((error=image_load(&that,filename))<0)
@@ -394,68 +424,57 @@ void on_file_open_main(my1image_test_t* test)
 			{
 				case BMP_ERROR_FILEOPEN:
 				case PNM_ERROR_FILEOPEN:
-					buff = g_strdup_printf("Error opening file! (%d){%s}",
+					temp = g_strdup_printf("Error opening file! (%d){%s}",
 						error,filename);
 					break;
 				case BMP_ERROR_VALIDBMP:
 				case PNM_ERROR_VALIDPNM:
 				case FILE_ERROR_FORMAT:
-					buff = g_strdup_printf("Unsupported file format! (%d){%s}",
+					temp = g_strdup_printf("Unsupported file format! (%d){%s}",
 						error,filename);
 					break;
 				case BMP_ERROR_RGBNGRAY:
-					buff = g_strdup_printf("Unsupported BMP format! (%d){%s}",
+					temp = g_strdup_printf("Unsupported BMP format! (%d){%s}",
 						error,filename);
 					break;
 				case PNM_ERROR_NOSUPPORT:
-					buff = g_strdup_printf("Unsupported PNM format! (%d){%s}",
+					temp = g_strdup_printf("Unsupported PNM format! (%d){%s}",
 						error,filename);
 					break;
 				case BMP_ERROR_FILESIZE:
 				case PNM_ERROR_FILESIZE:
-					buff = g_strdup_printf("Invalid file size! (%d){%s}",
+					temp = g_strdup_printf("Invalid file size! (%d){%s}",
 						error,filename);
 					break;
 				case BMP_ERROR_MEMALLOC:
 				case PNM_ERROR_MEMALLOC:
-					buff = g_strdup_printf("Cannot allocate memory! (%d){%s}",
+					temp = g_strdup_printf("Cannot allocate memory! (%d){%s}",
 						error,filename);
 					break;
 				case BMP_ERROR_DIBINVAL:
 				case BMP_ERROR_COMPRESS:
-					buff = g_strdup_printf("Invalid BMP format! (%d){%s}",
+					temp = g_strdup_printf("Invalid BMP format! (%d){%s}",
 						error,filename);
 					break;
 				default:
-					buff = g_strdup_printf("Unknown error! (%d){%s}",
+					temp = g_strdup_printf("Unknown error! (%d){%s}",
 						error,filename);
 			}
 			/* show info on status bar */
-			buff = g_strdup_printf("[ERROR] %s",buff);
+			buff = g_strdup_printf("[ERROR] %s",temp);
 			image_view_stat_time(&test->view,(char*)buff,5);
 		}
 		else
 		{
 			/* successful image file open */
-			image_copy(test->work.curr,&that);
-			test->image = test->work.curr;
-			/* limit size if it gets too big? */
-			if (test->image->width>MAX_WIDTH||test->image->height>MAX_HEIGHT)
-			{
-				test->image = image_size_this(test->work.curr,test->work.next,
-					MAX_HEIGHT,MAX_WIDTH);
-				if (test->image!=test->work.curr)
-					buffer_swap(&test->work);
-			}
-			image_copy(&test->currimage,test->image); /* keep original */
-			image_view_make(&test->view,test->image);
-			image_view_draw(&test->view,test->image);
+			image_test_that(test,&that);
 			/* show info on status bar */
 			buff = g_strdup_printf("[CHECK] %s",filename);
 			image_view_stat_time(&test->view,(char*)buff,5);
 		}
 		image_free(&that);
-		if (buff) g_free(buff);
+		if (temp) g_free(temp);
+		g_free(buff);
 		g_free (filename);
 	}
 	gtk_widget_destroy(doopen);
@@ -472,7 +491,7 @@ void on_file_save_main(my1image_test_t* test)
 	if (gtk_dialog_run(GTK_DIALOG(dosave))==GTK_RESPONSE_ACCEPT)
 	{
 		int error;
-		gchar *filename, *buff = 0x0;
+		gchar *filename, *buff, *temp = 0x0;
 		filename = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(dosave));
 		if ((error=image_save(&test->view.buff,filename))<0)
 		{
@@ -480,15 +499,15 @@ void on_file_save_main(my1image_test_t* test)
 			{
 				case BMP_ERROR_FILEOPEN:
 				case PNM_ERROR_FILEOPEN:
-					buff = g_strdup_printf("Write error! (%d){%s}",
+					temp = g_strdup_printf("Write error! (%d){%s}",
 						error,filename);
 					break;
 				default:
-					buff = g_strdup_printf("Unknown error! (%d){%s}",
+					temp = g_strdup_printf("Unknown error! (%d){%s}",
 						error,filename);
 			}
 			/* show info on status bar */
-			buff = g_strdup_printf("[ERROR] %s",buff);
+			buff = g_strdup_printf("[ERROR] %s",temp);
 			image_view_stat_time(&test->view,(char*)buff,5);
 		}
 		else
@@ -497,7 +516,8 @@ void on_file_save_main(my1image_test_t* test)
 			buff = g_strdup_printf("[SAVED] %s",filename);
 			image_view_stat_time(&test->view,(char*)buff,5);
 		}
-		if (buff) g_free(buff);
+		if (temp) g_free(temp);
+		g_free(buff);
 		g_free (filename);
 	}
 	gtk_widget_destroy(dosave);
@@ -674,6 +694,12 @@ void image_test_menu(my1image_test_t* test)
 	gtk_menu_shell_append(GTK_MENU_SHELL(menu_main),menu_item);
 	g_signal_connect_swapped(G_OBJECT(menu_item),"activate",
 		G_CALLBACK(on_toggle_aspectratio),(gpointer)test);
+	gtk_widget_show(menu_item);
+	/* test menu item */
+	menu_item = gtk_check_menu_item_new_with_label("Limit Size");
+	gtk_menu_shell_append(GTK_MENU_SHELL(menu_main),menu_item);
+	g_signal_connect_swapped(G_OBJECT(menu_item),"activate",
+		G_CALLBACK(on_limit_size),(gpointer)test);
 	gtk_widget_show(menu_item);
 	/* quit menu item */
 	menu_item = gtk_menu_item_new_with_mnemonic("_Quit");
@@ -998,25 +1024,12 @@ int main(int argc, char* argv[])
 	/* check request for ui */
 	if (view)
 	{
-		/* check size for gui */
-		image_copy(q.work.curr,&q.currimage);
-		q.image = q.work.curr;
-		/* limit size if it gets too big? */
-		if (q.image->width>MAX_WIDTH||q.image->height>MAX_HEIGHT)
-		{
-			q.image = image_size_this(q.image,q.work.next,MAX_HEIGHT,MAX_WIDTH);
-			if (q.image!=q.work.curr)
-				buffer_swap(&q.work);
-			/* keep original copy */
-			image_copy(&q.currimage,q.image);
-		}
 		/* initialize gui */
 		gtk_init(&argc,&argv);
 		/* setup auto-quit on close */
 		q.view.goquit = 1;
-		/* make image_view */
-		image_view_make(&q.view,q.image);
-		image_view_name(&q.view,MY1APP_PROGINFO);
+		/* assign image */
+		image_test_that(&q,&q.currimage);
 		/* allow histogram */
 		image_hist_make(&q.hist);
 		/* event handlers */
