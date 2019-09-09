@@ -2,13 +2,15 @@
 # - using libav & gtk for interfacing & display
 
 TESTIMG = my1image_test
-OBJSIMG = my1image.o my1image_util.o my1image_file.o
-OBJSIMG += my1image_work.o my1image_view.o my1image_hist.o $(TESTIMG).o
+OBJSIMG = my1image.o my1image_util.o my1image_view.o my1image_hist.o
+OBJSIMG += my1image_work.o my1image_file.o my1image_data.o
+OBJSIMG += my1image_chsv.o $(TESTIMG).o
 TESTVIS = my1video_test
 OBJSVIS = my1image.o my1image_util.o my1image_file.o
 OBJSVIS += my1image_work.o my1image_view.o
 OBJSVIS += my1video.o my1video_main.o $(TESTVIS).o
 CHKSIZE = resizer
+HSVTEST = testhsv
 
 CFLAGS += -Wall
 LFLAGS += -lm
@@ -42,6 +44,9 @@ debug: new
 $(CHKSIZE): my1image.o my1image_file.o my1image_resize.o
 	$(LD) $(CFLAGS) $(DFLAGS) -o $@ $+ $(LFLAGS) $(GFLAGS)
 
+$(HSVTEST): my1image.o my1image_chsv.o my1image_testhsv.o
+	$(LD) $(CFLAGS) $(DFLAGS) -o $@ $+ $(LFLAGS) $(GFLAGS)
+
 ${TESTIMG}: $(OBJSIMG)
 	$(LD) $(CFLAGS) $(DFLAGS) -o $@ $+ $(LFLAGS) $(GFLAGS)
 
@@ -55,4 +60,4 @@ ${TESTVIS}: $(OBJSVIS)
 	$(CC) $(CFLAGS) $(DFLAGS) $(TFLAGS) $(VFLAGS) -o $@ $<
 
 clean:
-	-$(RM) $(TESTIMG) $(OBJSIMG) $(TESTVIS) $(OBJSVIS) $(CHKSIZE) *.o *.pnm
+	-$(RM) $(TESTIMG) $(TESTVIS) $(CHKSIZE) $(HSVTEST) *.o *.pnm
