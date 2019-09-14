@@ -182,7 +182,7 @@ gboolean on_mouse_click(GtkWidget *widget, GdkEventButton *event, gpointer data)
 		{
 			gchar *buff; my1rgb_t *temp; my1hsv_t that;
 			int mask = q->view.buff.mask;
-			int dpix = image_get_pixel(&q->view.buff,event->x,event->y);
+			int dpix = image_get_pixel(&q->view.buff,event->y,event->x);
 			dpix &= mask; /* remove alpha */
 			dpix = color_swap(dpix); /* get rgb from bgr */
 			temp = (my1rgb_t*)&dpix;
