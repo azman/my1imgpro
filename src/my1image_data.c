@@ -21,6 +21,7 @@ void image_data_init(my1image_data_t* data)
 	data->dosize = 0;
 	data->maxh = DEFAULT_MAX_HEIGHT;
 	data->maxw = DEFAULT_MAX_WIDTH;
+	data->flag = DATA_FLAG_OK;
 	image_init(&data->currimage);
 	data->image = 0x0;
 	image_view_init(&data->view);
@@ -65,6 +66,22 @@ void image_data_make(my1image_data_t* data, my1image_t* that)
 	image_copy(&data->currimage,data->image); /* keep original */
 	image_view_make(&data->view,data->image);
 	image_view_draw(&data->view,data->image);
+}
+/*----------------------------------------------------------------------------*/
+void image_data_filter_more(my1image_data_t* data, filter_info_t* info)
+{
+	my1image_filter_t* temp = filter_search(data->pflist,info->name);
+	if (temp)
+	{
+		/* cannot have duplicate name here! */
+		data->flag = DATA_FLAG_ERROR;
+		return;
+	}
+	temp = info_create_filter(info);
+	if (temp)
+		data->pflist = filter_insert(data->pflist,temp);
+	else
+		data->flag = DATA_FLAG_ERROR;
 }
 /*----------------------------------------------------------------------------*/
 void image_data_filter_load(my1image_data_t* data, char* name)
