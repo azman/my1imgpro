@@ -1,22 +1,18 @@
 /*----------------------------------------------------------------------------*/
+#include "my1image_data.h"
+#include "my1image_file.h"
+/*----------------------------------------------------------------------------*/
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 /*----------------------------------------------------------------------------*/
-#include "my1image_data.h"
-#include "my1image_file.h"
-/*----------------------------------------------------------------------------*/
 #define DEF_WIDTH 320
 #define DEF_HEIGHT 240
 /*----------------------------------------------------------------------------*/
-#ifndef MY1APP_PROGNAME
-#define MY1APP_PROGNAME "my1image_test"
-#endif
-#ifndef MY1APP_PROGVERS
-#define MY1APP_PROGVERS "build"
-#endif
-#ifndef MY1APP_PROGINFO
-#define MY1APP_PROGINFO "MY1Image Test Program"
+#define MY1APP_NAME "my1image_test"
+#define MY1APP_INFO "MY1Image Test Program"
+#ifndef MY1APP_VERS
+#define MY1APP_VERS "build"
 #endif
 /*----------------------------------------------------------------------------*/
 #define ERROR_GENERAL 0
@@ -33,7 +29,7 @@ void about(my1image_data_t* data)
 	int size = 0;
 	my1image_filter_t* ppass = data->pflist;
 	printf("Command-line use:\n");
-	printf("  %s [options] <image-file> [filter(s)]\n\n",MY1APP_PROGNAME);
+	printf("  %s [options] <image-file> [filter(s)]\n\n",MY1APP_NAME);
 	printf("Options are:\n");
 	printf("  --save <filename>  : save to image file\n");
 	printf("  --cdata <filename> : save to C source file\n");
@@ -60,7 +56,7 @@ int main(int argc, char* argv[])
 	my1image_filter_t* ppass;
 	/* print tool info */
 	printf("\n%s - %s (%s)\n",
-		MY1APP_PROGNAME,MY1APP_PROGINFO,MY1APP_PROGVERS);
+		MY1APP_NAME,MY1APP_INFO,MY1APP_VERS);
 	printf("  => by azman@my1matrix.org\n\n");
 	/* initialize image_test */
 	image_data_init(&q);

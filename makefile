@@ -16,7 +16,7 @@ CFLAGS += -Wall
 LFLAGS += -lm
 GFLAGS += $(shell pkg-config --libs gtk+-2.0)
 OFLAGS += $(GFLAGS) -lavcodec -lavutil -lavformat -lswscale -lavdevice
-VFLAGS = -DMY1APP_PROGVERS=\"$(shell date +%Y%m%d)\"
+VFLAGS = -DMY1APP_VERS=\"$(shell date +%Y%m%d)\"
 DFLAGS =
 TFLAGS += $(shell pkg-config --cflags gtk+-2.0)
 

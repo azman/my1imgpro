@@ -3,14 +3,10 @@
 /*----------------------------------------------------------------------------*/
 #include <stdio.h>
 /*----------------------------------------------------------------------------*/
-#ifndef MY1APP_PROGNAME
-#define MY1APP_PROGNAME "my1video_test"
-#endif
-#ifndef MY1APP_PROGVERS
-#define MY1APP_PROGVERS "build"
-#endif
-#ifndef MY1APP_PROGINFO
-#define MY1APP_PROGINFO "MY1Video Test Program"
+#define MY1APP_NAME "my1video_test"
+#define MY1APP_INFO "MY1Video Test Program"
+#ifndef MY1APP_VERS
+#define MY1APP_VERS "build"
 #endif
 /*----------------------------------------------------------------------------*/
 static char showkeys[] =
@@ -51,7 +47,7 @@ int main(int argc, char* argv[])
 	char *psource = 0x0;
 	my1vmain_t vmain;
 	/* print tool info */
-	printf("\n%s - %s (%s)\n",MY1APP_PROGNAME,MY1APP_PROGINFO,MY1APP_PROGVERS);
+	printf("\n%s - %s (%s)\n",MY1APP_NAME,MY1APP_INFO,MY1APP_VERS);
 	printf("  => by azman@my1matrix.org\n\n");
 	/* check parameter */
 	for (loop=1;loop<argc;loop++)
@@ -108,7 +104,7 @@ int main(int argc, char* argv[])
 	/* setup capture */
 	video_main_capture(&vmain,psource,type);
 	/* setup display */
-	video_main_display(&vmain,MY1APP_PROGINFO);
+	video_main_display(&vmain,MY1APP_INFO);
 	/* tell them */
 	printf("Starting main capture loop.\n\n%s",showkeys);
 	/* setup display/capture cycle */
