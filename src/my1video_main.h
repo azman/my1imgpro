@@ -91,6 +91,7 @@ void video_main_free(my1vmain_t* vmain);
 void video_main_capture(my1vmain_t* vmain, char* vsrc, int type);
 void video_main_display(my1vmain_t* vmain, char* name);
 void video_main_loop(my1vmain_t* vmain, int loopms);
+void video_main_pass_more(my1vmain_t* vmain, filter_info_t* info);
 void video_main_pass_load(my1vmain_t* vmain, char* name);
 void video_main_pass_done(my1vmain_t* vmain);
 /*----------------------------------------------------------------------------*/

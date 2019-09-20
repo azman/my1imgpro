@@ -100,7 +100,10 @@ int main(int argc, char* argv[])
 	vmain.vview.view.draw_more_data = (void*)&vmain;
 	/* setup filters */
 	video_main_pass_load(&vmain,IFNAME_GRAYSCALE);
-	video_main_pass_load(&vmain,IFNAME_LAPLACE);
+	video_main_pass_load(&vmain,IFNAME_SOBEL);
+	video_main_pass_load(&vmain,IFNAME_INVERT);
+	video_main_pass_load(&vmain,IFNAME_THRESHOLD);
+	video_main_pass_load(&vmain,IFNAME_INVERT);
 	/* setup capture */
 	video_main_capture(&vmain,psource,type);
 	/* setup display */

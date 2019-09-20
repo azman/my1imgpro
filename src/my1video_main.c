@@ -644,6 +644,14 @@ void video_main_loop(my1vmain_t* vmain, int loopms)
 	display_loop(&vmain->vview,loopms);
 }
 /*----------------------------------------------------------------------------*/
+void video_main_pass_more(my1vmain_t* vmain, filter_info_t* info)
+{
+	my1vpass_t* temp = filter_search(vmain->plist,info->name);
+	if (temp) return;
+	temp = info_create_filter(info);
+	if (temp) vmain->plist = filter_insert(vmain->plist,temp);
+}
+/*----------------------------------------------------------------------------*/
 void video_main_pass_load(my1vmain_t* vmain, char* name)
 {
 	my1vpass_t *ipass, *tpass = 0x0;
