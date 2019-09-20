@@ -77,17 +77,29 @@ void capture_free(my1video_capture_t* vgrab)
 /*----------------------------------------------------------------------------*/
 void* capture_grab_frame(my1video_capture_t* vgrab)
 {
-	AVFormatContext *pFormatCtx = vgrab->fcontext;
-	AVCodecContext *pCodecCtx = vgrab->ccontext;
-	AVFrame *frame = 0x0;
+	int test, live = 0;
 	AVPacket packet;
-	int test;
-	if (!pFormatCtx) return frame;
+	AVFrame *frame = 0x0;
+	AVCodecContext *pCodecCtx = vgrab->ccontext;
+	AVFormatContext *pFormatCtx = vgrab->fcontext;
+	if (!pFormatCtx) return (void*)frame;
 	while (av_read_frame(pFormatCtx,&packet)>=0)
 	{
 		/* look for video stream packet */
 		if (packet.stream_index==vgrab->vstream)
 		{
+			/** TODO: NEED TO REFINE THIS! */
+			/* flush buffers for live feed */
+			if (vgrab->video->count<0&&!live)
+			{
+				/* enter draining mode */
+				avcodec_send_packet(pCodecCtx,NULL);
+				while (avcodec_receive_frame(pCodecCtx,vgrab->frame)>=0);
+				/* reset codec to resume decoding */
+				avcodec_flush_buffers(pCodecCtx);
+				live = 1;
+				continue;
+			}
 			/* decode video frame - NEW! */
 			test = avcodec_send_packet(pCodecCtx,&packet);
 			if (test>=0)
@@ -139,7 +151,7 @@ void capture_reset(my1video_capture_t* vgrab)
 	avcodec_flush_buffers(vgrab->ccontext);
 }
 /*----------------------------------------------------------------------------*/
-void capture_form_frame(my1video_capture_t* vgrab)
+void capture_from_frame(my1video_capture_t* vgrab)
 {
 	/* convert to RGB! resize here as well? */
 	sws_scale(vgrab->rgb32fmt,
@@ -253,10 +265,10 @@ void capture_file(my1video_capture_t* vgrab, char *filename)
 	/* grab a 'sample' frame */
 	if (capture_grab_frame(vgrab))
 	{
-		capture_form_frame(vgrab); /* get frame in rgb format */
+		capture_from_frame(vgrab); /* get frame in rgb format */
 		image_make(&vgrab->video->image,
 			vgrab->video->height,vgrab->video->width);
-		/* capture_form_frame always convert rgb? */
+		/* capture_from_frame always convert rgb? */
 		vgrab->video->image.mask = IMASK_COLOR;
 		image_set_frame(&vgrab->video->image,vgrab->buffer);
 		vgrab->video->frame = &vgrab->video->image;
@@ -294,10 +306,10 @@ void capture_live(my1video_capture_t* vgrab, char *camname)
 	/* grab a 'sample' frame */
 	if (capture_grab_frame(vgrab))
 	{
-		capture_form_frame(vgrab); /* get frame in rgb format */
+		capture_from_frame(vgrab); /* get frame in rgb format */
 		image_make(&vgrab->video->image,
 			vgrab->video->height,vgrab->video->width);
-		/* capture_form_frame always convert rgb? */
+		/* capture_from_frame always convert rgb? */
 		vgrab->video->image.mask = IMASK_COLOR;
 		image_set_frame(&vgrab->video->image,vgrab->buffer);
 		vgrab->video->frame = &vgrab->video->image;
@@ -343,10 +355,10 @@ void capture_grab(my1video_capture_t* vgrab)
 	}
 	if (vgrab->ready) /* create video internal copy if valid frame */
 	{
-		capture_form_frame(vgrab); /* get frame in rgb format */
+		capture_from_frame(vgrab); /* get frame in rgb format */
 		image_make(&vgrab->video->image,
 			vgrab->video->height,vgrab->video->width);
-		/* capture_form_frame always convert rgb? */
+		/* capture_from_frame always convert rgb? */
 		vgrab->video->image.mask = IMASK_COLOR;
 		image_set_frame(&vgrab->video->image,vgrab->buffer);
 		vgrab->video->frame = &vgrab->video->image;
@@ -497,12 +509,28 @@ gboolean on_display_timer(gpointer data)
 	}
 	else if (keyval == GDK_KEY_g)
 	{
+		GtkWidget *dosave;
 		/* stop video on grabbing */
 		video_stop(video);
-		if (image_save(video->frame,"vgrab.pnm"))
-			image_view_stat_time(&vview->view,"Grab failed!",MESG_SHOWTIME);
-		else
-			image_view_stat_time(&vview->view,"Frame saved!",MESG_SHOWTIME);
+		/* create save dialog */
+		dosave = gtk_file_chooser_dialog_new("Save Image File",
+			GTK_WINDOW(vview->view.window),GTK_FILE_CHOOSER_ACTION_SAVE,
+			GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
+			GTK_STOCK_SAVE, GTK_RESPONSE_ACCEPT, NULL);
+		gtk_file_chooser_set_do_overwrite_confirmation(GTK_FILE_CHOOSER(dosave),
+			TRUE);
+		/* show it! */
+		if (gtk_dialog_run(GTK_DIALOG(dosave))==GTK_RESPONSE_ACCEPT)
+		{
+			gchar *filename;
+			filename = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(dosave));
+			if (image_save(video->frame,filename))
+				image_view_stat_time(&vview->view,"Grab failed!",MESG_SHOWTIME);
+			else
+				image_view_stat_time(&vview->view,"Frame saved!",MESG_SHOWTIME);
+			g_free(filename);
+		}
+		gtk_widget_destroy(dosave);
 	}
 	else if (keyval == GDK_KEY_z)
 	{
@@ -567,7 +595,7 @@ void video_main_init(my1vmain_t* vmain)
 	vmain->video.parent_ = (void*)vmain;
 	capture_init(&vmain->vgrab,&vmain->video);
 	display_init(&vmain->vview,&vmain->video);
-	vmain->plist = image_work_create_all();;
+	vmain->plist = image_work_create_all();
 	vmain->type = VIDEO_SOURCE_NONE;
 	vmain->data = 0x0;
 	vmain->grabber = 0x0;

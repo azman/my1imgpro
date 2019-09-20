@@ -525,6 +525,8 @@ void image_data_domenu(my1image_data_t* data)
 {
 	my1image_filter_t *temp;
 	GtkWidget *menu_main, *menu_item, *menu_subs, *menu_temp;
+	/* in case already created! */
+	if (data->view.domenu) return;
 	/* create popup menu for canvas */
 	menu_main = gtk_menu_new();
 	gtk_widget_add_events(data->view.canvas, GDK_BUTTON_PRESS_MASK);
