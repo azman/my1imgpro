@@ -642,26 +642,26 @@ void image_data_domenu(my1image_data_t* data)
 	/* data menu item */
 	menu_item = gtk_check_menu_item_new_with_label("Histogram");
 	gtk_menu_shell_append(GTK_MENU_SHELL(menu_main),menu_item);
-	g_signal_connect_swapped(G_OBJECT(menu_item),"activate",
-		G_CALLBACK(on_toggle_histogram),(gpointer)data);
 	gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(menu_item)
 		,data->hist.dohide?FALSE:TRUE);
+	g_signal_connect_swapped(G_OBJECT(menu_item),"activate",
+		G_CALLBACK(on_toggle_histogram),(gpointer)data);
 	gtk_widget_show(menu_item);
 	/* keep aspect ratio menu item */
 	menu_item = gtk_check_menu_item_new_with_label("Keep Aspect");
 	gtk_menu_shell_append(GTK_MENU_SHELL(menu_main),menu_item);
-	g_signal_connect_swapped(G_OBJECT(menu_item),"activate",
-		G_CALLBACK(on_toggle_aspectratio),(gpointer)data);
 	gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(menu_item)
 		,data->view.aspect?TRUE:FALSE);
+	g_signal_connect_swapped(G_OBJECT(menu_item),"activate",
+		G_CALLBACK(on_toggle_aspectratio),(gpointer)data);
 	gtk_widget_show(menu_item);
 	/* limit size menu item */
 	menu_item = gtk_check_menu_item_new_with_label("Limit Size");
 	gtk_menu_shell_append(GTK_MENU_SHELL(menu_main),menu_item);
-	g_signal_connect_swapped(G_OBJECT(menu_item),"activate",
-		G_CALLBACK(on_limit_size),(gpointer)data);
 	gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(menu_item)
 		,data->dosize?TRUE:FALSE);
+	g_signal_connect_swapped(G_OBJECT(menu_item),"activate",
+		G_CALLBACK(on_limit_size),(gpointer)data);
 	gtk_widget_show(menu_item);
 	/* quit menu item */
 	menu_item = gtk_menu_item_new_with_mnemonic("_Quit");
