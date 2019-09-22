@@ -31,7 +31,8 @@ int main(int argc, char* argv[])
 	{
 		/* file info */
 		printf("File: %s\n",pname);
-		printf("Size: %d x %d {Mask:%08X}\n",buff.width,buff.height,buff.mask);
+		printf("Size: %d x %d (Size:%d) {Mask:%08X}\n",
+			buff.width,buff.height,buff.length,buff.mask);
 	}
 	image_free(&buff);
 	return 0;
