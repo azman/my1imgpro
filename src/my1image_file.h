@@ -21,8 +21,15 @@
 #define PNM_ERROR_MEMALLOC -5+PNM_ERROR_OFFSET
 #define PNM_ERROR_LEVELPNM -6+PNM_ERROR_OFFSET
 /*----------------------------------------------------------------------------*/
+#define PNG_ERROR_OFFSET -30
+#define PNG_ERROR_FILEOPEN (PNG_ERROR_OFFSET-1)
+#define PNG_ERROR_VALIDPNG (PNG_ERROR_OFFSET-2)
+#define PNG_ERROR_NOHEADER (PNG_ERROR_OFFSET-3)
+#define PNG_ERROR_NOSUPPORT (PNG_ERROR_OFFSET-4)
+#define PNG_ERROR_MISSCHUNK (PNG_ERROR_OFFSET-5)
+/*----------------------------------------------------------------------------*/
 #define FILE_ERROR_OPEN -1
-#define FILE_ERROR_FORMAT BMP_ERROR_VALIDBMP+PNM_ERROR_VALIDPNM
+#define FILE_ERROR_FORMAT -2
 /*----------------------------------------------------------------------------*/
 int image_load(my1image_t *image, char *filename);
 int image_save(my1image_t *image, char *filename);
