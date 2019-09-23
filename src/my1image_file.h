@@ -4,32 +4,29 @@
 /*----------------------------------------------------------------------------*/
 #include "my1image.h"
 /*----------------------------------------------------------------------------*/
-#define BMP_ERROR_OFFSET -10
-#define BMP_ERROR_FILEOPEN -1+BMP_ERROR_OFFSET
-#define BMP_ERROR_VALIDBMP -2+BMP_ERROR_OFFSET
-#define BMP_ERROR_FILESIZE -3+BMP_ERROR_OFFSET
-#define BMP_ERROR_RGBNGRAY -4+BMP_ERROR_OFFSET
-#define BMP_ERROR_MEMALLOC -5+BMP_ERROR_OFFSET
-#define BMP_ERROR_DIBINVAL -6+BMP_ERROR_OFFSET
-#define BMP_ERROR_COMPRESS -7+BMP_ERROR_OFFSET
+/** a fancy way of setting msb to 1 */
+#define FILE_ERROR_FLAG (~(~0U>>1))
+#define FILE_ERROR_OPEN (0x00000001|FILE_ERROR_FLAG)
+#define FILE_ERROR_FORMAT (0x00000002|FILE_ERROR_FLAG)
+#define FILE_ERROR_SIZE (0x00000004|FILE_ERROR_FLAG)
+#define FILE_ERROR_MALLOC (0x00000008|FILE_ERROR_FLAG)
 /*----------------------------------------------------------------------------*/
-#define PNM_ERROR_OFFSET -20
-#define PNM_ERROR_FILEOPEN -1+PNM_ERROR_OFFSET
-#define PNM_ERROR_VALIDPNM -2+PNM_ERROR_OFFSET
-#define PNM_ERROR_FILESIZE -3+PNM_ERROR_OFFSET
-#define PNM_ERROR_NOSUPPORT -4+PNM_ERROR_OFFSET
-#define PNM_ERROR_MEMALLOC -5+PNM_ERROR_OFFSET
-#define PNM_ERROR_LEVELPNM -6+PNM_ERROR_OFFSET
+#define BMP_ERROR_FLAG 0x00010000
+#define BMP_ERROR_FILEOPEN (BMP_ERROR_FLAG|FILE_ERROR_OPEN)
+#define BMP_ERROR_VALIDBMP (BMP_ERROR_FLAG|FILE_ERROR_FORMAT)
+#define BMP_ERROR_FILESIZE (BMP_ERROR_FLAG|FILE_ERROR_SIZE)
+#define BMP_ERROR_MEMALLOC (BMP_ERROR_FLAG|FILE_ERROR_MALLOC)
+#define BMP_ERROR_RGBNGRAY (BMP_ERROR_FLAG|0x00008000)
+#define BMP_ERROR_DIBINVAL (BMP_ERROR_FLAG|0x00004000)
+#define BMP_ERROR_COMPRESS (BMP_ERROR_FLAG|0x00002000)
 /*----------------------------------------------------------------------------*/
-#define PNG_ERROR_OFFSET -30
-#define PNG_ERROR_FILEOPEN (PNG_ERROR_OFFSET-1)
-#define PNG_ERROR_VALIDPNG (PNG_ERROR_OFFSET-2)
-#define PNG_ERROR_NOHEADER (PNG_ERROR_OFFSET-3)
-#define PNG_ERROR_NOSUPPORT (PNG_ERROR_OFFSET-4)
-#define PNG_ERROR_MISSCHUNK (PNG_ERROR_OFFSET-5)
-/*----------------------------------------------------------------------------*/
-#define FILE_ERROR_OPEN -1
-#define FILE_ERROR_FORMAT -2
+#define PNM_ERROR_FLAG 0x00020000
+#define PNM_ERROR_FILEOPEN (PNM_ERROR_FLAG|FILE_ERROR_OPEN)
+#define PNM_ERROR_VALIDPNM (PNM_ERROR_FLAG|FILE_ERROR_FORMAT)
+#define PNM_ERROR_FILESIZE (PNM_ERROR_FLAG|FILE_ERROR_SIZE)
+#define PNM_ERROR_MEMALLOC (PNM_ERROR_FLAG|FILE_ERROR_MALLOC)
+#define PNM_ERROR_NOSUPPORT (PNM_ERROR_FLAG|0x00008000)
+#define PNM_ERROR_LEVELPNM (PNM_ERROR_FLAG|0x00004000)
 /*----------------------------------------------------------------------------*/
 int image_load(my1image_t *image, char *filename);
 int image_save(my1image_t *image, char *filename);
