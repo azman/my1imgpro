@@ -9,12 +9,14 @@ This is a simple image processing library (meant to support work on vision
 
 This software consists of several small modules:
   * my1image      - basic image structure, pixel/image operations, color option
+  * my1image_chsv - functions to convert rgb<->hsv
   * my1image_file - file load/save functions (BMP & PNM only)
   * my1image_util - basic region/mask@filter/histogram structure & utility
   * my1image_math - math-related function(s), matrix structure & operations
   * my1image_work - sample image processing filters
   * my1image_view - image viewer library using gtk
   * my1image_hist - histogram view for my1image_view
+  * my1image_data - modular image application structure
   * my1image_test - main test program for my1image & friends
   * my1video      - video structure based on basic image structure
   * my1video_main - sample video processing flow (using libav & my1image_view)
@@ -22,6 +24,8 @@ This software consists of several small modules:
 
 The my1image_view module requires gtk, while the my1video_main module requires
 libav(ffmpeg).
+
+Three sample applications: resizer, imgload and testhsv.
 
 Although my1imgpro library is meant for 8-bit grayscale processing, the
 my1image_t structure can support color image using RGB-encoded integer
