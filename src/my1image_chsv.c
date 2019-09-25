@@ -94,36 +94,3 @@ my1rgb_t hsv2rgb(my1hsv_t hsv)
 	return rgb;
 }
 /*----------------------------------------------------------------------------*/
-void hsv_get_stat(my1hsv_t hsv, hsv_stat_t* hsv_stat)
-{
-	int max, min, del, hue, reg, off, sub, chk;
-	/* check zero saturation => pure grayscale! */
-	if (!hsv.s)
-	{
-		hsv_stat->col = 0;
-		hsv_stat->max = hsv.v;
-		return;
-	}
-	/* max & min for rgb are 100% reproducible! */
-	max = hsv.v;
-	del = hsv.s * max / WHITE;
-	min = max - del;
-	/* third value */
-	hue = hsv.h;
-	reg = (hue / HUE_DIFF); /* should be <HUE_PART */
-	off = (hue - ((reg>>1) * HUE_COMP)); /* offset from HUE_COMP */
-	if (off>HUE_DIFF) off = HUE_COMP-off;
-	sub = (off * del / HUE_DIFF); /* get diff for third value */
-	chk = (sub + min); /* third value */
-	/* assign to struct */
-	hsv_stat->col = 1;
-	hsv_stat->max = max;
-	hsv_stat->min = min;
-	hsv_stat->del = del;
-	hsv_stat->hue = hue;
-	hsv_stat->reg = reg;
-	hsv_stat->off = off;
-	hsv_stat->sub = sub;
-	hsv_stat->chk = chk;
-}
-/*----------------------------------------------------------------------------*/

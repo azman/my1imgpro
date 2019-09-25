@@ -40,13 +40,5 @@ typedef my1image_hsv_t my1hsv_t;
 my1hsv_t rgb2hsv(my1rgb_t rgb);
 my1rgb_t hsv2rgb(my1hsv_t hsv); /* not really needed? */
 /*----------------------------------------------------------------------------*/
-typedef struct _hsv_stat_t
-{
-	int col, max, min, del, hue, reg, off, sub, chk;
-}
-hsv_stat_t;
-/*----------------------------------------------------------------------------*/
-void hsv_get_stat(my1hsv_t hsv, hsv_stat_t* hsv_stat);
-/*----------------------------------------------------------------------------*/
 #endif
 /*----------------------------------------------------------------------------*/

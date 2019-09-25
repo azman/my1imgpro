@@ -5,8 +5,6 @@
 /*----------------------------------------------------------------------------*/
 #include "my1image_file.h"
 /*----------------------------------------------------------------------------*/
-int image_load_png(my1image_t *image, char *filename);
-/*----------------------------------------------------------------------------*/
 int main(int argc, char* argv[])
 {
 	my1image_t buff;
@@ -15,7 +13,7 @@ int main(int argc, char* argv[])
 	/* check program arguments */
 	if(argc<2)
 	{
-		printf("No filename given for image resize! Aborting!\n\n");
+		printf("No filename given for image loading! Aborting!\n");
 		return -1;
 	}
 	pname = argv[1];
@@ -25,7 +23,7 @@ int main(int argc, char* argv[])
 	test = image_load(&buff,pname);
 	if(test<0)
 	{
-		printf("Cannot load image file '%s'! [%d] Aborting!\n\n",pname,test);
+		printf("Cannot load image file '%s'! [%d] Aborting!\n",pname,test);
 	}
 	else
 	{
