@@ -228,11 +228,12 @@ void on_image_invert(my1image_data_t *data)
 	image_view_draw(&data->view,data->image);
 }
 /*----------------------------------------------------------------------------*/
-void on_image_normalize(my1image_data_t *data)
+void on_image_rotate_cw90(my1image_data_t *data)
 {
-	image_grayscale(data->image);
-	image_normalize(data->image);
-	image_view_draw(&data->view,data->image);
+	image_turn(data->work.curr,data->work.next,IMAGE_TURN_270);
+	buffer_swap(&data->work);
+	data->image = data->work.curr;
+	image_view_make(&data->view,data->image);
 }
 /*----------------------------------------------------------------------------*/
 void on_image_rotate_ccw90(my1image_data_t *data)
@@ -572,12 +573,6 @@ void image_data_domenu(my1image_data_t* data)
 	g_signal_connect_swapped(G_OBJECT(menu_item),"activate",
 		G_CALLBACK(on_image_invert),(gpointer)data);
 	gtk_widget_show(menu_item);
-	/* normalize menu */
-	menu_item = gtk_menu_item_new_with_mnemonic("_Normalize");
-	gtk_menu_shell_append(GTK_MENU_SHELL(menu_subs),menu_item);
-	g_signal_connect_swapped(G_OBJECT(menu_item),"activate",
-		G_CALLBACK(on_image_normalize),(gpointer)data);
-	gtk_widget_show(menu_item);
 	/* temp menu to insert as sub-menu */
 	menu_temp = gtk_menu_item_new_with_mnemonic("_Image");
 	gtk_menu_item_set_submenu(GTK_MENU_ITEM(menu_temp),menu_subs);
@@ -586,6 +581,12 @@ void image_data_domenu(my1image_data_t* data)
 	gtk_widget_show(menu_temp);
 	/* sub menu? */
 	menu_subs = gtk_menu_new();
+	/* rotate menu */
+	menu_item = gtk_menu_item_new_with_mnemonic("_Rotate CW90");
+	gtk_menu_shell_append(GTK_MENU_SHELL(menu_subs),menu_item);
+	g_signal_connect_swapped(G_OBJECT(menu_item),"activate",
+		G_CALLBACK(on_image_rotate_cw90),(gpointer)data);
+	gtk_widget_show(menu_item);
 	/* rotate menu */
 	menu_item = gtk_menu_item_new_with_mnemonic("_Rotate CCW90");
 	gtk_menu_shell_append(GTK_MENU_SHELL(menu_subs),menu_item);
