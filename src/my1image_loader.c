@@ -7,30 +7,51 @@
 /*----------------------------------------------------------------------------*/
 int main(int argc, char* argv[])
 {
+	int test, loop;
 	my1image_t buff;
-	char *pname;
-	int test;
-	/* check program arguments */
-	if(argc<2)
+	char *pname = 0x0, *psave = 0x0, *pdata = 0x0;
+	for(loop=1;loop<argc;loop++)
 	{
-		printf("No filename given for image loading! Aborting!\n");
-		return -1;
+		if(!strcmp(argv[loop],"--save"))
+		{
+			loop++;
+			if(loop<argc) psave = argv[loop];
+			else printf("Cannot get save file name - NOT saving!\n");
+		}
+		else if(!strcmp(argv[loop],"--cdata"))
+		{
+			loop++;
+			if(loop<argc) pdata = argv[loop];
+			else printf("Cannot get C file name - NOT writing!\n");
+		}
+		else
+		{
+			if(!pname) pname = argv[loop];
+			else printf("Unknown option '%s'!\n",argv[loop]);
+		}
 	}
-	pname = argv[1];
-	/* initialize */
+	if (!pname) return -1;
 	image_init(&buff);
-	/* load image */
-	test = image_load(&buff,pname);
-	if(test<0)
-	{
-		printf("Cannot load image file '%s'! [%d] Aborting!\n",pname,test);
-	}
+	printf("Loading image file '%s'... ",pname);
+	if ((test=image_load(&buff,pname))<0) printf("error![%d]\n",test);
 	else
 	{
-		/* file info */
-		printf("File: %s\n",pname);
-		printf("Size: %d x %d (Size:%d) {Mask:%08X}\n",
+		printf("done!\n");
+		printf("-- File: %s\n",pname);
+		printf("-- Size: %d x %d (Size:%d) {Mask:%08X}\n",
 			buff.width,buff.height,buff.length,buff.mask);
+		if(psave)
+		{
+			printf("Saving image data to %s... ",psave);
+			if ((test=image_save(&buff,psave))<0) printf("error![%d]\n",test);
+			else printf("done!\n");
+		}
+		if(pdata)
+		{
+			printf("Saving C data to %s... ",pdata);
+			if ((test=image_cdat(&buff,pdata))<0) printf("error![%d]\n",test);
+			else printf("done!\n");
+		}
 	}
 	image_free(&buff);
 	return 0;
