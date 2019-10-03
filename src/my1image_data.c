@@ -295,70 +295,24 @@ void on_file_open_main(my1image_data_t* data)
 		GTK_STOCK_OPEN, GTK_RESPONSE_ACCEPT, NULL);
 	if (gtk_dialog_run(GTK_DIALOG(doopen))==GTK_RESPONSE_ACCEPT)
 	{
-		int error;
+		int test;
 		my1image_t that;
-		gchar *filename, *buff, *temp;
-		filename = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(doopen));
+		gchar *filename, *buff;
 		image_init(&that);
-		if((error=image_load(&that,filename))<0)
+		filename = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(doopen));
+		if((test=image_load(&that,filename))<0)
 		{
-			switch (error)
-			{
-				case BMP_ERROR_FILEOPEN:
-				case PNM_ERROR_FILEOPEN:
-					temp = g_strdup_printf("Error opening file! (%d){%s}",
-						error,filename);
-					break;
-				case BMP_ERROR_VALIDBMP:
-				case PNM_ERROR_VALIDPNM:
-				case FILE_ERROR_FORMAT:
-					temp = g_strdup_printf("Unsupported file format! (%d){%s}",
-						error,filename);
-					break;
-				case BMP_ERROR_RGBNGRAY:
-					temp = g_strdup_printf("Unsupported BMP format! (%d){%s}",
-						error,filename);
-					break;
-				case PNM_ERROR_NOSUPPORT:
-					temp = g_strdup_printf("Unsupported PNM format! (%d){%s}",
-						error,filename);
-					break;
-				case BMP_ERROR_FILESIZE:
-				case PNM_ERROR_FILESIZE:
-					temp = g_strdup_printf("Invalid file size! (%d){%s}",
-						error,filename);
-					break;
-				case BMP_ERROR_MEMALLOC:
-				case PNM_ERROR_MEMALLOC:
-					temp = g_strdup_printf("Cannot allocate memory! (%d){%s}",
-						error,filename);
-					break;
-				case BMP_ERROR_DIBINVAL:
-				case BMP_ERROR_COMPRESS:
-					temp = g_strdup_printf("Invalid BMP format! (%d){%s}",
-						error,filename);
-					break;
-				default:
-					temp = g_strdup_printf("Unknown error! (%d){%s}",
-						error,filename);
-			}
-			/* show info on status bar */
-			buff = g_strdup_printf("[ERROR] %s",temp);
-			image_view_stat_time(&data->view,(char*)buff,5);
-			/* free that */
-			g_free(temp);
+			buff = g_strdup_printf("Error loading '%s'! (%d)",filename,test);
 		}
 		else
 		{
-			/* successful image file open */
 			image_data_make(data,&that);
-			/* show info on status bar */
-			buff = g_strdup_printf("[CHECK] %s",filename);
-			image_view_stat_time(&data->view,(char*)buff,5);
+			buff = g_strdup_printf("[LOAD] '%s'",filename);
 		}
-		image_free(&that);
+		image_view_stat_time(&data->view,(char*)buff,STATUS_TIMEOUT);
 		g_free(buff);
 		g_free(filename);
+		image_free(&that);
 	}
 	gtk_widget_destroy(doopen);
  }
@@ -373,34 +327,14 @@ void on_file_save_main(my1image_data_t* data)
 		TRUE);
 	if (gtk_dialog_run(GTK_DIALOG(dosave))==GTK_RESPONSE_ACCEPT)
 	{
-		int error;
-		gchar *filename, *buff, *temp;
+		int test;
+		gchar *filename, *buff;
 		filename = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(dosave));
-		if ((error=image_save(&data->view.buff,filename))<0)
-		{
-			switch (error)
-			{
-				case BMP_ERROR_FILEOPEN:
-				case PNM_ERROR_FILEOPEN:
-					temp = g_strdup_printf("Write error! (%d){%s}",
-						error,filename);
-					break;
-				default:
-					temp = g_strdup_printf("Unknown error! (%d){%s}",
-						error,filename);
-			}
-			/* show info on status bar */
-			buff = g_strdup_printf("[ERROR] %s",temp);
-			image_view_stat_time(&data->view,(char*)buff,5);
-			/* free that */
-			g_free(temp);
-		}
+		if ((test=image_save(&data->view.buff,filename))<0)
+			buff = g_strdup_printf("Error saving '%s'! (%d)",filename,test);
 		else
-		{
-			/* show info on status bar */
-			buff = g_strdup_printf("[SAVED] %s",filename);
-			image_view_stat_time(&data->view,(char*)buff,5);
-		}
+			buff = g_strdup_printf("[SAVE] '%s'",filename);
+		image_view_stat_time(&data->view,(char*)buff,STATUS_TIMEOUT);
 		g_free(buff);
 		g_free(filename);
 	}

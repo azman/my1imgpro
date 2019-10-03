@@ -58,26 +58,23 @@ int main(int argc, char* argv[])
 	int loop, check = 0, ckmax = -1, ckmin = -1;
 	int error = 0, domax = ERROR_MAX;
 	/* check program arguments */
-	if(argc>1)
+	for(loop=1;loop<argc;loop++)
 	{
-		for(loop=1;loop<argc;loop++)
+		if(argv[loop][0]=='-')
 		{
-			if(argv[loop][0]=='-')
+			if(!strcmp(argv[loop],"--domax"))
 			{
-				if(!strcmp(argv[loop],"--domax"))
-				{
-					loop++;
-					if(loop<argc)
-						domax = atoi(argv[loop]);
-					else
-						printf("Cannot get max error! Using {%d}\n",domax);
-				}
+				loop++;
+				if(loop<argc)
+					domax = atoi(argv[loop]);
 				else
-					printf("Unknown option '%s'!\n",argv[loop]);
+					printf("Cannot get max error! Using {%d}\n",domax);
 			}
 			else
-				printf("Unknown parameter %s!\n",argv[loop]);
+				printf("Unknown option '%s'!\n",argv[loop]);
 		}
+		else
+			printf("Unknown parameter %s!\n",argv[loop]);
 	}
 	/* run test */
 	test.g = BLACK; test.a = 0;
