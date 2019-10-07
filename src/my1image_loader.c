@@ -33,10 +33,10 @@ int main(int argc, char* argv[])
 	if (!pname) return -1;
 	image_init(&buff);
 	printf("Loading image file '%s'... ",pname);
-	if ((test=image_load(&buff,pname))<0) printf("error![%d]\n",test);
+	if ((test=image_load(&buff,pname))<0) printf("error![%x]\n",(unsigned)test);
 	else
 	{
-		printf("done!\n");
+		printf("done![%x]\n",(unsigned)test);
 		printf("-- File: %s\n",pname);
 		printf("-- Size: %d x %d (Size:%d) {Mask:%08X}\n",
 			buff.width,buff.height,buff.length,buff.mask);

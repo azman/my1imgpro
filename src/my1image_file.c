@@ -488,10 +488,11 @@ int image_load(my1image_t* image, char *pfilename)
 	{
 		if (!(test=image_load_bmp(image,pfilename))) { flag = 0; break; }
 		flag += test;
-		if (test!=BMP_ERROR_VALIDBMP) break;
+		if (test&FILE_ERROR_OPEN) break; /* only need to check once? */
+		if (test!=BMP_ERROR_VALIDBMP) break; /* continue if NOT format error */
 		if (!(test=image_load_pnm(image,pfilename))) { flag = 0; break; }
 		flag += test;
-		/*if (test!=PNM_ERROR_VALIDPNM) break;*/
+		if (test!=PNM_ERROR_VALIDPNM) break;
 	}
 	while (0);
 	return flag;
