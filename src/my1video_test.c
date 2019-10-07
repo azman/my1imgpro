@@ -24,23 +24,6 @@ static char showkeys[] =
 	"\t---------------------------\n"
 };
 /*----------------------------------------------------------------------------*/
-void video_draw_index(void* data)
-{
-	my1image_view_t* view = (my1image_view_t*) data;
-	my1video_t* video = (my1video_t*)view->draw_more_data;
-	my1vgrab_t* vgrab = (my1video_capture_t*)video->capture;
-	gchar *buff = 0x0;
-	if (video->count<0) return;
-	cairo_set_source_rgb(view->dodraw,0.0,0.0,1.0);
-	cairo_move_to(view->dodraw,20,20);
-	cairo_set_font_size(view->dodraw,12);
-	buff = g_strdup_printf("%d/%d(%d)",
-		video->index, video->count, vgrab->index);
-	cairo_show_text(view->dodraw,buff);
-	cairo_stroke(view->dodraw);
-	g_free(buff);
-}
-/*----------------------------------------------------------------------------*/
 int main(int argc, char* argv[])
 {
 	int loop, stop = 0, type = VIDEO_SOURCE_NONE;
@@ -96,7 +79,7 @@ int main(int argc, char* argv[])
 	gtk_init(&argc,&argv);
 	/* initialize */
 	video_main_init(&vmain);
-	vmain.vview.view.draw_more = &video_draw_index;
+	vmain.vview.view.draw_more = &video_main_draw_index;
 	vmain.vview.view.draw_more_data = (void*)&vmain;
 	/* setup filters */
 	video_main_pass_load(&vmain,IFNAME_GRAYSCALE);
@@ -108,6 +91,8 @@ int main(int argc, char* argv[])
 	video_main_capture(&vmain,psource,type);
 	/* setup display */
 	video_main_display(&vmain,MY1APP_INFO);
+	/* prepare menu & events */
+	video_main_prepare(&vmain);
 	/* tell them */
 	printf("Starting main capture loop.\n\n%s",showkeys);
 	/* setup display/capture cycle */

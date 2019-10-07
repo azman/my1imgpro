@@ -419,14 +419,30 @@ gint on_display_key_press(GtkWidget *widget, GdkEventKey *kevent, gpointer data)
 	return FALSE;
 }
 /*----------------------------------------------------------------------------*/
+gboolean on_mouse_click(GtkWidget *widget, GdkEventButton *event, gpointer data)
+{
+	const gint RIGHT_CLICK = 3;
+	if (event->type == GDK_BUTTON_PRESS)
+	{
+		my1vmain_t *vmain = (my1vmain_t*) data;
+		if (event->button==RIGHT_CLICK)
+		{
+			GtkWidget* menu = (GtkWidget*) vmain->vview.view.domenu;
+			if (!menu) return FALSE;
+			video_hold(&vmain->video,1);
+			gtk_menu_popup(GTK_MENU(menu),0x0,0x0,0x0,0x0,
+				event->button,event->time);
+			return TRUE;
+		}
+	}
+	return FALSE;
+}
+/*----------------------------------------------------------------------------*/
 void display_make(my1video_display_t* vview)
 {
 	/* must have image frame */
 	if (!vview->video||!vview->video->frame) return;
 	image_view_make(&vview->view,vview->video->frame);
-	/* add default control? */
-	g_signal_connect(G_OBJECT(vview->view.window),"key_press_event",
-		G_CALLBACK(on_display_key_press),(gpointer)vview->video);
 }
 /*----------------------------------------------------------------------------*/
 gboolean on_display_timer(gpointer data)
@@ -569,6 +585,7 @@ void display_draw(my1video_display_t* vview)
 {
 	/* must have image frame */
 	if (!vview->video||!vview->video->frame) return;
+	image_view_make(&vview->view,vview->video->frame);
 	image_view_draw(&vview->view,vview->video->frame);
 }
 /*----------------------------------------------------------------------------*/
@@ -637,6 +654,104 @@ void video_main_display(my1vmain_t* vmain, char* name)
 	display_make(&vmain->vview);
 	display_draw(&vmain->vview);
 	display_name(&vmain->vview,name,0x0);
+}
+/*----------------------------------------------------------------------------*/
+void on_load_filter(my1vmain_t* vmain)
+{
+	GtkWidget *doopen = gtk_file_chooser_dialog_new("Open Filter List",
+		GTK_WINDOW(vmain->vview.view.window),GTK_FILE_CHOOSER_ACTION_OPEN,
+		GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
+		GTK_STOCK_OPEN, GTK_RESPONSE_ACCEPT, NULL);
+	if (gtk_dialog_run(GTK_DIALOG(doopen))==GTK_RESPONSE_ACCEPT)
+	{
+		gchar *filename, *buff;
+		filename = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(doopen));
+
+		/* show info on status bar */
+		buff = g_strdup_printf("[CHECK] %s loaded!",filename);
+		image_view_stat_time(&vmain->vview.view,(char*)buff,5);
+		g_free(buff);
+		g_free(filename);
+	}
+	gtk_widget_destroy(doopen);
+}
+/*----------------------------------------------------------------------------*/
+void video_main_prepare(my1vmain_t* vmain)
+{
+	GtkWidget *menu_main, *menu_item, *menu_subs, *menu_temp;
+	/* in case already assigned */
+	if (vmain->vview.view.domenu) return;
+	/* create popup menu for canvas */
+	menu_main = gtk_menu_new();
+	/* sub menu? */
+	menu_subs = gtk_menu_new();
+	menu_item = gtk_menu_item_new_with_label("Play Video (p)");
+	gtk_menu_shell_append(GTK_MENU_SHELL(menu_subs),menu_item);
+	gtk_widget_show(menu_item);
+	menu_item = gtk_menu_item_new_with_label("Stop Video (s)");
+	gtk_menu_shell_append(GTK_MENU_SHELL(menu_subs),menu_item);
+	gtk_widget_show(menu_item);
+	menu_item = gtk_menu_item_new_with_label("Pause Video (space)");
+	gtk_menu_shell_append(GTK_MENU_SHELL(menu_subs),menu_item);
+	gtk_widget_show(menu_item);
+	menu_item = gtk_menu_item_new_with_label("Next Frame (f)");
+	gtk_menu_shell_append(GTK_MENU_SHELL(menu_subs),menu_item);
+	gtk_widget_show(menu_item);
+	menu_item = gtk_menu_item_new_with_label("Previous Frame (b)");
+	gtk_menu_shell_append(GTK_MENU_SHELL(menu_subs),menu_item);
+	gtk_widget_show(menu_item);
+	menu_item = gtk_menu_item_new_with_label("Toggle Looping (l)");
+	gtk_menu_shell_append(GTK_MENU_SHELL(menu_subs),menu_item);
+	gtk_widget_show(menu_item);
+	menu_item = gtk_menu_item_new_with_label("Toggle Filter (z)");
+	gtk_menu_shell_append(GTK_MENU_SHELL(menu_subs),menu_item);
+	gtk_widget_show(menu_item);
+	/* temp menu to insert as sub-menu */
+	menu_temp = gtk_menu_item_new_with_label("Control Keys");
+	gtk_menu_item_set_submenu(GTK_MENU_ITEM(menu_temp),menu_subs);
+	/* add to main menu */
+	gtk_menu_shell_append(GTK_MENU_SHELL(menu_main),menu_temp);
+	gtk_widget_show(menu_temp);
+	/* file load menu */
+	menu_item = gtk_menu_item_new_with_mnemonic("_Load Filter...");
+	gtk_menu_shell_append(GTK_MENU_SHELL(menu_main),menu_item);
+	g_signal_connect_swapped(G_OBJECT(menu_item),"activate",
+		G_CALLBACK(on_load_filter),(gpointer)vmain);
+	gtk_widget_show(menu_item);
+	/* quit menu item */
+	menu_item = gtk_menu_item_new_with_mnemonic("_Quit");
+	gtk_menu_shell_append(GTK_MENU_SHELL(menu_main),menu_item);
+	g_signal_connect(G_OBJECT(menu_item),"activate",
+		G_CALLBACK(gtk_main_quit),0x0);
+	gtk_widget_show(menu_item);
+	/* save that menu */
+	vmain->vview.view.domenu = menu_main;
+	/* show it! */
+	gtk_widget_show(vmain->vview.view.domenu);
+	/* setup gtk signal handler(s) */
+	g_signal_connect(G_OBJECT(vmain->vview.view.window),"key_press_event",
+		G_CALLBACK(on_display_key_press),(gpointer)vmain->vview.video);
+	g_signal_connect(G_OBJECT(vmain->vview.view.canvas),"button-press-event",
+		G_CALLBACK(on_mouse_click),(gpointer)vmain);
+	gtk_widget_add_events(vmain->vview.view.canvas, GDK_BUTTON_PRESS_MASK);
+}
+/*----------------------------------------------------------------------------*/
+void video_main_draw_index(void* data)
+{
+	my1vmain_t* vmain = (my1vmain_t*) data;
+	my1video_t* video = &vmain->video;
+	my1vview_t* vview = &vmain->vview;
+	my1vgrab_t* vgrab = &vmain->vgrab;
+	my1image_view_t* view = &vview->view;
+	gchar *buff = 0x0;
+	if (video->count<0) return;
+	cairo_set_source_rgb(view->dodraw,0.0,0.0,1.0);
+	cairo_move_to(view->dodraw,20,20);
+	cairo_set_font_size(view->dodraw,12);
+	buff = g_strdup_printf("%d/%d(%d)",video->index,video->count,vgrab->index);
+	cairo_show_text(view->dodraw,buff);
+	cairo_stroke(view->dodraw);
+	g_free(buff);
 }
 /*----------------------------------------------------------------------------*/
 void video_main_loop(my1vmain_t* vmain, int loopms)
