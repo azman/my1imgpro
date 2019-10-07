@@ -98,6 +98,8 @@ void video_main_pass_done(my1vmain_t* vmain);
 /*----------------------------------------------------------------------------*/
 /* example draw handler to show frame index */
 void video_main_draw_index(void* data);
+/* example handler to key input */
+void video_main_check_input(void* data);
 /*----------------------------------------------------------------------------*/
 #endif
 /*----------------------------------------------------------------------------*/

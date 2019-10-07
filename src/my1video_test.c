@@ -21,6 +21,7 @@ static char showkeys[] =
 	"\tb       - previous frame\n"
 	"\tl       - toggle looping\n"
 	"\tz       - toggle filter\n"
+	"\tq       - pause/play video\n"
 	"\t---------------------------\n"
 };
 /*----------------------------------------------------------------------------*/
