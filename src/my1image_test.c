@@ -32,7 +32,7 @@ int main(int argc, char* argv[])
 		pname = argv[1];
 		if((test=image_load(&that,pname))<0)
 		{
-			printf("Error loading file '%s'!(%d)\n",pname,test);
+			printf("Error loading file '%s'!(%x)\n",pname,(unsigned)test);
 			return test;
 		}
 	}

@@ -28,6 +28,7 @@ int image_load(my1image_t* image, char *pfilename)
 	if (!pfile) return FILE_ERROR_OPEN; /* cannot open file */
 	while (that)
 	{
+		/* do_load should always be available! */
 		if (!(test=that->do_load(image,pfile))) { flag = 0; break; }
 		flag += test;
 		/* if error other that format validation, we are done! */
@@ -54,7 +55,8 @@ int image_save(my1image_t* image, char *pfilename)
 	/* compare requested file extension */
 	while (that)
 	{
-		if (ptest[0]=='.'&&!strcmp(&ptest[1],that->extd))
+		/* make sure do_save exists && compare type */
+		if (that->do_save&&ptest[0]=='.'&&!strcmp(&ptest[1],that->extd))
 		{
 			find = that;
 			break;
