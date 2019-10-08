@@ -2,12 +2,12 @@
 # - using libav & gtk for interfacing & display
 
 TESTIMG = my1image_test
-OBJSIMG = my1image.o my1image_util.o my1image_view.o my1image_hist.o
-OBJSIMG += my1image_work.o my1image_file.o my1image_data.o
-OBJSIMG += my1image_chsv.o $(TESTIMG).o
+OBJSIMG = my1image.o my1image_util.o my1image_view.o
+IMGFILE = my1image_file.o my1image_file_bmp.o my1image_file_pnm.o
+OBJSIMG += my1image_hist.o my1image_chsv.o $(IMGFILE)
+OBJSIMG += my1image_work.o my1image_data.o $(TESTIMG).o
 TESTVIS = my1video_test
-OBJSVIS = my1image.o my1image_util.o my1image_file.o
-OBJSVIS += my1image_work.o my1image_view.o
+OBJSVIS = my1image.o my1image_util.o my1image_work.o my1image_view.o $(IMGFILE)
 OBJSVIS += my1video.o my1video_main.o $(TESTVIS).o
 CHKSIZE = resizer
 CHKLOAD = imgload
@@ -43,10 +43,10 @@ new: clean main
 
 debug: new
 
-$(CHKSIZE): my1image.o my1image_file.o my1image_resize.o
+$(CHKSIZE): my1image.o $(IMGFILE) my1image_resize.o
 	$(LD) $(CFLAGS) $(DFLAGS) -o $@ $+ $(LFLAGS) $(GFLAGS)
 
-$(CHKLOAD): my1image.o my1image_file.o my1image_loader.o
+$(CHKLOAD): my1image.o $(IMGFILE) my1image_loader.o
 	$(LD) $(CFLAGS) $(DFLAGS) -o $@ $+ $(LFLAGS) $(GFLAGS)
 
 $(HSVTEST): my1image.o my1image_chsv.o my1image_testhsv.o
