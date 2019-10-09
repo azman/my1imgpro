@@ -1,7 +1,7 @@
 /*----------------------------------------------------------------------------*/
 #include "my1image_file_pnm.h"
 /*----------------------------------------------------------------------------*/
-#include <string.h> /** image_write needs string functions */
+//#include <string.h> /** image_write needs string functions */
 /*----------------------------------------------------------------------------*/
 #define PNM_MAGIC_CHAR 2
 #define PNM_MAGIC_SIZE (PNM_MAGIC_CHAR+1)
@@ -10,7 +10,7 @@ int image_load_pnm(my1image_t *image, FILE *pnmfile)
 {
 	char buffer[PNM_MAGIC_SIZE];
 	int r, g, b, buff, loop, size;
-	int width, height, maxval = 1, error = 0, version = 0;
+	int width, height, version, maxval = 1;
 	/* get and check magic number - will read PNM_MAGIC_SIZE-1 char */
 	fgets(buffer, PNM_MAGIC_SIZE, pnmfile);
 	if (buffer[0]=='P'&&(buffer[1]>0x30&&buffer[1]<0x37))
@@ -19,8 +19,7 @@ int image_load_pnm(my1image_t *image, FILE *pnmfile)
 		if (version>3)
 			return PNM_ERROR_NOSUPPORT; /* not supported */
 	}
-	if (!version)
-		return PNM_ERROR_VALIDPNM; /* not a pnm format */
+	else return FILE_NOT_FORMAT; /* not a pnm format */
 	/** get to end of magic number line */
 	while (!feof(pnmfile)&&fgetc(pnmfile)!='\n');
 	if (feof(pnmfile)) return PNM_ERROR_CORRUPT;
@@ -57,15 +56,9 @@ int image_load_pnm(my1image_t *image, FILE *pnmfile)
 			for (loop=0;loop<size;loop++)
 			{
 				if (fscanf(pnmfile,"%d %d %d",&r,&g,&b)==EOF)
-				{
-					error = PNM_ERROR_FILESIZE;
-					break;
-				}
+					return PNM_ERROR_FILESIZE;
 				if ((r<0||r>maxval)||(g<0||g>maxval)||(b<0||b>maxval))
-				{
-					error = PNM_ERROR_LEVELPNM;
-					break;
-				}
+					return PNM_ERROR_LEVELPNM;
 				buff = encode_rgb(r,g,b);
 				image->data[loop] = buff;
 			}
@@ -76,15 +69,9 @@ int image_load_pnm(my1image_t *image, FILE *pnmfile)
 			for (loop=0;loop<size;loop++)
 			{
 				if (fscanf(pnmfile,"%d",&buff)==EOF)
-				{
-					error = PNM_ERROR_FILESIZE;
-					break;
-				}
+					return PNM_ERROR_FILESIZE;
 				if (buff<0||buff>maxval)
-				{
-					error = PNM_ERROR_LEVELPNM;
-					break;
-				}
+					return PNM_ERROR_LEVELPNM;
 				image->data[loop] = buff;
 			}
 			break;
@@ -94,10 +81,7 @@ int image_load_pnm(my1image_t *image, FILE *pnmfile)
 			for (loop=0;loop<size;loop++)
 			{
 				if (feof(pnmfile))
-				{
-					error = PNM_ERROR_FILESIZE;
-					break;
-				}
+					return PNM_ERROR_FILESIZE;
 				buff = fgetc(pnmfile);
 				switch (buff)
 				{
@@ -105,25 +89,20 @@ int image_load_pnm(my1image_t *image, FILE *pnmfile)
 					case '1': buff = BLACK; break;
 					case '0': buff = WHITE; break;
 					default: buff = -1; break;
-					case ' ':
-					case '\t':
-					case '\r':
-					case '\n':
+					/* ignore whitespaces */
+					case ' ': case '\t':
+					case '\r': case '\n':
 						continue;
 				}
 				if (buff<0)
-				{
-					error = PNM_ERROR_LEVELPNM;
-					break;
-				}
+					return PNM_ERROR_LEVELPNM;
 				image->data[loop] = buff;
 			}
 			break;
 		}
 	}
-	if (!error)
-		image->mask = (version==3) ? IMASK_COLOR : IMASK_GRAY;
-	return error;
+	image->mask = (version==3) ? IMASK_COLOR : IMASK_GRAY;
+	return FILE_OK;
 }
 /*----------------------------------------------------------------------------*/
 int image_save_pnm(my1image_t *image, FILE* pnmfile)
@@ -166,6 +145,6 @@ int image_save_pnm(my1image_t *image, FILE* pnmfile)
 			fprintf(pnmfile,"\n");
 		}
 	}
-	return 0;
+	return FILE_OK;
 }
 /*----------------------------------------------------------------------------*/

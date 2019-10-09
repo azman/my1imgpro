@@ -21,7 +21,7 @@ void image_format_insert(my1image_format_t* imgfmt)
 int image_load(my1image_t* image, char *pfilename)
 {
 	FILE* pfile;
-	int test, flag = 0;
+	int flag;
 	my1image_format_t *that = init;
 	/* open file for read */
 	pfile = fopen(pfilename, "rb");
@@ -29,11 +29,12 @@ int image_load(my1image_t* image, char *pfilename)
 	while (that)
 	{
 		/* do_load should always be available! */
-		if (!(test=that->do_load(image,pfile))) { flag = 0; break; }
-		flag += test;
-		/* if error other that format validation, we are done! */
-		if (!(test&FILE_ERROR_FORMAT)) break;
-		fseek(pfile,0,SEEK_SET); /* reset file pointer... */
+		flag = that->do_load(image,pfile);
+		if (flag==FILE_OK) break;
+		/* if error other than non-format, we are done! */
+		if (!(flag&FILE_NOT_FORMAT)) break;
+		/* reset file pointer and try next format */
+		fseek(pfile,0,SEEK_SET);
 		that = that->next;
 	}
 	fclose(pfile);

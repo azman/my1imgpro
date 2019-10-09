@@ -10,10 +10,14 @@
 /** a fancy way of setting msb to 1 */
 #define FILE_ERROR_FLAG (~(~0U>>1))
 #define FILE_ERROR_OPEN (0x00000001|FILE_ERROR_FLAG)
-#define FILE_ERROR_FORMAT (0x00000002|FILE_ERROR_FLAG)
-#define FILE_ERROR_SIZE (0x00000004|FILE_ERROR_FLAG)
-#define FILE_ERROR_MALLOC (0x00000008|FILE_ERROR_FLAG)
-#define FILE_ERROR_CORRUPT (0x00000010|FILE_ERROR_FLAG)
+/** flag for unknown format */
+#define FILE_NOT_FORMAT (0x40000000|FILE_ERROR_FLAG)
+/** flag for system error */
+#define FILE_ERROR_SYSTEM (0x20000000|FILE_ERROR_FLAG)
+#define FILE_ERROR_MALLOC (0x00000001|FILE_ERROR_SYSTEM)
+/** flag for unsupported format */
+#define FILE_ERROR_FORMAT (0x10000000|FILE_ERROR_FLAG)
+#define FILE_ERROR_SIZE (0x00000001|FILE_ERROR_FORMAT)
 /*----------------------------------------------------------------------------*/
 #define IMGFMT_NAMESIZE 16
 /*----------------------------------------------------------------------------*/
@@ -28,6 +32,8 @@ typedef struct _my1image_format_t
 }
 my1image_format_t;
 typedef my1image_format_t my1imgfmt_t;
+/*----------------------------------------------------------------------------*/
+#define FILE_OK 0
 /*----------------------------------------------------------------------------*/
 #endif
 /*----------------------------------------------------------------------------*/

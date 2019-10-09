@@ -52,7 +52,7 @@ int image_load_bmp(my1image_t *image, FILE *bmpfile)
 	pChar = (unsigned char*) bmpID;
 	fread(pChar, sizeof(bmpID), 1, bmpfile);
 	if (bmpID[0]!='B'||bmpID[1]!='M')
-		return BMP_ERROR_VALIDBMP; /* not a bmp format */
+		return FILE_NOT_FORMAT; /* not a bmp format */
 	/* get header */
 	pChar = (unsigned char*) &head;
 	fread(pChar, BMP_HEAD_SIZE, 1, bmpfile);
@@ -165,7 +165,7 @@ int image_load_bmp(my1image_t *image, FILE *bmpfile)
 	}
 	/* put on mask?? */
 	image->mask = iscolor;
-	return 0;
+	return FILE_OK;
 }
 /*----------------------------------------------------------------------------*/
 int image_save_bmp(my1image_t *image, FILE *bmpfile)
@@ -284,6 +284,6 @@ int image_save_bmp(my1image_t *image, FILE *bmpfile)
 			temp++;
 		}
 	}
-	return 0;
+	return FILE_OK;
 }
 /*----------------------------------------------------------------------------*/
