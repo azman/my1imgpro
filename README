@@ -25,14 +25,19 @@ This software consists of several small modules:
 The my1image_view module requires gtk, while the my1video_main module requires
 libav(ffmpeg).
 
-Three sample applications: resizer, imgload and testhsv.
-
 Although my1imgpro library is meant for 8-bit grayscale processing, the
 my1image_t structure can support color image using RGB-encoded integer
 (assuming an integer is at least 32-bit).
 
 Only 2 image file formats supported: BMP (gray & 24-bit RGB only) and
 NetPBM@PNM Portable Any Map (P1[bit|*.pbm]/P2[gray|*.pgm]/P3[pix|*.ppm] only).
+
+Three sample applications: resizer, imgload and testhsv.
+
+- resizer: application to demonstrate image resizing functions of my1imgpro
+- imgload: loads and optionally save an image file into supported format AND
+           C source code (targetting embedded application here).
+- testhsv: application to test HSV color representation
 
 See LICENSE for licensing details.
 
