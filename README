@@ -29,8 +29,30 @@ Although my1imgpro library is meant for 8-bit grayscale processing, the
 my1image_t structure can support color image using RGB-encoded integer
 (assuming an integer is at least 32-bit).
 
-Only 2 image file formats supported: BMP (gray & 24-bit RGB only) and
-NetPBM@PNM Portable Any Map (P1[bit|*.pbm]/P2[gray|*.pgm]/P3[pix|*.ppm] only).
+See LICENSE for licensing details.
+
+*Note*: The my1image_math module has no test codes... yet! I will put this in
+when I have the time and idea :p
+
+Supported file format
+---------------------
+
+By default, only 2 image file formats are supported (limited):
+- BMP (gray & 24-bit RGB only)
+- NetPBM@PNM Portable AnyMap (P1[bit|*.pbm]/P2[gray|*.pgm]/P3[pix|*.ppm] only)
+
+An easy way to allow myimgpro uses an image is to use IMageMagick's convert:
+
+- to get supported BMP, use 'convert image.file -compress none output.bmp'
+- to get supported PNM, use 'convert image.file -compress none output.pnm'
+
+A third format (PNG) is separated, but can easily be inserted into main code
+when needed (e.g. see my1image_test.c and my1image_loader.c). This is simply
+because the code is slightly cumbersome and may not be needed for simple
+applications.
+
+Sample application(s)
+---------------------
 
 Three sample applications: resizer, imgload and testhsv.
 
@@ -38,8 +60,3 @@ Three sample applications: resizer, imgload and testhsv.
 - imgload: loads and optionally save an image file into supported format AND
            C source code (targetting embedded application here).
 - testhsv: application to test HSV color representation
-
-See LICENSE for licensing details.
-
-*Note*: The my1image_math module has no test codes... yet! I will put this in
-when I have the time and idea :p

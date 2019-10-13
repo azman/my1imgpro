@@ -4,6 +4,7 @@
 TESTIMG = my1image_test
 OBJSIMG = my1image.o my1image_util.o my1image_view.o
 IMGFILE = my1image_file.o my1image_file_bmp.o my1image_file_pnm.o
+IMGFILE += my1image_file_png.o
 OBJSIMG += my1image_hist.o my1image_chsv.o $(IMGFILE)
 OBJSIMG += my1image_work.o my1image_data.o $(TESTIMG).o
 TESTVIS = my1video_test

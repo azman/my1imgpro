@@ -1,6 +1,7 @@
 /*----------------------------------------------------------------------------*/
 #include "my1image_data.h"
 #include "my1image_file.h"
+#include "my1image_file_png.h"
 /*----------------------------------------------------------------------------*/
 #include <stdio.h>
 #include <stdlib.h>
@@ -24,6 +25,8 @@ int main(int argc, char* argv[])
 	/* print tool info */
 	printf("\n%s - %s (%s)\n",MY1APP_NAME,MY1APP_INFO,MY1APP_VERS);
 	printf("  => by azman@my1matrix.org\n\n");
+	/* add png support */
+	image_format_insert(&ipng);
 	/* initialize that */
 	image_init(&that);
 	/* check program argument */

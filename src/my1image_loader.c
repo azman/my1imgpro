@@ -4,6 +4,7 @@
 #include <string.h>
 /*----------------------------------------------------------------------------*/
 #include "my1image_file.h"
+#include "my1image_file_png.h"
 /*----------------------------------------------------------------------------*/
 int main(int argc, char* argv[])
 {
@@ -31,6 +32,8 @@ int main(int argc, char* argv[])
 		}
 	}
 	if (!pname) return -1;
+	/* add png support */
+	image_format_insert(&ipng);
 	image_init(&buff);
 	printf("Loading image file '%s'... ",pname);
 	if ((test=image_load(&buff,pname))<0) printf("error![%x]\n",(unsigned)test);
