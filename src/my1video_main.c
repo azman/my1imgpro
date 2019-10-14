@@ -432,12 +432,15 @@ void video_main_check_input(void* data)
 {
 	my1vview_t* vview = (my1vview_t*) data;
 	my1vmain_t* vmain = (my1vmain_t*) vview->chkinput_data;
+	GtkWidget* menu = (GtkWidget*) vmain->vview.view.domenu;
+	if (!menu) return;
 	switch ((guint)vview->inkey)
 	{
 		case GDK_KEY_Return:
 			video_hold(&vmain->video,1);
 			gtk_menu_popup(GTK_MENU(vview->view.domenu),0x0,0x0,
 				&vmain_set_menu_position,(gpointer)vview->view.window,0x0,0x0);
+			vview->inkey = 0;
 			break;
 	}
 }
@@ -557,6 +560,11 @@ void on_vmain_list_current(my1video_main_t *vmain, GtkMenuItem *menu_item)
 	}
 	if (flag)
 		gtk_widget_set_sensitive(menu_clra,TRUE);
+}
+/*----------------------------------------------------------------------------*/
+void on_vmain_menu_resume(my1video_main_t *vmain, GtkMenuItem *menu_item)
+{
+	video_play(&vmain->video);
 }
 /*----------------------------------------------------------------------------*/
 void display_make(my1video_display_t* vview)
@@ -819,6 +827,12 @@ void video_main_prepare(my1vmain_t* vmain)
 			G_CALLBACK(on_vmain_list_current),(gpointer)vmain);
 		gtk_widget_show(menu_temp);
 	}
+	/* resume */
+	menu_item = gtk_menu_item_new_with_mnemonic("_Resume");
+	gtk_menu_shell_append(GTK_MENU_SHELL(menu_main),menu_item);
+	g_signal_connect_swapped(G_OBJECT(menu_item),"activate",
+		G_CALLBACK(on_vmain_menu_resume),(gpointer)vmain);
+	gtk_widget_show(menu_item);
 	/* quit menu item */
 	menu_item = gtk_menu_item_new_with_mnemonic("_Quit");
 	gtk_menu_shell_append(GTK_MENU_SHELL(menu_main),menu_item);
