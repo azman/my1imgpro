@@ -567,6 +567,24 @@ void on_vmain_menu_resume(my1video_main_t *vmain, GtkMenuItem *menu_item)
 	video_play(&vmain->video);
 }
 /*----------------------------------------------------------------------------*/
+void on_vmain_filter_toggle(my1video_main_t *vmain, GtkMenuItem *menu_item)
+{
+	my1video_t* video = &vmain->video;
+	my1vview_t* vview = &vmain->vview;
+	if (video->flags&VIDEO_FLAG_NO_FILTER)
+	{
+		video_skip_filter(video,0);
+		image_view_stat_time(&vview->view,"Filter ON",MESG_SHOWTIME);
+	}
+	else
+	{
+		video_skip_filter(video,1);
+		image_view_stat_time(&vview->view,"Filter OFF",MESG_SHOWTIME);
+	}
+	gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(menu_item),
+		video->flags&VIDEO_FLAG_NO_FILTER?FALSE:TRUE);
+}
+/*----------------------------------------------------------------------------*/
 void display_make(my1video_display_t* vview)
 {
 	/* must have image frame */
@@ -827,6 +845,14 @@ void video_main_prepare(my1vmain_t* vmain)
 			G_CALLBACK(on_vmain_list_current),(gpointer)vmain);
 		gtk_widget_show(menu_temp);
 	}
+	/* Filter */
+	menu_item = gtk_check_menu_item_new_with_label("Filtered");
+	gtk_menu_shell_append(GTK_MENU_SHELL(menu_main),menu_item);
+	gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(menu_item),
+		vmain->video.flags&VIDEO_FLAG_NO_FILTER?FALSE:TRUE);
+	g_signal_connect_swapped(G_OBJECT(menu_item),"activate",
+		G_CALLBACK(on_vmain_filter_toggle),(gpointer)vmain);
+	gtk_widget_show(menu_item);
 	/* resume */
 	menu_item = gtk_menu_item_new_with_mnemonic("_Resume");
 	gtk_menu_shell_append(GTK_MENU_SHELL(menu_main),menu_item);
