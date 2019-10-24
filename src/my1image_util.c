@@ -269,7 +269,7 @@ void filter_init(my1image_filter_t* pfilter,
 	pfilter->name[0] = 0x0; /* anonymous */
 	pfilter->data = 0x0;
 	pfilter->buffer = buffer;
-	pfilter->docopy = 0x0;
+	pfilter->output = 0x0;
 	pfilter->filter = filter;
 	pfilter->doinit = 0x0; /* used in cloning? */
 	pfilter->dofree = 0x0;
@@ -286,7 +286,7 @@ void filter_free(my1image_filter_t* pfilter)
 void filter_unlink(my1image_filter_t* pfilter)
 {
 	/* simply prepare for new filter chaining */
-	pfilter->docopy = 0x0;
+	pfilter->output = 0x0;
 	if (pfilter->next)
 		filter_free(pfilter->next);
 	pfilter->next = 0x0;
@@ -376,19 +376,20 @@ my1image_t* image_filter(my1image_t* image, my1image_filter_t* pfilter)
 {
 	while (pfilter)
 	{
-		if (pfilter->filter&&pfilter->buffer)
+		if (pfilter->filter)
 		{
-			my1image_buffer_t *pbuff = pfilter->buffer;
-			image = pfilter->filter(image,pbuff->next,pfilter);
-			buffer_swap(pbuff);
-			/* just in case... should we break? */
-			if (!image) image = pbuff->curr;
-			/* in case we need a copy of this stage output! */
-			if (pfilter->docopy)
+			my1image_buffer_t* pbuff = 0x0;
+			my1image_t* check = pfilter->output;
+			if (!check)
 			{
-				image_make(pfilter->docopy,image->height,image->width);
-				image_copy(pfilter->docopy,image);
+				/* skip filter if no output and no buffer assigned */
+				pbuff = pfilter->buffer;
+				if (!pbuff) continue;
+				check = pbuff->next;
 			}
+			image = pfilter->filter(image,check,pfilter);
+			/* swap buffer if used */
+			if (pbuff) buffer_swap(pbuff);
 		}
 		pfilter = pfilter->next;
 	}

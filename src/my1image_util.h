@@ -42,7 +42,7 @@ typedef struct _my1image_filter_t
 	char name[FILTER_NAMESIZE];
 	void *data; /* pointer to user-defined data */
 	my1image_buffer_t *buffer; /* external shared buffer */
-	my1image_t *docopy; /* if supplied, copy to this struct! */
+	my1image_t *output; /* output image to write to */
 	pfilter_t filter; /* pointer to filter function */
 	pfsetup_t doinit; /* pointer to setup function */
 	pfclean_t dofree; /* pointer to cleanup function */

@@ -99,22 +99,7 @@ void image_data_filter_load(my1image_data_t* data, char* name)
 void image_data_filter_exec(my1image_data_t* data)
 {
 	if (data->pfcurr)
-	{
-#if 0
-		/* debug! */
-		int size = 0;
-		my1image_filter_t* ppass = data->pfcurr;
-		printf("Filtering:\n");
-		while (ppass)
-		{
-			printf("- {%s}\n",ppass->name);
-			ppass = ppass->next;
-			size++;
-		}
-		printf("Done:%d.\n",size);
-#endif
 		data->image = image_filter(data->image,data->pfcurr);
-	}
 }
 /*----------------------------------------------------------------------------*/
 void set_menu_position(GtkMenu *menu, gint *x, gint *y,
