@@ -10,7 +10,7 @@ typedef struct _my1image_t
 {
 	int width,height;
 	int length; /* memory is cheap - precalculate this! */
-	int mask; /* can store rgb-encoded int - use this at user level */
+	int mask; /* general flag - can store rgb-encoded int! */
 	int *data; /* 1-d vector for 2-d image */
 }
 my1image_t;
@@ -47,56 +47,14 @@ void image_pan(my1image_t *image, my1image_t *check,
 /*----------------------------------------------------------------------------*/
 #define IMAGE_FLIP_VERTICAL 0
 #define IMAGE_FLIP_HORIZONTAL 1
+/*----------------------------------------------------------------------------*/
 void image_turn(my1image_t *image, my1image_t *check, int turn); /* turn*90 */
 void image_flip(my1image_t *image, my1image_t *check, int side); /* h/v */
 /*----------------------------------------------------------------------------*/
-/* image sizing */
-my1image_t* image_size_down(my1image_t* image, my1image_t* check,
+void image_size_down(my1image_t* image, my1image_t* check,
 	int height, int width);
-my1image_t* image_size_up(my1image_t* image, my1image_t* check,
+void image_size_up(my1image_t* image, my1image_t* check,
 	int height, int width);
-my1image_t* image_size_size(my1image_t* image, my1image_t* check,
-	int height, int width);
-my1image_t* image_size_this(my1image_t* image, my1image_t* check,
-	int height, int width);
-/*----------------------------------------------------------------------------*/
-/* image color (rgb) stuffs */
-/*----------------------------------------------------------------------------*/
-#define IMASK_GRAY    0x00000000
-#define IMASK_COLOR   0x00FFFFFF
-#define IMASK_COLOR_R 0x00FF0000
-#define IMASK_COLOR_G 0x0000FF00
-#define IMASK_COLOR_B 0x000000FF
-#define IMASK_COLOR_A 0xFF000000
-/*----------------------------------------------------------------------------*/
-typedef unsigned char cbyte; /** color byte */
-/*----------------------------------------------------------------------------*/
-typedef struct
-{
-	cbyte b,g,r,a;
-}
-my1image_rgb_t;
-/*----------------------------------------------------------------------------*/
-typedef my1image_rgb_t my1rgb_t;
-/*----------------------------------------------------------------------------*/
-/* color information - structure member 'mask' MUST BE assigned! */
-int image_assign_rgb(my1image_t *image, cbyte *rgb);
-int image_extract_rgb(my1image_t *image, cbyte *rgb);
-/* enforce color modes */
-void image_grayscale(my1image_t *image);
-void image_colormode(my1image_t *image);
-/* hack for gdk_draw_rgb_32_image */
-void image_copy_color2bgr(my1image_t *dst, my1image_t *src);
-/* color channel extract */
-void image_copy_color_channel(my1image_t *dst, my1image_t *src, int mask);
-/* rgb conversion utility */
-int encode_rgb(cbyte r, cbyte g, cbyte b);
-void decode_rgb(int data, cbyte *r, cbyte *g, cbyte *b);
-/* enforce gray/color value */
-int gray2color(int data);
-int color2gray(int data);
-/* swap b and r channels */
-int color_swap(int data);
 /*----------------------------------------------------------------------------*/
 #endif
 /*----------------------------------------------------------------------------*/

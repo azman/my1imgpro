@@ -12,8 +12,6 @@
 #define HISTSIZE_BCHART 1
 #define HISTSIZE_BCHART_SKIP 1
 /*----------------------------------------------------------------------------*/
-typedef void (*pdraw_more)(void*);
-/*----------------------------------------------------------------------------*/
 typedef struct _my1image_hist_t
 {
 	GtkWidget *donext, *dohist, *dostxt;

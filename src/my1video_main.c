@@ -1,5 +1,6 @@
 /*----------------------------------------------------------------------------*/
 #include "my1video_main.h"
+#include "my1image_crgb.h"
 /*----------------------------------------------------------------------------*/
 /** need this to save a frame from video to file! */
 #include "my1image_file.h"
@@ -13,11 +14,14 @@
 void image_get_frame(my1image_t* image, AVFrame* frame)
 {
 	int index,count;
-	vrgb_t temp;
+	my1rgb_t temp, *pdat;
 	for (index=0,count=0;index<image->length;index++)
 	{
 		if (image->mask)
-			temp = decode_vrgb(image->data[index]);
+		{
+			pdat = (my1rgb_t*)&image->data[index];
+			temp = *pdat;
+		}
 		else
 		{
 			temp.r = temp.g = temp.b = image->data[index];
@@ -31,15 +35,17 @@ void image_get_frame(my1image_t* image, AVFrame* frame)
 /*----------------------------------------------------------------------------*/
 void image_set_frame(my1image_t* image, AVFrame* frame)
 {
-	int index, count;
-	vrgb_t temp;
+	int index, count, *pdat;
+	my1rgb_t temp;
+	temp.a = 0; /* alpha always zero? */
 	for (index=0,count=0;index<image->length;index++)
 	{
 		temp.b = frame->data[0][count++];
 		temp.g = frame->data[0][count++];
 		temp.r = frame->data[0][count++];
 		count++; /* ignore alpha */
-		image->data[index] = encode_vrgb(temp);
+		pdat = (int*)&temp;
+		image->data[index] = *pdat;
 	}
 }
 /*----------------------------------------------------------------------------*/

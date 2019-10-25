@@ -165,11 +165,11 @@ void video_post_input(my1video_t *video)
 	}
 }
 /*----------------------------------------------------------------------------*/
+/* -> taking these out! keeping for reference for now...
 int encode_vrgb(vrgb_t colorpix)
 {
 	return encode_rgb(colorpix.r,colorpix.g,colorpix.b);
 }
-/*----------------------------------------------------------------------------*/
 vrgb_t decode_vrgb(int rgbcode)
 {
 	vrgb_t cpix;
@@ -177,13 +177,11 @@ vrgb_t decode_vrgb(int rgbcode)
 	decode_rgb(rgbcode,&cpix.r,&cpix.g,&cpix.b);
 	return cpix;
 }
-/*----------------------------------------------------------------------------*/
 int vrgb2gray(vrgb_t colorpix)
 {
 	int *buff = (int*) &colorpix;
 	return color2gray(*buff);
 }
-/*----------------------------------------------------------------------------*/
 vrgb_t gray2vrgb(int grayvalue)
 {
 	int temp;
@@ -191,4 +189,5 @@ vrgb_t gray2vrgb(int grayvalue)
 	temp = gray2color(grayvalue);
 	return *cpix;
 }
+*/
 /*----------------------------------------------------------------------------*/

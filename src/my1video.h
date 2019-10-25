@@ -4,10 +4,8 @@
 /*----------------------------------------------------------------------------*/
 #include "my1image_util.h"
 /*----------------------------------------------------------------------------*/
-typedef unsigned char vbyte;
 typedef my1image_filter_t my1vpass_t;
 typedef my1image_buffer_t my1vbuff_t;
-typedef my1image_rgb_t vrgb_t;
 /*----------------------------------------------------------------------------*/
 #define VIDEO_FLAG_LOOP 0x01
 #define VIDEO_FLAG_STEP 0x02
@@ -51,11 +49,6 @@ void video_filter_frame(my1video_t *video);
 void video_post_frame(my1video_t *video);
 /* handle user input */
 void video_post_input(my1video_t *video);
-/* color conversion helper functions */
-int encode_vrgb(vrgb_t colorpix);
-vrgb_t decode_vrgb(int rgbcode);
-int vrgb2gray(vrgb_t colorpix);
-vrgb_t gray2vrgb(int grayvalue);
 /*----------------------------------------------------------------------------*/
 #endif
 /*----------------------------------------------------------------------------*/

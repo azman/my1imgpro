@@ -1,5 +1,6 @@
 /*----------------------------------------------------------------------------*/
 #include "my1image_hist.h"
+#include "my1image_crgb.h"
 /*----------------------------------------------------------------------------*/
 void image_hist_init(my1image_hist_t* ihist, my1image_view_t* iview)
 {

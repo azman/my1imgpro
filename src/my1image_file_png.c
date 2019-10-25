@@ -1,5 +1,6 @@
 /*----------------------------------------------------------------------------*/
 #include "my1image_file_png.h"
+#include "my1image_crgb.h"
 /*----------------------------------------------------------------------------*/
 #include <string.h> /** image_write needs string functions */
 #include <stdlib.h>
