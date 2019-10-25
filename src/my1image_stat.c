@@ -1,0 +1,100 @@
+/*----------------------------------------------------------------------------*/
+#include "my1image_stat.h"
+/*----------------------------------------------------------------------------*/
+void image_get_histogram(my1image_t *image, my1image_histogram_t *hist)
+{
+	int loop, temp;
+	/* clear histogram */
+	for (loop=0;loop<GRAYLEVEL;loop++)
+		hist->count[loop] = 0;
+	/* count! */
+	for (loop=0;loop<image->length;loop++)
+	{
+		temp = image->data[loop];
+		hist->count[temp]++;
+	}
+	/* get index for highest/lowest count */
+	temp = hist->count[0];
+	hist->chkvalue = temp;
+	hist->chkindex = -1;
+	hist->maxvalue = temp;
+	hist->maxindex = 0;
+	hist->minvalue = temp;
+	hist->minindex = 0;
+	for (loop=1;loop<GRAYLEVEL;loop++)
+	{
+		temp = hist->count[loop];
+		if (temp>hist->maxvalue)
+		{
+			hist->chkvalue = hist->maxvalue;
+			hist->chkindex = hist->maxindex;
+			hist->maxvalue = temp;
+			hist->maxindex = loop;
+		}
+		/* in case first value IS maximum value */
+		if (temp>hist->chkvalue)
+		{
+			if (loop!=hist->maxindex)
+			{
+				hist->chkvalue = temp;
+				hist->chkindex = loop;
+			}
+		}
+		/* look for non-zero minimum count */
+		if (temp<hist->minvalue||!hist->minvalue)
+		{
+			hist->minvalue = temp;
+			hist->minindex = loop;
+		}
+	}
+}
+/*----------------------------------------------------------------------------*/
+void image_smooth_histogram(my1image_t *image, my1image_histogram_t *hist)
+{
+	int loop, size = image->length, buff[GRAYLEVEL];
+	float alpha = (float)WHITE/image->length;
+	for (loop=1;loop<GRAYLEVEL;loop++)
+		buff[loop] = (int)(hist->count[loop]*alpha);
+	for(loop=0;loop<size;loop++)
+		image->data[loop] = buff[image->data[loop]];
+}
+/*----------------------------------------------------------------------------*/
+void histogram_get_threshold(my1image_histogram_t *hist)
+{
+	int loop, last, init = 0, ends = GRAYLEVEL-1, mids = (init+ends)>>1;
+	int stop = GRAYLEVEL>>1, chkl = 0, chkr = 0, temp;
+	/* prepare weights, limits (mids in right side) */
+	for(loop=init,last=ends;loop<stop;loop++,last--)
+	{
+		chkl += hist->count[loop];
+		chkr += hist->count[last];
+	}
+	/* balanced histogram thresholding */
+	while (init<=ends)
+	{
+		if (chkr>chkl)
+		{
+			while (!(temp=hist->count[ends--]));
+			chkr -= temp;
+			if (((init+ends)>>1)<mids)
+			{
+				mids--;
+				chkr += hist->count[mids];
+				chkl -= hist->count[mids];
+			}
+		}
+		else /**if (chkl>=chkr)*/
+		{
+			while (!(temp=hist->count[init++]));
+			chkl -= temp;
+			if (((init+ends)>>1)>=mids)
+			{
+				chkl += hist->count[mids];
+				chkr -= hist->count[mids];
+				mids++;
+			}
+		}
+	}
+	hist->threshold = mids;
+}
+/*----------------------------------------------------------------------------*/

@@ -59,16 +59,6 @@ typedef struct _filter_info_t
 }
 filter_info_t;
 /*----------------------------------------------------------------------------*/
-typedef struct _my1image_histogram_t
-{
-	int threshold; /* suggested threshold value? */
-	int maxindex, chkindex; /* find 2 highest peak */
-	int maxvalue, chkvalue;
-	int minvalue, minindex;
-	int count[GRAYLEVEL]; /* grayscale level count */
-}
-my1image_histogram_t;
-/*----------------------------------------------------------------------------*/
 /* mask management functions */
 int* image_mask_init(my1image_mask_t *mask, int size);
 void image_mask_free(my1image_mask_t *mask);
@@ -105,11 +95,6 @@ void filter_clean(my1image_filter_t* ppass); /* destroys all instances */
 my1image_filter_t* info_create_filter(filter_info_t* info);
 /* apply filter on image */
 my1image_t* image_filter(my1image_t* image, my1image_filter_t* pfilter);
-/* grayscale histogram utility */
-void image_get_histogram(my1image_t *image, my1image_histogram_t *hist);
-void image_smooth_histogram(my1image_t *image, my1image_histogram_t *hist);
-/* histogram threshold utility */
-void histogram_get_threshold(my1image_histogram_t *hist);
 /*----------------------------------------------------------------------------*/
 #endif
 /*----------------------------------------------------------------------------*/

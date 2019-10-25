@@ -1,6 +1,7 @@
 /*----------------------------------------------------------------------------*/
 #include "my1image_work.h"
 #include "my1image_crgb.h"
+#include "my1image_stat.h"
 /*----------------------------------------------------------------------------*/
 /* needed for sqrt in sobel */
 #include <math.h>

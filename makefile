@@ -2,14 +2,14 @@
 # - using libav & gtk for interfacing & display
 
 TESTIMG = my1image_test
+IMGFILE = my1image_file.o my1image_file_bmp.o
+IMGFILE += my1image_file_pnm.o my1image_file_png.o
 OBJSIMG = my1image.o my1image_util.o my1image_crgb.o my1image_view.o
-IMGFILE = my1image_file.o my1image_file_bmp.o my1image_file_pnm.o
-IMGFILE += my1image_file_png.o
-OBJSIMG += my1image_hist.o my1image_chsv.o $(IMGFILE)
+OBJSIMG += my1image_stat.o my1image_hist.o my1image_chsv.o $(IMGFILE)
 OBJSIMG += my1image_work.o my1image_data.o $(TESTIMG).o
 TESTVIS = my1video_test
 OBJSVIS = my1image.o my1image_util.o my1image_crgb.o my1image_view.o
-OBJSVIS += my1image_work.o $(IMGFILE)
+OBJSVIS += my1image_stat.o my1image_work.o $(IMGFILE)
 OBJSVIS += my1video.o my1video_main.o $(TESTVIS).o
 CHKSIZE = resizer
 CHKLOAD = imgload
@@ -35,7 +35,7 @@ debug: DFLAGS = -g -DMY1DEBUG
 
 main: image
 
-all: image video $(CHKSIZE) $(CHKLOAD) $(HSVTEST)
+all: image video $(TOOLLST)
 
 image: $(TESTIMG)
 
