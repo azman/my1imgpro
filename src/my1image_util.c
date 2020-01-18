@@ -337,9 +337,9 @@ my1image_filter_t* filter_clone(my1image_filter_t* ppass)
 		filter_init(that,ppass->filter,ppass->buffer);
 		strncpy(that->name,ppass->name,FILTER_NAMESIZE);
 		that->doinit = ppass->doinit;
+		that->dofree = ppass->dofree;
 		if (that->doinit)
 			that->doinit(that);
-		that->dofree = ppass->dofree;
 	}
 	return that;
 }
@@ -364,10 +364,10 @@ my1image_filter_t* info_create_filter(filter_info_t* info)
 	{
 		filter_init(that,info->filter,0x0);
 		strncpy(that->name,info->name,FILTER_NAMESIZE);
-		if (info->fsetup)
-			info->fsetup(that);
 		that->doinit = info->fsetup;
 		that->dofree = info->fclean;
+		if (that->doinit)
+			that->doinit(that);
 	}
 	return that;
 }

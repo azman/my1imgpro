@@ -8,7 +8,8 @@ This is a simple image processing library (meant to support work on vision
 @ video) that was written for personal use since 2006 (started as kimgpro).
 
 This software consists of several small modules:
-  * my1image      - basic image structure, pixel/image operations, color option
+  * my1image      - basic image structure, pixel/image operations
+  * my1image_crgb - my1image with rgb color option
   * my1image_chsv - functions to convert rgb<->hsv
   * my1image_file - file load/save functions (BMP & PNM only)
   * my1image_util - basic region/mask@filter/histogram structure & utility

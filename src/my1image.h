@@ -24,7 +24,7 @@ void image_fill(my1image_t *image, int value);
 int image_get_pixel(my1image_t *image, int row, int col); /* col(x),row(y) */
 void image_set_pixel(my1image_t *image, int row, int col, int pixel);
 int* image_row_data(my1image_t *image, int row);
-/* pixel operators */
+/* pixel operators - grayscale pixels only! */
 void image_limit(my1image_t *image);
 void image_invert(my1image_t *image);
 void image_absolute(my1image_t *image);
@@ -36,7 +36,7 @@ void image_shift(my1image_t *image, int value);
 void image_scale(my1image_t *image, float value);
 void image_normalize(my1image_t *image); /* get max-min value, rescale */
 /*----------------------------------------------------------------------------*/
-/* image functions */
+/* image functions - pan, rotate, flip, resize */
 void image_pan(my1image_t *image, my1image_t *check,
 	int shx, int shy, int vin); /* pan-x,pan-y,value-in */
 /*----------------------------------------------------------------------------*/

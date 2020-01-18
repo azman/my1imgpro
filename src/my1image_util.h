@@ -83,7 +83,7 @@ void buffer_swap(my1image_buffer_t* ibuff);
 void filter_init(my1image_filter_t* pfilter,
 	pfilter_t filter, my1image_buffer_t *buffer);
 void filter_free(my1image_filter_t* pfilter);
-/* SHOULD NOT be used if dynamic filters use next to create link list */
+/* SHOULD NOT be used if dynamic filters use {next} for linked list */
 void filter_unlink(my1image_filter_t* pfilter);
 my1image_filter_t* filter_insert(my1image_filter_t* pstack,
 	my1image_filter_t* pcheck);
