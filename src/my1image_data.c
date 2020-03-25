@@ -51,19 +51,17 @@ void image_data_draw(my1image_data_t* data)
 /*----------------------------------------------------------------------------*/
 void image_data_make(my1image_data_t* data, my1image_t* that)
 {
-	image_copy(data->work.curr,that);
-	data->image = data->work.curr;
+	image_copy(&data->currimage,that); /* keep original */
+	data->image = &data->currimage;
 	if (data->dosize)
 	{
 		if (data->image->width>data->maxw||data->image->height>data->maxh)
 		{
-			data->image = image_size_this(data->work.curr,data->work.next,
+			data->image = image_size_this(data->image,data->work.next,
 				data->maxh,data->maxw);
-			if (data->image!=data->work.curr)
-				buffer_swap(&data->work);
+			buffer_swap(&data->work);
 		}
 	}
-	image_copy(&data->currimage,data->image); /* keep original */
 	image_view_make(&data->view,data->image);
 	image_view_draw(&data->view,data->image);
 }
@@ -184,8 +182,8 @@ gboolean on_mouse_click(GtkWidget *widget, GdkEventButton *event, gpointer data)
 /*----------------------------------------------------------------------------*/
 void on_image_original(my1image_data_t *data)
 {
-	image_make(data->image,data->currimage.height,data->currimage.width);
-	image_copy(data->image,&data->currimage);
+	data->image = &data->currimage;
+	image_view_make(&data->view,data->image);
 	image_view_draw(&data->view,data->image);
 	image_view_stat_time(&data->view,"Original Image restored!",1);
 }
