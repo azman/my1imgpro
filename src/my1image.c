@@ -65,7 +65,7 @@ void image_set_pixel(my1image_t *image, int row, int col, int pixel)
 /*----------------------------------------------------------------------------*/
 int* image_row_data(my1image_t *image, int row)
 {
-	return &(image->data[row*image->width]);
+	return &image->data[row*image->width];
 }
 /*----------------------------------------------------------------------------*/
 void image_limit(my1image_t *image)
@@ -97,13 +97,13 @@ void image_absolute(my1image_t *image)
 	}
 }
 /*----------------------------------------------------------------------------*/
-void image_binary(my1image_t *image, int threshold)
+void image_binary(my1image_t *image, int threshold, int white)
 {
 	int loop, size = image->length;
 	for (loop=0;loop<size;loop++)
 	{
 		if (image->data[loop]>threshold)
-			image->data[loop] = WHITE;
+			image->data[loop] = white;
 		else
 			image->data[loop] = BLACK;
 	}
@@ -117,8 +117,6 @@ void image_range(my1image_t *image, int lothresh, int hithresh)
 		temp = image->data[loop];
 		if (temp>hithresh||temp<lothresh) /* black if out of range [lo,hi] */
 			image->data[loop] = BLACK;
-		else /* hilite in-range pixels */
-			image->data[loop] = WHITE;
 	}
 }
 /*----------------------------------------------------------------------------*/

@@ -2,9 +2,10 @@
 #ifndef __MY1IMAGEH__
 #define __MY1IMAGEH__
 /*----------------------------------------------------------------------------*/
-#define GRAYLEVEL 256 /* 8-bit grayscale */
-#define WHITE 255 /* 8-bit grayscale */
-#define BLACK 0 /* 8-bit grayscale */
+/* 8-bit graylevel */
+#define GRAYLEVEL 256
+#define WHITE 255
+#define BLACK 0
 /*----------------------------------------------------------------------------*/
 typedef struct _my1image_t
 {
@@ -28,7 +29,7 @@ int* image_row_data(my1image_t *image, int row);
 void image_limit(my1image_t *image);
 void image_invert(my1image_t *image);
 void image_absolute(my1image_t *image);
-void image_binary(my1image_t *image, int threshold);
+void image_binary(my1image_t *image, int threshold, int white);
 void image_range(my1image_t *image, int lothresh, int hithresh);
 void image_cliphi(my1image_t *image, int hithresh);
 void image_cliplo(my1image_t *image, int lothresh);
