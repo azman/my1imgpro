@@ -31,11 +31,11 @@ int morph_hit(my1image_scan_t* scan,  int *elem)
 	return 0; /* no hit */
 }
 /*----------------------------------------------------------------------------*/
-void image_erode(my1image_t *img, my1image_t *res, int* elem);
+void image_erode(my1image_t *img, my1image_t *res, int* elem)
 {
 	my1image_scan_t scan;
 	image_make(res,img->height,img->width);
-	scan_init(&scan,img->data,img->rows,img->cols,MY1IMAGE_SCAN_SKIP);
+	scan_init(&scan,img->data,img->height,img->width,MY1IMAGE_SCAN_SKIP);
 	scan_prep(&scan);
 	while (scan_next(&scan))
 	{
@@ -44,11 +44,11 @@ void image_erode(my1image_t *img, my1image_t *res, int* elem);
 	}
 }
 /*----------------------------------------------------------------------------*/
-void image_dilate(my1image_t *img, my1image_t *res, int* elem);
+void image_dilate(my1image_t *img, my1image_t *res, int* elem)
 {
 	my1image_scan_t scan;
 	image_make(res,img->height,img->width);
-	scan_init(&scan,img->data,img->rows,img->cols,MY1IMAGE_SCAN_SKIP);
+	scan_init(&scan,img->data,img->height,img->width,MY1IMAGE_SCAN_SKIP);
 	scan_prep(&scan);
 	while (scan_next(&scan))
 	{
