@@ -57,3 +57,22 @@ void image_dilate(my1image_t *img, my1image_t *res, int* elem)
 	}
 }
 /*----------------------------------------------------------------------------*/
+void image_opening(my1image_t *img, my1image_t *res, int* elem)
+{
+	my1image_t temp;
+	image_init(&temp)
+	image_erode(img,&temp,elem);
+	image_dilate(&temp,res,elem);
+	image_free(&temp);
+}
+/*----------------------------------------------------------------------------*/
+void image_closing(my1image_t *img, my1image_t *res, int* elem)
+{
+	my1image_t temp;
+	image_init(&temp)
+	/** actually needs a rotated 180deg structuring element */
+	image_dilate(img,&temp,elem);
+	image_erode(&temp,res,elem);
+	image_free(&temp);
+}
+/*----------------------------------------------------------------------------*/

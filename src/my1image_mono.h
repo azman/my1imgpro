@@ -14,6 +14,8 @@
 /*----------------------------------------------------------------------------*/
 void image_erode(my1image_t *img, my1image_t *res, int* elem);
 void image_dilate(my1image_t *img, my1image_t *res, int* elem);
+void image_opening(my1image_t *img, my1image_t *res, int* elem);
+void image_closing(my1image_t *img, my1image_t *res, int* elem);
 /*----------------------------------------------------------------------------*/
 #endif
 /*----------------------------------------------------------------------------*/
