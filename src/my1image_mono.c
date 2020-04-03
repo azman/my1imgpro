@@ -36,8 +36,8 @@ int morph_hit(my1image_scan_t* scan,  int *elem)
 void image_erode(my1image_t *img, my1image_t *res, int* elem)
 {
 	my1image_scan_t scan;
-	image_make(res,img->height,img->width);
-	scan_init(&scan,img->data,img->height,img->width,MY1IMAGE_SCAN_SKIP);
+	image_make(res,img->rows,img->cols);
+	scan_init(&scan,img->data,img->rows,img->cols,MY1IMAGE_SCAN_SKIP);
 	scan_prep(&scan);
 	while (scan_next(&scan))
 	{
@@ -49,8 +49,8 @@ void image_erode(my1image_t *img, my1image_t *res, int* elem)
 void image_dilate(my1image_t *img, my1image_t *res, int* elem)
 {
 	my1image_scan_t scan;
-	image_make(res,img->height,img->width);
-	scan_init(&scan,img->data,img->height,img->width,MY1IMAGE_SCAN_SKIP);
+	image_make(res,img->rows,img->cols);
+	scan_init(&scan,img->data,img->rows,img->cols,MY1IMAGE_SCAN_SKIP);
 	scan_prep(&scan);
 	while (scan_next(&scan))
 	{
@@ -62,7 +62,7 @@ void image_dilate(my1image_t *img, my1image_t *res, int* elem)
 void image_opening(my1image_t *img, my1image_t *res, int* elem)
 {
 	my1image_t temp;
-	image_init(&temp)
+	image_init(&temp);
 	image_erode(img,&temp,elem);
 	image_dilate(&temp,res,elem);
 	image_free(&temp);
@@ -71,7 +71,7 @@ void image_opening(my1image_t *img, my1image_t *res, int* elem)
 void image_closing(my1image_t *img, my1image_t *res, int* elem)
 {
 	my1image_t temp;
-	image_init(&temp)
+	image_init(&temp);
 	/** actually needs a rotated 180deg structuring element */
 	image_dilate(img,&temp,elem);
 	image_erode(&temp,res,elem);
