@@ -2,31 +2,7 @@
 #ifndef __MY1IMAGE_UTILH__
 #define __MY1IMAGE_UTILH__
 /*----------------------------------------------------------------------------*/
-#include "my1image.h"
-/*----------------------------------------------------------------------------*/
-typedef struct _my1image_mask_t
-{
-	int size; /* square mask - should be odd number */
-	int length; /* memory is cheap - precalculate this! */
-	int origin; /* origin for mask placement - always size/2 */
-	int *factor;
-}
-my1image_mask_t;
-/*----------------------------------------------------------------------------*/
-typedef struct _my1image_area_t
-{
-	int xset, yset;
-	int width, height;
-}
-my1image_area_t;
-/*----------------------------------------------------------------------------*/
-typedef struct _my1image_buffer_t
-{
-	/* double buffer image - with region! */
-	my1image_area_t region;
-	my1image_t main, buff, xtra, *curr, *next, *temp;
-}
-my1image_buffer_t;
+#include "my1image_buff.h"
 /*----------------------------------------------------------------------------*/
 #define FILTER_NAMESIZE 80
 /*----------------------------------------------------------------------------*/
@@ -50,6 +26,17 @@ typedef struct _my1image_filter_t
 }
 my1image_filter_t;
 /*----------------------------------------------------------------------------*/
+typedef my1image_filter_t my1ifilter_t;
+/*----------------------------------------------------------------------------*/
+void filter_init(my1ifilter_t* pass, pfilter_t filter, my1ibuffer_t *buff);
+void filter_free(my1ifilter_t* pass);
+void filter_free_clones(my1ifilter_t* pass);
+my1ifilter_t* filter_insert(my1ifilter_t* pass, my1ifilter_t* next);
+my1ifilter_t* filter_search(my1ifilter_t* pass, char *name);
+my1ifilter_t* filter_cloned(my1ifilter_t* pass);
+/* apply filter on image */
+my1image_t* image_filter(my1image_t* data, my1ifilter_t* pass);
+/*----------------------------------------------------------------------------*/
 typedef struct _filter_info_t
 {
 	char name[FILTER_NAMESIZE];
@@ -59,42 +46,8 @@ typedef struct _filter_info_t
 }
 filter_info_t;
 /*----------------------------------------------------------------------------*/
-/* mask management functions */
-int* image_mask_init(my1image_mask_t *mask, int size);
-void image_mask_free(my1image_mask_t *mask);
-void image_mask_make(my1image_mask_t *mask, int size, int *pval);
-/* linear filter : cross-correlation & convolution */
-void image_correlation(my1image_t *img, my1image_t *res, my1image_mask_t *mask);
-void image_convolution(my1image_t *img, my1image_t *res, my1image_mask_t *mask);
-/* region@sub-image management functions */
-void image_get_area(my1image_t *img, my1image_t *sub, my1image_area_t *reg);
-void image_set_area(my1image_t *img, my1image_t *sub, my1image_area_t *reg);
-void image_area_init(my1image_area_t *reg);
-void image_area_make(my1image_area_t *reg, int y, int x, int h, int w);
-void image_area_select(my1image_t *img, my1image_area_t *reg, int val, int inv);
-void image_size_aspect(my1image_t *img, my1image_area_t *reg);
-/* double buffered image for processing */
-void buffer_init(my1image_buffer_t* ibuff);
-void buffer_free(my1image_buffer_t* ibuff);
-void buffer_size(my1image_buffer_t* ibuff, int height, int width);
-void buffer_size_all(my1image_buffer_t* ibuff, int height, int width);
-void buffer_swap(my1image_buffer_t* ibuff);
-/* generic filter */
-void filter_init(my1image_filter_t* pfilter,
-	pfilter_t filter, my1image_buffer_t *buffer);
-void filter_free(my1image_filter_t* pfilter);
-/* SHOULD NOT be used if dynamic filters use {next} for linked list */
-void filter_unlink(my1image_filter_t* pfilter);
-my1image_filter_t* filter_insert(my1image_filter_t* pstack,
-	my1image_filter_t* pcheck);
-my1image_filter_t* filter_search(my1image_filter_t* ppass, char *name);
-/* allow filters to be on heap (dynamic allocation) */
-my1image_filter_t* filter_clone(my1image_filter_t* ppass);
-void filter_clean(my1image_filter_t* ppass); /* destroys all instances */
 /* malloc'ed filter structure */
-my1image_filter_t* info_create_filter(filter_info_t* info);
-/* apply filter on image */
-my1image_t* image_filter(my1image_t* image, my1image_filter_t* pfilter);
+my1ifilter_t* info_create_filter(filter_info_t* info);
 /*----------------------------------------------------------------------------*/
-#endif
+#endif /** __MY1IMAGE_UTILH__ */
 /*----------------------------------------------------------------------------*/

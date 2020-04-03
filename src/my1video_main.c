@@ -15,7 +15,7 @@ void image_get_frame(my1image_t* image, AVFrame* frame)
 {
 	int index,count;
 	my1rgb_t temp, *pdat;
-	for (index=0,count=0;index<image->length;index++)
+	for (index=0,count=0;index<image->size;index++)
 	{
 		if (image->mask)
 		{
@@ -38,7 +38,7 @@ void image_set_frame(my1image_t* image, AVFrame* frame)
 	int index, count, *pdat;
 	my1rgb_t temp;
 	temp.a = 0; /* alpha always zero? */
-	for (index=0,count=0;index<image->length;index++)
+	for (index=0,count=0;index<image->size;index++)
 	{
 		temp.b = frame->data[0][count++];
 		temp.g = frame->data[0][count++];
@@ -400,7 +400,7 @@ void display_init(my1video_display_t* vview, my1video_t* video)
 	vview->chkinput = 0x0;
 	vview->chkinput_data = 0x0;
 	vview->video = video;
-	image_view_init(&vview->view);
+	image_appw_init(&vview->appw);
 	video->display = (void*) vview;
 }
 /*----------------------------------------------------------------------------*/
@@ -410,7 +410,7 @@ void display_free(my1video_display_t* vview)
 		g_source_remove(vview->timer);
 	if (vview->pixbuf)
 		g_object_unref(vview->pixbuf);
-	image_view_free(&vview->view);
+	image_appw_free(&vview->appw);
 }
 /*----------------------------------------------------------------------------*/
 gint on_display_key_press(GtkWidget *widget, GdkEventKey *kevent, gpointer data)
@@ -438,14 +438,14 @@ void video_main_check_input(void* data)
 {
 	my1vview_t* vview = (my1vview_t*) data;
 	my1vmain_t* vmain = (my1vmain_t*) vview->chkinput_data;
-	GtkWidget* menu = (GtkWidget*) vmain->vview.view.domenu;
+	GtkWidget* menu = (GtkWidget*) vmain->vview.appw.domenu;
 	if (!menu) return;
 	switch ((guint)vview->inkey)
 	{
 		case GDK_KEY_Return:
 			video_hold(&vmain->video,1);
-			gtk_menu_popup(GTK_MENU(vview->view.domenu),0x0,0x0,
-				&vmain_set_menu_position,(gpointer)vview->view.window,0x0,0x0);
+			gtk_menu_popup(GTK_MENU(vview->appw.domenu),0x0,0x0,
+				&vmain_set_menu_position,(gpointer)vview->appw.window,0x0,0x0);
 			vview->inkey = 0;
 			break;
 	}
@@ -461,7 +461,7 @@ gboolean on_vmain_mouse_click(GtkWidget *widget,
 		my1vmain_t *vmain = (my1vmain_t*) data;
 		if (event->button==RIGHT_CLICK)
 		{
-			GtkWidget* menu = (GtkWidget*) vmain->vview.view.domenu;
+			GtkWidget* menu = (GtkWidget*) vmain->vview.appw.domenu;
 			if (!menu) return FALSE;
 			video_hold(&vmain->video,1);
 			gtk_menu_popup(GTK_MENU(menu),0x0,0x0,0x0,0x0,
@@ -480,7 +480,7 @@ void on_vmain_filter_clear(my1video_main_t *vmain, GtkMenuItem *menu_item)
 void on_vmain_load_filter(my1vmain_t* vmain)
 {
 	GtkWidget *doopen = gtk_file_chooser_dialog_new("Open Filter List",
-		GTK_WINDOW(vmain->vview.view.window),GTK_FILE_CHOOSER_ACTION_OPEN,
+		GTK_WINDOW(vmain->vview.appw.window),GTK_FILE_CHOOSER_ACTION_OPEN,
 		GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
 		GTK_STOCK_OPEN, GTK_RESPONSE_ACCEPT, NULL);
 	if (gtk_dialog_run(GTK_DIALOG(doopen))==GTK_RESPONSE_ACCEPT)
@@ -513,7 +513,7 @@ void on_vmain_load_filter(my1vmain_t* vmain)
 		}
 		else
 			buff = g_strdup_printf("[ERROR] Cannot load '%s'!",filename);
-		image_view_stat_time(&vmain->vview.view,(char*)buff,5);
+		image_appw_stat_time(&vmain->vview.appw,(char*)buff,5);
 		g_free(buff);
 		g_free(filename);
 	}
@@ -580,12 +580,12 @@ void on_vmain_filter_toggle(my1video_main_t *vmain, GtkMenuItem *menu_item)
 	if (video->flags&VIDEO_FLAG_NO_FILTER)
 	{
 		video_skip_filter(video,0);
-		image_view_stat_time(&vview->view,"Filter ON",MESG_SHOWTIME);
+		image_appw_stat_time(&vview->appw,"Filter ON",MESG_SHOWTIME);
 	}
 	else
 	{
 		video_skip_filter(video,1);
-		image_view_stat_time(&vview->view,"Filter OFF",MESG_SHOWTIME);
+		image_appw_stat_time(&vview->appw,"Filter OFF",MESG_SHOWTIME);
 	}
 	gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(menu_item),
 		video->flags&VIDEO_FLAG_NO_FILTER?FALSE:TRUE);
@@ -595,7 +595,7 @@ void display_make(my1video_display_t* vview)
 {
 	/* must have image frame */
 	if (!vview->video||!vview->video->frame) return;
-	image_view_make(&vview->view,vview->video->frame);
+	image_appw_make(&vview->appw,vview->video->frame);
 }
 /*----------------------------------------------------------------------------*/
 gboolean on_display_timer(gpointer data)
@@ -615,19 +615,19 @@ gboolean on_display_timer(gpointer data)
 		display_draw(vview);
 	}
 	if (keyval == GDK_KEY_Escape||
-		keyval == GDK_KEY_q || vview->view.doquit)
+		keyval == GDK_KEY_q || vview->appw.doquit)
 	{
 		gtk_main_quit();
 	}
 	else if (keyval == GDK_KEY_c)
 	{
 		video_play(video);
-		image_view_stat_time(&vview->view,"Play",MESG_SHOWTIME);
+		image_appw_stat_time(&vview->appw,"Play",MESG_SHOWTIME);
 	}
 	else if (keyval == GDK_KEY_s)
 	{
 		video_stop(video);
-		image_view_stat_time(&vview->view,"Stop",MESG_SHOWTIME);
+		image_appw_stat_time(&vview->appw,"Stop",MESG_SHOWTIME);
 	}
 	else if (keyval == GDK_KEY_space)
 	{
@@ -636,31 +636,31 @@ gboolean on_display_timer(gpointer data)
 			if (video->flags&VIDEO_FLAG_IS_PAUSED)
 			{
 				video_hold(video,0);
-				image_view_stat_time(&vview->view,"Play",MESG_SHOWTIME);
+				image_appw_stat_time(&vview->appw,"Play",MESG_SHOWTIME);
 			}
 			else
 			{
 				video_hold(video,1);
-				image_view_stat_time(&vview->view,"Paused",MESG_SHOWTIME);
+				image_appw_stat_time(&vview->appw,"Paused",MESG_SHOWTIME);
 			}
 		}
 	}
 	else if (keyval == GDK_KEY_f)
 	{
 		video_next_frame(video);
-		image_view_stat_time(&vview->view,"Next",MESG_SHOWTIME);
+		image_appw_stat_time(&vview->appw,"Next",MESG_SHOWTIME);
 	}
 	else if (keyval == GDK_KEY_b)
 	{
 		if (video->count<0)
 		{
-			image_view_stat_time(&vview->view,
+			image_appw_stat_time(&vview->appw,
 				"Not during live feed!",MESG_SHOWTIME);
 		}
 		else
 		{
 			video_prev_frame(video);
-			image_view_stat_time(&vview->view,"Previous",MESG_SHOWTIME);
+			image_appw_stat_time(&vview->appw,"Previous",MESG_SHOWTIME);
 		}
 	}
 	else if (keyval == GDK_KEY_l)
@@ -668,12 +668,12 @@ gboolean on_display_timer(gpointer data)
 		if (video->flags&VIDEO_FLAG_LOOP)
 		{
 			video_loop(video,0);
-			image_view_stat_time(&vview->view,"Looping OFF",MESG_SHOWTIME);
+			image_appw_stat_time(&vview->appw,"Looping OFF",MESG_SHOWTIME);
 		}
 		else
 		{
 			video_loop(video,1);
-			image_view_stat_time(&vview->view,"Looping ON",MESG_SHOWTIME);
+			image_appw_stat_time(&vview->appw,"Looping ON",MESG_SHOWTIME);
 		}
 	}
 	else if (keyval == GDK_KEY_g)
@@ -683,7 +683,7 @@ gboolean on_display_timer(gpointer data)
 		video_stop(video);
 		/* create save dialog */
 		dosave = gtk_file_chooser_dialog_new("Save Image File",
-			GTK_WINDOW(vview->view.window),GTK_FILE_CHOOSER_ACTION_SAVE,
+			GTK_WINDOW(vview->appw.window),GTK_FILE_CHOOSER_ACTION_SAVE,
 			GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
 			GTK_STOCK_SAVE, GTK_RESPONSE_ACCEPT, NULL);
 		gtk_file_chooser_set_do_overwrite_confirmation(GTK_FILE_CHOOSER(dosave),
@@ -694,9 +694,9 @@ gboolean on_display_timer(gpointer data)
 			gchar *filename;
 			filename = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(dosave));
 			if (image_save(video->frame,filename))
-				image_view_stat_time(&vview->view,"Grab failed!",MESG_SHOWTIME);
+				image_appw_stat_time(&vview->appw,"Grab failed!",MESG_SHOWTIME);
 			else
-				image_view_stat_time(&vview->view,"Frame saved!",MESG_SHOWTIME);
+				image_appw_stat_time(&vview->appw,"Frame saved!",MESG_SHOWTIME);
 			g_free(filename);
 		}
 		gtk_widget_destroy(dosave);
@@ -706,12 +706,12 @@ gboolean on_display_timer(gpointer data)
 		if (video->flags&VIDEO_FLAG_NO_FILTER)
 		{
 			video_skip_filter(video,0);
-			image_view_stat_time(&vview->view,"Filter ON",MESG_SHOWTIME);
+			image_appw_stat_time(&vview->appw,"Filter ON",MESG_SHOWTIME);
 		}
 		else
 		{
 			video_skip_filter(video,1);
-			image_view_stat_time(&vview->view,"Filter OFF",MESG_SHOWTIME);
+			image_appw_stat_time(&vview->appw,"Filter OFF",MESG_SHOWTIME);
 		}
 	}
 	else if (keyval)
@@ -738,15 +738,14 @@ void display_draw(my1video_display_t* vview)
 {
 	/* must have image frame */
 	if (!vview->video||!vview->video->frame) return;
-	image_view_make(&vview->view,vview->video->frame);
-	image_view_draw(&vview->view,vview->video->frame);
+	image_appw_draw(&vview->appw,vview->video->frame);
 }
 /*----------------------------------------------------------------------------*/
 void display_name(my1video_display_t* vview,const char *name,const char *icon)
 {
 	if (!vview->video) return;
 	/* set title */
-	image_view_name(&vview->view,name);
+	image_appw_name(&vview->appw,name);
 	/* remove existing pixbuf */
 	if (vview->pixbuf)
 		g_object_unref(vview->pixbuf);
@@ -755,7 +754,7 @@ void display_name(my1video_display_t* vview,const char *name,const char *icon)
 	{
 		vview->pixbuf = gdk_pixbuf_new_from_file(icon,0x0);
 		if (vview->pixbuf)
-			gtk_window_set_icon(GTK_WINDOW(vview->view.window),vview->pixbuf);
+			gtk_window_set_icon(GTK_WINDOW(vview->appw.window),vview->pixbuf);
 	}
 }
 /*----------------------------------------------------------------------------*/
@@ -771,8 +770,8 @@ void video_main_init(my1vmain_t* vmain)
 	vmain->grabber = 0x0;
 	vmain->grabber_data = 0x0;
 	/* pointers to functions and data */
-	vmain->vview.view.draw_more = &video_main_draw_index;
-	vmain->vview.view.draw_more_data = (void*) vmain;
+	vmain->vview.appw.view.draw_more = &video_main_draw_index;
+	vmain->vview.appw.view.draw_more_data = (void*) vmain;
 	vmain->vview.chkinput = &video_main_check_input;
 	vmain->vview.chkinput_data = (void*) vmain;
 }
@@ -782,7 +781,7 @@ void video_main_free(my1vmain_t* vmain)
 	/* using dynamically created filters */
 	video_main_pass_done(vmain);
 	if (vmain->plist)
-		filter_clean(vmain->plist);
+		filter_free_clones(vmain->plist);
 	display_free(&vmain->vview);
 	capture_free(&vmain->vgrab);
 	video_free(&vmain->video);
@@ -819,7 +818,7 @@ void video_main_prepare(my1vmain_t* vmain)
 	GtkWidget *menu_main, *menu_item, *menu_subs, *menu_temp;
 	my1image_filter_t *temp;
 	/* in case already assigned */
-	if (vmain->vview.view.domenu) return;
+	if (vmain->vview.appw.domenu) return;
 	/* create popup menu for canvas */
 	menu_main = gtk_menu_new();
 	/* sub menu? - LIST ALL AVAILABLE FILTERS? */
@@ -872,15 +871,15 @@ void video_main_prepare(my1vmain_t* vmain)
 		G_CALLBACK(gtk_main_quit),0x0);
 	gtk_widget_show(menu_item);
 	/* save that menu */
-	vmain->vview.view.domenu = menu_main;
+	vmain->vview.appw.domenu = menu_main;
 	/* show it! */
-	gtk_widget_show(vmain->vview.view.domenu);
+	gtk_widget_show(vmain->vview.appw.domenu);
 	/* setup gtk signal handler(s) */
-	g_signal_connect(G_OBJECT(vmain->vview.view.window),"key_press_event",
+	g_signal_connect(G_OBJECT(vmain->vview.appw.window),"key_press_event",
 		G_CALLBACK(on_display_key_press),(gpointer)vmain->vview.video);
-	g_signal_connect(G_OBJECT(vmain->vview.view.canvas),"button-press-event",
-		G_CALLBACK(on_vmain_mouse_click),(gpointer)vmain);
-	gtk_widget_add_events(vmain->vview.view.canvas, GDK_BUTTON_PRESS_MASK);
+	g_signal_connect(G_OBJECT(vmain->vview.appw.view.canvas),
+		"button-press-event",G_CALLBACK(on_vmain_mouse_click),(gpointer)vmain);
+	gtk_widget_add_events(vmain->vview.appw.view.canvas,GDK_BUTTON_PRESS_MASK);
 }
 /*----------------------------------------------------------------------------*/
 void video_main_draw_index(void* data)
@@ -918,14 +917,14 @@ void video_main_pass_load(my1vmain_t* vmain, char* name)
 	my1vpass_t *ipass, *tpass = 0x0;
 	if (!vmain->plist) return;
 	ipass = filter_search(vmain->plist,name);
-	if (ipass) tpass = filter_clone(ipass);
+	if (ipass) tpass = filter_cloned(ipass);
 	if (tpass) video_filter_insert(&vmain->video,tpass);
 }
 /*----------------------------------------------------------------------------*/
 void video_main_pass_done(my1vmain_t* vmain)
 {
 	if (!vmain->video.ppass) return;
-	filter_clean(vmain->video.ppass);
+	filter_free_clones(vmain->video.ppass);
 	vmain->video.ppass = 0x0;
 }
 /*----------------------------------------------------------------------------*/

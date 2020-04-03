@@ -2,15 +2,18 @@
 # - using libav & gtk for interfacing & display
 
 TESTIMG = my1image_test
+IMGBASE = my1image_base.o my1image_gray.o my1image_crgb.o my1image_chsv.o
 IMGFILE = my1image_file.o my1image_file_bmp.o
 IMGFILE += my1image_file_pnm.o my1image_file_png.o
-OBJSIMG = my1image.o my1image_util.o my1image_crgb.o my1image_view.o
-OBJSIMG += my1image_stat.o my1image_hist.o my1image_chsv.o $(IMGFILE)
-OBJSIMG += my1image_work.o my1image_data.o $(TESTIMG).o
+IMGUTIL = my1image_mask.o my1image_area.o my1image_buff.o my1image_util.o
+IMGWORK = my1image_stat.o my1image_work.o
+IMGAPPW = my1image_view.o my1image_appw.o my1image_hist.o my1image_data.o
+OBJSIMG = $(IMGBASE) $(IMGFILE) $(IMGUTIL) $(IMGWORK) $(IMGAPPW)
+OBJSIMG += $(TESTIMG).o
 TESTVIS = my1video_test
-OBJSVIS = my1image.o my1image_util.o my1image_crgb.o my1image_view.o
-OBJSVIS += my1image_stat.o my1image_work.o $(IMGFILE)
-OBJSVIS += my1video.o my1video_main.o $(TESTVIS).o
+OBJSVIS = $(IMGBASE) $(IMGFILE) $(IMGUTIL) $(IMGWORK)
+OBJSVIS += my1image_view.o my1image_appw.o my1video.o my1video_main.o
+OBJSVIS += $(TESTVIS).o
 CHKSIZE = resizer
 CHKLOAD = imgload
 HSVTEST = testhsv
@@ -29,11 +32,19 @@ CC = gcc -c
 LD = gcc
 
 ifeq ($(DO_DEBUG),YES)
-	DFLAGS = -g -DMY1DEBUG
+	DFLAGS += -g -DMY1DEBUG
 endif
-debug: DFLAGS = -g -DMY1DEBUG
+
+#test: DFLAGS += -D__MYIMAGE_NO_HSV__ -D__MYIMAGE_NO_FILE__
+test: DFLAGS += -D__MYIMAGE_FILE_PNG__ -D__MYIMAGE_WORK__
+test: DFLAGS += -D__MYIMAGE_VIEW__ -D__MYIMAGE_APPW__
+
+.PHONY: main test all image video new debug clean
 
 main: image
+
+test: my1image.o chkimage.o
+	$(LD) $(CFLAGS) $(DFLAGS) -o $(TESTIMG) $+ $(LFLAGS) $(GFLAGS)
 
 all: image video $(TOOLLST)
 
@@ -45,13 +56,13 @@ new: clean main
 
 debug: new
 
-$(CHKSIZE): my1image.o my1image_crgb.o $(IMGFILE) my1image_resize.o
+$(CHKSIZE): $(IMGBASE) $(IMGFILE) my1image_resize.o
 	$(LD) $(CFLAGS) $(DFLAGS) -o $@ $+ $(LFLAGS) $(GFLAGS)
 
-$(CHKLOAD): my1image.o my1image_crgb.o $(IMGFILE) my1image_loader.o
+$(CHKLOAD): $(IMGBASE) $(IMGFILE) my1image_loader.o
 	$(LD) $(CFLAGS) $(DFLAGS) -o $@ $+ $(LFLAGS) $(GFLAGS)
 
-$(HSVTEST): my1image.o my1image_chsv.o my1image_testhsv.o
+$(HSVTEST): $(IMGBASE) my1image_testhsv.o
 	$(LD) $(CFLAGS) $(DFLAGS) -o $@ $+ $(LFLAGS) $(GFLAGS)
 
 ${TESTIMG}: $(OBJSIMG)

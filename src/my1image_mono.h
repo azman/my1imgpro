@@ -2,7 +2,7 @@
 #ifndef __MY1IMAGE_MONOH__
 #define __MY1IMAGE_MONOH__
 /*----------------------------------------------------------------------------*/
-#include "my1image.h"
+#include "my1image_base.h"
 /*----------------------------------------------------------------------------*/
 /**
  * structuring element is always 3x3 with center origin
@@ -17,5 +17,5 @@ void image_dilate(my1image_t *img, my1image_t *res, int* elem);
 void image_opening(my1image_t *img, my1image_t *res, int* elem);
 void image_closing(my1image_t *img, my1image_t *res, int* elem);
 /*----------------------------------------------------------------------------*/
-#endif
+#endif /** __MY1IMAGE_MONOH__ */
 /*----------------------------------------------------------------------------*/

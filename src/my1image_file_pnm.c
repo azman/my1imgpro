@@ -1,8 +1,9 @@
 /*----------------------------------------------------------------------------*/
+#ifndef __MY1IMAGE_FILE_PNMC__
+#define __MY1IMAGE_FILE_PNMC__
+/*----------------------------------------------------------------------------*/
 #include "my1image_file_pnm.h"
 #include "my1image_crgb.h"
-/*----------------------------------------------------------------------------*/
-//#include <string.h> /** image_write needs string functions */
 /*----------------------------------------------------------------------------*/
 #define PNM_MAGIC_CHAR 2
 #define PNM_MAGIC_SIZE (PNM_MAGIC_CHAR+1)
@@ -49,7 +50,7 @@ int image_load_pnm(my1image_t *image, FILE *pnmfile)
 		else ungetc(buff,pnmfile);
 	} while (buff=='#');
 	/** read in the pixels - depending on version (validated as 1-3)! */
-	size = image->length;
+	size = image->size;
 	switch (version)
 	{
 		case 3:
@@ -119,15 +120,15 @@ int image_save_pnm(my1image_t *image, FILE* pnmfile)
 	/* write comment? */
 	fprintf(pnmfile,"# Written by my1imgpro library\n");
 	/* write size */
-	fprintf(pnmfile,"%d %d\n",image->width,image->height);
+	fprintf(pnmfile,"%d %d\n",image->cols,image->rows);
 	/* write max value - ALWAYS 8-bit {gray,color} max value */
 	fprintf(pnmfile,"255\n");
 #ifdef MY1DEBUG
 	printf("Version: %d, ",version);
-	printf("Image width: %d, height: %d\n",image->width,image->height);
+	printf("Image width: %d, height: %d\n",image->cols,image->rows);
 #endif
 	/* write data! */
-	for (loop=0,next=0;loop<image->length;loop++)
+	for (loop=0,next=0;loop<image->size;loop++)
 	{
 		buff = image->data[loop];
 		if (image->mask==IMASK_COLOR)
@@ -140,7 +141,7 @@ int image_save_pnm(my1image_t *image, FILE* pnmfile)
 			fprintf(pnmfile,"%d ",buff);
 		}
 		/* newline for every row */
-		if (++next==image->width)
+		if (++next==image->cols)
 		{
 			next = 0;
 			fprintf(pnmfile,"\n");
@@ -148,4 +149,6 @@ int image_save_pnm(my1image_t *image, FILE* pnmfile)
 	}
 	return FILE_OK;
 }
+/*----------------------------------------------------------------------------*/
+#endif /** __MY1IMAGE_FILE_PNMC__ */
 /*----------------------------------------------------------------------------*/

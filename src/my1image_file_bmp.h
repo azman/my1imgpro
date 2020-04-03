@@ -15,5 +15,5 @@
 int image_load_bmp(my1image_t *image, FILE *bmpfile);
 int image_save_bmp(my1image_t *image, FILE *bmpfile);
 /*----------------------------------------------------------------------------*/
-#endif
+#endif /** __MY1IMAGE_FILE_BMPH__ */
 /*----------------------------------------------------------------------------*/

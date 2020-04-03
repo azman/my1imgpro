@@ -1,6 +1,8 @@
 /*----------------------------------------------------------------------------*/
-#include "my1image_mono.h"
+#ifndef __MY1IMAGE_MONOC__
+#define __MY1IMAGE_MONOC__
 /*----------------------------------------------------------------------------*/
+#include "my1image_mono.h"
 #include "my1image_scan.h"
 /*----------------------------------------------------------------------------*/
 int morph_fit(my1image_scan_t* scan,  int *elem)
@@ -75,4 +77,6 @@ void image_closing(my1image_t *img, my1image_t *res, int* elem)
 	image_erode(&temp,res,elem);
 	image_free(&temp);
 }
+/*----------------------------------------------------------------------------*/
+#endif /** __MY1IMAGE_MONOC__ */
 /*----------------------------------------------------------------------------*/

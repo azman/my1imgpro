@@ -6,7 +6,7 @@
 #include "my1image_work.h"
 /*----------------------------------------------------------------------------*/
 #include <libavformat/avformat.h>
-#include "my1image_view.h"
+#include "my1image_appw.h"
 /*----------------------------------------------------------------------------*/
 typedef struct SwsContext AVswsContext;
 /*----------------------------------------------------------------------------*/
@@ -51,7 +51,7 @@ typedef struct _my1video_display_t
 	pchkinput chkinput;
 	void* chkinput_data;
 	my1video_t *video; /* pure pointer to video object */
-	my1image_view_t view;
+	my1image_appw_t appw;
 }
 my1video_display_t;
 /*----------------------------------------------------------------------------*/

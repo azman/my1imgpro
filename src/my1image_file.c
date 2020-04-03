@@ -1,7 +1,9 @@
 /*----------------------------------------------------------------------------*/
+#ifndef __MY1IMAGE_FILEC__
+#define __MY1IMAGE_FILEC__
+/*----------------------------------------------------------------------------*/
 #include "my1image_file.h"
 /*----------------------------------------------------------------------------*/
-#include <stdio.h> /** for file access */
 #include <string.h> /** image_write needs string functions */
 /*----------------------------------------------------------------------------*/
 #include "my1image_file_bmp.h"
@@ -74,18 +76,20 @@ int image_cdat(my1image_t* image, char *pfilename)
 	int loop;
 	FILE *cfile = fopen(pfilename,"wt");
 	if(!cfile) return FILE_ERROR_OPEN; /* cannot open file */
-	fprintf(cfile,"unsigned char image[%d] = {",image->length);
+	fprintf(cfile,"unsigned char image[%d] = {",image->size);
 	/* write data! */
-	for (loop=0;loop<image->length;loop++)
+	for (loop=0;loop<image->size;loop++)
 	{
 		if (loop%16==0)
 			fprintf(cfile,"\n");
 		fprintf(cfile,"0x%02X",image->data[loop]);
-		if (loop<image->length-1)
+		if (loop<image->size-1)
 			fprintf(cfile,",");
 	}
 	fprintf(cfile,"};");
 	fclose(cfile);
 	return 0;
 }
+/*----------------------------------------------------------------------------*/
+#endif /** __MY1IMAGE_FILEC__ */
 /*----------------------------------------------------------------------------*/

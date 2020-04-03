@@ -8,23 +8,41 @@ This is a simple image processing library (meant to support work on vision
 @ video) that was written for personal use since 2006 (started as kimgpro).
 
 This software consists of several small modules:
-  * my1image      - basic image structure, pixel/image operations
-  * my1image_crgb - my1image with rgb color option
-  * my1image_chsv - functions to convert rgb<->hsv
-  * my1image_file - file load/save functions (BMP & PNM only)
-  * my1image_util - basic region/mask@filter/histogram structure & utility
-  * my1image_math - math-related function(s), matrix structure & operations
-  * my1image_work - sample image processing filters
-  * my1image_view - image viewer library using gtk
-  * my1image_hist - histogram view for my1image_view
-  * my1image_data - modular image application structure
-  * my1image_test - main test program for my1image & friends
-  * my1video      - video structure based on basic image structure
-  * my1video_main - sample video processing flow (using libav & my1image_view)
-  * my1video_test - main test program for my1video & friends
+- my1image_base : basic my1image_t structure with management ops
+- my1image_gray : grayscale ops plus some basic functions (flip,turn,etc.)
+- my1image_crgb : rgb color support
+- my1image_chsv : hsv color support
+- my1image_file : generic file load/save support (include my1image_file_fmt.h)
+  = my1image_file_bmp - bmp support
+  = my1image_file_pnm - pnm support
+  = my1image_file_png - png support (load only)
+- my1image_mask : basic convolution/correlation masks/kernels
+- my1image_area : area/sub-image management
+- my1image_buff : double buffer (triple actually...) with region
+- my1image_util : filter support
+- my1image_stat : grayscale histogram
+- my1image_work : library of commonly used filters
+- my1image_view : gtk-based gui canvas
+- my1image_appw : gtk-based gui app for single image view
+- my1image_hist : gtk-based gui window for histogram (requires appw)
+- my1image_data : wrapper for view/appw/hist with filters defined in work
+* my1image_test : main test program for my1image & friends
+- my1video      - video structure based on my1image_t
+- my1video_main - sample video processing flow (using libav & my1image_appw)
+* my1video_test - main test program for my1video & friends
 
-The my1image_view module requires gtk, while the my1video_main module requires
-libav(ffmpeg).
+Work-in-progress:
+- my1image_scan : raster scan meta-data used in my1image_mono
+- my1image_mono : binary morphology procedures
+- my1image_math : require my old lane detection code to test?
+
+For simplicity, building an image processing software based on this library
+can be done by just compiling in my1image.o (and including 'my1image.h').
+Refer to my1image.c or my1image.h on to learn control flags on which module
+to exclude/include (e.g. -D__MYIMAGE_NO_HSV__ to exclude HSV support).
+
+The my1image_view/my1image_appw module requires gtk, while the my1video_main
+module requires libav(ffmpeg).
 
 Although my1imgpro library is meant for 8-bit grayscale processing, the
 my1image_t structure can support color image using RGB-encoded integer
@@ -57,7 +75,8 @@ Sample application(s)
 
 Three sample applications: resizer, imgload and testhsv.
 
-- resizer: application to demonstrate image resizing functions of my1imgpro
-- imgload: loads and optionally save an image file into supported format AND
-           C source code (targetting embedded application here).
-- testhsv: application to test HSV color representation
+- resizer: (my1image_resize.c) application to demonstrate image resizing
+           functions of my1imgpro
+- imgload: (my1image_loader.c) loads and optionally save an image file into
+           supported format AND C source code (targetting embedded application)
+- testhsv: (my1image_testhsv.c) application to test HSV color representation

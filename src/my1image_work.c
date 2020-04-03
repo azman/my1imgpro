@@ -1,6 +1,10 @@
 /*----------------------------------------------------------------------------*/
+#ifndef __MY1IMAGE_WORKC__
+#define __MY1IMAGE_WORKC__
+/*----------------------------------------------------------------------------*/
 #include "my1image_work.h"
 #include "my1image_crgb.h"
+#include "my1image_mask.h"
 #include "my1image_stat.h"
 /*----------------------------------------------------------------------------*/
 /* needed for sqrt in sobel */
@@ -9,11 +13,10 @@
 #include <stdlib.h>
 #include <string.h>
 /*----------------------------------------------------------------------------*/
-my1image_t* filter_gray(my1image_t* img, my1image_t* res,
-	my1image_filter_t* filter)
+my1image_t* filter_gray(my1image_t* img, my1image_t* res, my1ifilter_t* filter)
 {
-	int loop, size = img->length;
-	image_make(res,img->height,img->width);
+	int loop, size = img->size;
+	image_make(res,img->rows,img->cols);
 	if (img->mask==IMASK_COLOR)
 	{
 		for(loop=0;loop<size;loop++)
@@ -29,10 +32,10 @@ my1image_t* filter_gray(my1image_t* img, my1image_t* res,
 }
 /*----------------------------------------------------------------------------*/
 my1image_t* filter_color_blue(my1image_t* img, my1image_t* res,
-	my1image_filter_t* filter)
+	my1ifilter_t* filter)
 {
-	int loop, size = img->length;
-	image_make(res,img->height,img->width);
+	int loop, size = img->size;
+	image_make(res,img->rows,img->cols);
 	if (img->mask==IMASK_COLOR)
 	{
 		for(loop=0;loop<size;loop++)
@@ -48,10 +51,10 @@ my1image_t* filter_color_blue(my1image_t* img, my1image_t* res,
 }
 /*----------------------------------------------------------------------------*/
 my1image_t* filter_color_green(my1image_t* img, my1image_t* res,
-	my1image_filter_t* filter)
+	my1ifilter_t* filter)
 {
-	int loop, size = img->length;
-	image_make(res,img->height,img->width);
+	int loop, size = img->size;
+	image_make(res,img->rows,img->cols);
 	if (img->mask==IMASK_COLOR)
 	{
 		for(loop=0;loop<size;loop++)
@@ -67,10 +70,10 @@ my1image_t* filter_color_green(my1image_t* img, my1image_t* res,
 }
 /*----------------------------------------------------------------------------*/
 my1image_t* filter_color_red(my1image_t* img, my1image_t* res,
-	my1image_filter_t* filter)
+	my1ifilter_t* filter)
 {
-	int loop, size = img->length;
-	image_make(res,img->height,img->width);
+	int loop, size = img->size;
+	image_make(res,img->rows,img->cols);
 	if (img->mask==IMASK_COLOR)
 	{
 		for(loop=0;loop<size;loop++)
@@ -86,10 +89,10 @@ my1image_t* filter_color_red(my1image_t* img, my1image_t* res,
 }
 /*----------------------------------------------------------------------------*/
 my1image_t* filter_invert(my1image_t* img, my1image_t* res,
-	my1image_filter_t* filter)
+	my1ifilter_t* filter)
 {
-	int loop, size = img->length;
-	image_make(res,img->height,img->width);
+	int loop, size = img->size;
+	image_make(res,img->rows,img->cols);
 	if (img->mask==IMASK_COLOR)
 	{
 		cbyte r, g, b;
@@ -111,23 +114,20 @@ my1image_t* filter_invert(my1image_t* img, my1image_t* res,
 }
 /*----------------------------------------------------------------------------*/
 my1image_t* filter_resize(my1image_t* img, my1image_t* res,
-	my1image_filter_t* filter)
+	my1ifilter_t* filter)
 {
 	my1image_area_t *size = (my1image_area_t*) filter->data;
-	return image_size_this(img,res,size->height,size->width);
+	return image_size_this(img,res,size->hval,size->wval);
 }
 /*----------------------------------------------------------------------------*/
-void filter_resize_init(my1image_filter_t* filter)
+void filter_resize_init(my1ifilter_t* filter)
 {
 	filter->data = malloc(sizeof(my1image_area_t));
-	if (filter->data)
-		image_area_init((my1image_area_t*)filter->data);
 }
 /*----------------------------------------------------------------------------*/
-void filter_resize_free(my1image_filter_t* filter)
+void filter_resize_free(my1ifilter_t* filter)
 {
-	if (filter->data)
-		free((void*)filter->data);
+	if (filter->data) free((void*)filter->data);
 }
 /*----------------------------------------------------------------------------*/
 my1image_t* image_mask_this(my1image_t* img, my1image_t* res,
@@ -137,7 +137,7 @@ my1image_t* image_mask_this(my1image_t* img, my1image_t* res,
 	if (!image_mask_init(&mask,mask_size))
 		return img;
 	image_mask_make(&mask,data_size,pdata);
-	image_make(res,img->height,img->width);
+	image_make(res,img->rows,img->cols);
 	image_correlation(img,res,&mask);
 	image_mask_free(&mask);
 	res->mask = IMASK_GRAY;
@@ -145,7 +145,7 @@ my1image_t* image_mask_this(my1image_t* img, my1image_t* res,
 }
 /*----------------------------------------------------------------------------*/
 my1image_t* filter_laplace(my1image_t* img, my1image_t* res,
-	my1image_filter_t* filter)
+	my1ifilter_t* filter)
 {
 	int coeff[] = { 0,-1,0, -1,4,-1, 0,-1,0 };
 	image_mask_this(img,res,3,9,coeff);
@@ -154,7 +154,7 @@ my1image_t* filter_laplace(my1image_t* img, my1image_t* res,
 }
 /*----------------------------------------------------------------------------*/
 my1image_t* filter_sobel_x(my1image_t* img, my1image_t* res,
-	my1image_filter_t* filter)
+	my1ifilter_t* filter)
 {
 	/* +ve gradient when dark(left) -> light(right) */
 	int coeff[] = { -1,0,1, -2,0,2, -1,0,1 };
@@ -164,7 +164,7 @@ my1image_t* filter_sobel_x(my1image_t* img, my1image_t* res,
 }
 /*----------------------------------------------------------------------------*/
 my1image_t* filter_sobel_y(my1image_t* img, my1image_t* res,
-	my1image_filter_t* filter)
+	my1ifilter_t* filter)
 {
 	/* +ve gradient when dark(bottom) -> light(top) */
 	int coeff[] = { 1,2,1, 0,0,0, -1,-2,-1 };
@@ -174,7 +174,7 @@ my1image_t* filter_sobel_y(my1image_t* img, my1image_t* res,
 }
 /*----------------------------------------------------------------------------*/
 my1image_t* filter_sobel(my1image_t* img, my1image_t* res,
-	my1image_filter_t* filter)
+	my1ifilter_t* filter)
 {
 	my1image_t buff1, buff2, *chk = (my1image_t*) filter->data;
 	int irow, icol, x, y, z, p;
@@ -184,8 +184,8 @@ my1image_t* filter_sobel(my1image_t* img, my1image_t* res,
 	image_init(&buff1);
 	image_init(&buff2);
 	/* create temporary buffers */
-	if (!image_make(&buff1,img->height,img->width)||
-		!image_make(&buff2,img->height,img->width))
+	if (!image_make(&buff1,img->rows,img->cols)||
+		!image_make(&buff2,img->rows,img->cols))
 	{
 		image_free(&buff1);
 		image_free(&buff2);
@@ -195,16 +195,16 @@ my1image_t* filter_sobel(my1image_t* img, my1image_t* res,
 	filter_sobel_x(img,&buff1,0x0);
 	filter_sobel_y(img,&buff2,0x0);
 	/* prepare resulting image structure */
-	image_make(res,img->height,img->width);
+	image_make(res,img->rows,img->cols);
 	if (chk)
 	{
-		image_make(chk,img->height,img->width);
+		image_make(chk,img->rows,img->cols);
 		chk->mask = IMASK_GRAY;
 	}
 	/* calculate magnitude & phase for 3x3 neighbourhood */
-	for (irow=0;irow<img->height;irow++)
+	for (irow=0;irow<img->rows;irow++)
 	{
-		for (icol=0;icol<img->width;icol++)
+		for (icol=0;icol<img->cols;icol++)
 		{
 			x = image_get_pixel(&buff1,irow,icol);
 			y = image_get_pixel(&buff2,irow,icol);
@@ -278,7 +278,7 @@ my1image_t* filter_sobel(my1image_t* img, my1image_t* res,
 }
 /*----------------------------------------------------------------------------*/
 my1image_t* filter_gauss(my1image_t* img, my1image_t* res,
-	my1image_filter_t* filter)
+	my1ifilter_t* filter)
 {
 	int coeff[] = { 1,2,1, 2,4,2, 1,2,1};
 	image_mask_this(img,res,3,9,coeff);
@@ -287,10 +287,10 @@ my1image_t* filter_gauss(my1image_t* img, my1image_t* res,
 }
 /*----------------------------------------------------------------------------*/
 my1image_t* filter_maxscale(my1image_t* img, my1image_t* res,
-	my1image_filter_t* filter)
+	my1ifilter_t* filter)
 {
-	int loop, size = img->length, pmax = img->data[0], temp;
-	image_make(res,img->height,img->width);
+	int loop, size = img->size, pmax = img->data[0], temp;
+	image_make(res,img->rows,img->cols);
 	/* find max value, stretch to maximum */
 	for (loop=1;loop<size;loop++)
 	{
@@ -324,17 +324,17 @@ int image_check_suppress(my1image_t *img, my1image_t *chk, int pref, int pchk)
 	switch (pchk)
 	{
 		default:
-		case CHECK_TOP: pick = pref-img->width; break;
-		case CHECK_BOTTOM: pick = pref+img->width; break;
+		case CHECK_TOP: pick = pref-img->cols; break;
+		case CHECK_BOTTOM: pick = pref+img->cols; break;
 		case CHECK_LEFT: pick = pref-1; break;
 		case CHECK_RIGHT: pick = pref+1; break;
-		case CHECK_TOP_LEFT: pick = pref-img->width-1; break;
-		case CHECK_BOTTOM_RIGHT: pick = pref+img->width+1; break;
-		case CHECK_TOP_RIGHT: pick = pref-img->width+1; break;
-		case CHECK_BOTTOM_LEFT: pick = pref-img->width-1; break;
+		case CHECK_TOP_LEFT: pick = pref-img->cols-1; break;
+		case CHECK_BOTTOM_RIGHT: pick = pref+img->cols+1; break;
+		case CHECK_TOP_RIGHT: pick = pref-img->cols+1; break;
+		case CHECK_BOTTOM_LEFT: pick = pref-img->cols-1; break;
 	}
 	/* check valid index */
-	if (pick<0||pick>=img->length)
+	if (pick<0||pick>=img->size)
 		return edge;
 	/* suppress if parallel and stronger edge */
 	if (chk->data[pick]==chk->data[pref])
@@ -364,14 +364,14 @@ int image_check_suppress(my1image_t *img, my1image_t *chk, int pref, int pchk)
 }
 /*----------------------------------------------------------------------------*/
 my1image_t* filter_suppress(my1image_t* img, my1image_t* res,
-	my1image_filter_t* filter)
+	my1ifilter_t* filter)
 {
-	int loop, size = img->length, curr, buff;
+	int loop, size = img->size, curr, buff;
 	my1image_t *chk = (my1image_t*) filter->data;
 	/* assign to default if not specified */
 	if (!chk&&filter->buffer) chk = &filter->buffer->xtra;
 	if (!chk) return img;
-	image_make(res,img->height,img->width);
+	image_make(res,img->rows,img->cols);
 	for (loop=0;loop<size;loop++)
 	{
 		/* dummy loop */
@@ -422,13 +422,13 @@ my1image_t* filter_suppress(my1image_t* img, my1image_t* res,
 }
 /*----------------------------------------------------------------------------*/
 my1image_t* filter_threshold(my1image_t* img, my1image_t* res,
-	my1image_filter_t* filter)
+	my1ifilter_t* filter)
 {
-	int loop, size = img->length, temp;
+	int loop, size = img->size, temp;
 	my1image_histogram_t hist;
 	image_get_histogram(img,&hist);
 	histogram_get_threshold(&hist);
-	image_make(res,img->height,img->width);
+	image_make(res,img->rows,img->cols);
 	for (loop=0;loop<size;loop++)
 	{
 		temp = img->data[loop];
@@ -460,11 +460,11 @@ static const filter_info_t MY1_IFILTER_DB[] =
 /*----------------------------------------------------------------------------*/
 const int IFILTER_DB_SIZE = sizeof(MY1_IFILTER_DB)/sizeof(filter_info_t);
 /*----------------------------------------------------------------------------*/
-my1image_filter_t* image_work_create(char* name)
+my1ifilter_t* image_work_create(char* name)
 {
-	my1image_filter_t* that = 0x0;
-	filter_info_t* info;
 	int loop;
+	filter_info_t* info;
+	my1ifilter_t* that = 0x0;
 	for(loop=0;loop<IFILTER_DB_SIZE;loop++)
 	{
 		info = (filter_info_t*)&MY1_IFILTER_DB[loop];
@@ -477,18 +477,19 @@ my1image_filter_t* image_work_create(char* name)
 	return that;
 }
 /*----------------------------------------------------------------------------*/
-my1image_filter_t* image_work_create_all(void)
+my1ifilter_t* image_work_create_all(void)
 {
-	my1image_filter_t *that = 0x0, *temp;
-	filter_info_t* info;
 	int loop;
+	filter_info_t* info;
+	my1ifilter_t *temp, *that = 0x0;
 	for(loop=0;loop<IFILTER_DB_SIZE;loop++)
 	{
 		info = (filter_info_t*)&MY1_IFILTER_DB[loop];
 		temp = info_create_filter(info);
-		if (temp)
-			that = filter_insert(that,temp);
+		if (temp) that = filter_insert(that,temp);
 	}
 	return that;
 }
+/*----------------------------------------------------------------------------*/
+#endif /** __MY1IMAGE_WORKC__ */
 /*----------------------------------------------------------------------------*/

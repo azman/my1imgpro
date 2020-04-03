@@ -19,21 +19,20 @@
 int main(int argc, char* argv[])
 {
 	int test;
-	char *pname = 0x0;
+	char *pname;
 	my1image_data_t data;
-	my1image_t that;
 	/* print tool info */
 	printf("\n%s - %s (%s)\n",MY1APP_NAME,MY1APP_INFO,MY1APP_VERS);
 	printf("  => by azman@my1matrix.org\n\n");
 	/* add png support */
 	image_format_insert(&ipng);
-	/* initialize that */
-	image_init(&that);
+	/* initialize image_data */
+	image_data_init(&data);
 	/* check program argument */
 	if(argc>1)
 	{
 		pname = argv[1];
-		if((test=image_load(&that,pname))<0)
+		if((test=image_load(&data.appw.buff,pname))<0)
 		{
 			printf("Error loading file '%s'!(%x)\n",pname,(unsigned)test);
 			return test;
@@ -42,19 +41,17 @@ int main(int argc, char* argv[])
 	else
 	{
 		/* create blank image at default size */
-		image_make(&that,DEF_HEIGHT,DEF_WIDTH);
-		image_fill(&that,BLACK);
+		image_make(&data.appw.buff,DEF_HEIGHT,DEF_WIDTH);
+		image_fill(&data.appw.buff,BLACK);
 	}
 	/* initialize gui */
 	gtk_init(&argc,&argv);
-	/* initialize image_test */
-	image_data_init(&data);
 	/* setup auto-quit on close */
-	data.view.goquit = 1;
+	data.appw.goquit = 1;
+	/* create all filters in my1image_work */
+	image_data_work(&data);
 	/* assign image */
-	image_data_make(&data,&that);
-	image_data_draw(&data);
-	image_free(&that);
+	image_data_make(&data,&data.appw.buff);
 	/* allow histogram */
 	image_hist_make(&data.hist);
 	/* event handlers */

@@ -2,7 +2,7 @@
 #ifndef __MY1IMAGE_STATH__
 #define __MY1IMAGE_STATH__
 /*----------------------------------------------------------------------------*/
-#include "my1image.h"
+#include "my1image_gray.h"
 /*----------------------------------------------------------------------------*/
 typedef struct _my1image_histogram_t
 {
@@ -20,5 +20,5 @@ void image_smooth_histogram(my1image_t *image, my1image_histogram_t *hist);
 /* histogram threshold utility */
 void histogram_get_threshold(my1image_histogram_t *hist);
 /*----------------------------------------------------------------------------*/
-#endif
+#endif /** __MY1IMAGE_STATH__ */
 /*----------------------------------------------------------------------------*/

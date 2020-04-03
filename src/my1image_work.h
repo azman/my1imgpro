@@ -23,5 +23,5 @@
 my1image_filter_t* image_work_create(char* name);
 my1image_filter_t* image_work_create_all(void);
 /*----------------------------------------------------------------------------*/
-#endif
+#endif /** __MY1IMAGE_WORKH__ */
 /*----------------------------------------------------------------------------*/

@@ -28,34 +28,34 @@ int main(int argc, char* argv[])
 	}
 	/* file info */
 	printf("File: %s\n",pname);
-	printf("Size: %d x %d {Mask:%08X}\n",buff.width,buff.height,buff.mask);
+	printf("Size: %d x %d {Mask:%08X}\n",buff.cols,buff.rows,buff.mask);
 	psave = (char*) malloc(strlen(pname)*2);
 	/* double size and save */
-	image_size_this(&buff,&save,buff.height*2,buff.width*2);
+	image_size_this(&buff,&save,buff.rows*2,buff.cols*2);
 	sprintf(psave,"%s_double.bmp",pname);
 	if (image_save(&save,psave)<0)
 		printf("\nCannot save double file '%s'!\n\n",psave);
 	else printf("File '%s' saved.\n",psave);
 	/* half size and save */
-	image_size_this(&buff,&save,buff.height/2,buff.width/2);
+	image_size_this(&buff,&save,buff.rows/2,buff.cols/2);
 	sprintf(psave,"%s_half.bmp",pname);
 	if (image_save(&save,psave)<0)
 		printf("\nCannot save half file '%s'!\n\n",psave);
 	else printf("File '%s' saved.\n",psave);
 	/* half width, double height */
-	image_size_this(&buff,&save,buff.height*2,buff.width/2);
+	image_size_this(&buff,&save,buff.rows*2,buff.cols/2);
 	sprintf(psave,"%s_sized1.bmp",pname);
 	if (image_save(&save,psave)<0)
 		printf("\nCannot save sized file '%s'!\n\n",psave);
 	else printf("File '%s' saved.\n",psave);
 	/* double width, half height */
-	image_size_this(&buff,&save,buff.height/2,buff.width*2);
+	image_size_this(&buff,&save,buff.rows/2,buff.cols*2);
 	sprintf(psave,"%s_sized2.bmp",pname);
 	if (image_save(&save,psave)<0)
 		printf("\nCannot save sized file '%s'!\n\n",psave);
 	else printf("File '%s' saved.\n",psave);
 	/* quad size */
-	image_size_this(&buff,&save,buff.height<<2,buff.width<<2);
+	image_size_this(&buff,&save,buff.rows<<2,buff.cols<<2);
 	sprintf(psave,"%s_quad.bmp",pname);
 	if (image_save(&save,psave)<0)
 		printf("\nCannot save sized file '%s'!\n\n",psave);

@@ -2,7 +2,7 @@
 #ifndef __MY1IMAGE_HISTH__
 #define __MY1IMAGE_HISTH__
 /*----------------------------------------------------------------------------*/
-#include "my1image_view.h"
+#include "my1image_appw.h"
 #include "my1image_stat.h"
 /*----------------------------------------------------------------------------*/
 #include <gtk/gtk.h>
@@ -17,15 +17,15 @@ typedef struct _my1image_hist_t
 {
 	GtkWidget *donext, *dohist, *dostxt;
 	guint idstxt, dohide;
-	my1image_view_t* view;
+	my1image_appw_t* appwin;
 	my1image_histogram_t hist; /* histogram */
 }
 my1image_hist_t;
 /*----------------------------------------------------------------------------*/
-void image_hist_init(my1image_hist_t* ihist, my1image_view_t* iview);
+void image_hist_init(my1image_hist_t* ihist, my1image_appw_t* appw);
 void image_hist_free(my1image_hist_t* ihist);
 void image_hist_make(my1image_hist_t* ihist);
 void image_hist_show(my1image_hist_t* ihist);
 /*----------------------------------------------------------------------------*/
-#endif
+#endif /** __MY1IMAGE_HISTH__ */
 /*----------------------------------------------------------------------------*/

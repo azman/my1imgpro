@@ -40,5 +40,5 @@ typedef my1image_hsv_t my1hsv_t;
 my1hsv_t rgb2hsv(my1rgb_t rgb);
 my1rgb_t hsv2rgb(my1hsv_t hsv); /* not really needed? */
 /*----------------------------------------------------------------------------*/
-#endif
+#endif /** __MY1IMAGE_CHSVH__ */
 /*----------------------------------------------------------------------------*/

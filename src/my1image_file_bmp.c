@@ -1,4 +1,7 @@
 /*----------------------------------------------------------------------------*/
+#ifndef __MY1IMAGE_FILE_BMPC__
+#define __MY1IMAGE_FILE_BMPC__
+/*----------------------------------------------------------------------------*/
 #include "my1image_file_bmp.h"
 #include "my1image_crgb.h"
 /*----------------------------------------------------------------------------*/
@@ -124,10 +127,10 @@ int image_load_bmp(my1image_t *image, FILE *bmpfile)
 	fseek (bmpfile, head.bmpOffset, SEEK_SET);
 	pChar = &someChar;
 	/** my origin is topleft but bmp origin is bottomleft! */
-	for (row=image->height-1; row>=0; row--)
+	for (row=image->rows-1; row>=0; row--)
 	{
 		temp = 0;
-		for (col=0; col<image->width; col++)
+		for (col=0; col<image->cols; col++)
 		{
 			if (info.bmpBitsPerPixel==24)
 			{
@@ -189,9 +192,9 @@ int image_save_bmp(my1image_t *image, FILE *bmpfile)
 		paletteSize = sizeof(int)*GRAYLEVEL_COUNT;
 	}
 	/* calculate filesize */
-	length = image->width*bytepp;
+	length = image->cols*bytepp;
 	while (length%4) length++;
-	vectorSize = length*image->height;
+	vectorSize = length*image->rows;
 	headSize = BMP_ID_SIZE+BMP_HEAD_SIZE+BMP_INFO_SIZE;
 	fileSize = headSize + vectorSize + paletteSize;
 	/* populate BMP header */
@@ -202,8 +205,8 @@ int image_save_bmp(my1image_t *image, FILE *bmpfile)
 	head.bmpOffset = headSize + paletteSize;
 	/* populate BMP info */
 	info.bmpInfoSize = BMP_INFO_SIZE;
-	info.bmpWidth = image->width;
-	info.bmpHeight = image->height;
+	info.bmpWidth = image->cols;
+	info.bmpHeight = image->rows;
 	info.bmpPlaneCount = 1;
 	info.bmpBitsPerPixel = bytepp*8;
 	info.bmpCompression = 0;
@@ -253,10 +256,10 @@ int image_save_bmp(my1image_t *image, FILE *bmpfile)
 	/* write data! */
 	/** my origin is topleft but bmp origin is bottomleft! */
 	pChar = (unsigned char*) &someChar;
-	for (row=image->height-1;row>=0;row--)
+	for (row=image->rows-1;row>=0;row--)
 	{
 		temp = 0;
-		for (col=0;col<image->width;col++)
+		for (col=0;col<image->cols;col++)
 		{
 			buff = image_get_pixel(image,row,col);
 			if (image->mask==IMASK_COLOR)
@@ -287,4 +290,6 @@ int image_save_bmp(my1image_t *image, FILE *bmpfile)
 	}
 	return FILE_OK;
 }
+/*----------------------------------------------------------------------------*/
+#endif /** __MY1IMAGE_FILE_BMPC__ */
 /*----------------------------------------------------------------------------*/

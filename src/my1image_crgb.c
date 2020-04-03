@@ -1,4 +1,7 @@
 /*----------------------------------------------------------------------------*/
+#ifndef __MY1IMAGE_CRGBC__
+#define __MY1IMAGE_CRGBC__
+/*----------------------------------------------------------------------------*/
 #include "my1image_crgb.h"
 /*----------------------------------------------------------------------------*/
 int gray4rgb(cbyte r, cbyte g, cbyte b)
@@ -57,7 +60,7 @@ int color_swap(int data)
 /*----------------------------------------------------------------------------*/
 int image_make_rgb(my1image_t *image, cbyte *rgb)
 {
-	int loop, size = image->length;
+	int loop, size = image->size;
 	if (image->mask==IMASK_COLOR)
 	{
 		for (loop=0;loop<size;loop++)
@@ -77,9 +80,9 @@ int image_make_rgb(my1image_t *image, cbyte *rgb)
 	return image->mask;
 }
 /*----------------------------------------------------------------------------*/
-int image_from_rgb(my1image_t *image, cbyte *rgb)
+int image_form_rgb(my1image_t *image, cbyte *rgb)
 {
-	int loop, size = image->length;
+	int loop, size = image->size;
 	for (loop=0;loop<size;loop++)
 	{
 		decode_rgb(image->data[loop],&rgb[0],&rgb[1],&rgb[2]);
@@ -93,7 +96,7 @@ void image_grayscale(my1image_t *image)
 {
 	if (image->mask==IMASK_COLOR)
 	{
-		int loop, size = image->length;
+		int loop, size = image->size;
 		for (loop=0;loop<size;loop++)
 			image->data[loop] = color2gray(image->data[loop]);
 		image->mask = IMASK_GRAY;
@@ -104,17 +107,33 @@ void image_colormode(my1image_t *image)
 {
 	if (image->mask!=IMASK_COLOR)
 	{
-		int loop, size = image->length;
+		int loop, size = image->size;
 		for (loop=0;loop<size;loop++)
 			image->data[loop] = gray2color(image->data[loop]);
 		image->mask = IMASK_COLOR;
 	}
 }
 /*----------------------------------------------------------------------------*/
+void image_invert_this(my1image_t *image)
+{
+	if (image->mask==IMASK_COLOR)
+	{
+		cbyte r, g, b;
+		int loop, size = image->size;
+		for(loop=0;loop<size;loop++)
+		{
+			decode_rgb(image->data[loop],&r,&g,&b);
+			r = WHITE - r; g = WHITE - g; b = WHITE - b;
+			image->data[loop] = encode_rgb(r,g,b);
+		}
+	}
+	else image_invert(image);
+}
+/*----------------------------------------------------------------------------*/
 void image_copy_color2bgr(my1image_t *dst, my1image_t *src)
 {
-	int loop, size = src->length;
-	image_make(dst,src->height,src->width);
+	int loop, size = src->size;
+	image_make(dst,src->rows,src->cols);
 	if (src->mask==IMASK_COLOR)
 	{
 		cbyte *that;
@@ -136,11 +155,36 @@ void image_copy_color2bgr(my1image_t *dst, my1image_t *src)
 	dst->mask = IMASK_COLOR;
 }
 /*----------------------------------------------------------------------------*/
+void image_copy_color2rgb(my1image_t *dst, my1image_t *src)
+{
+	int loop, size = src->size;
+	image_make(dst,src->rows,src->cols);
+	if (src->mask==IMASK_COLOR)
+	{
+		cbyte *that;
+		for(loop=0;loop<size;loop++)
+		{
+			that = (cbyte*) &src->data[loop];
+			dst->data[loop] = encode_rgb(that[0],that[1],that[2]);
+		}
+	}
+	else
+	{
+		cbyte temp;
+		for(loop=0;loop<size;loop++)
+		{
+			temp = (cbyte) src->data[loop];
+			dst->data[loop] = encode_rgb(temp,temp,temp);
+		}
+	}
+	dst->mask = IMASK_COLOR;
+}
+/*----------------------------------------------------------------------------*/
 void image_copy_color_channel(my1image_t *dst, my1image_t *src, int mask)
 {
 	cbyte *that;
-	int loop, size = src->length, pick;
-	image_make(dst,src->height,src->width);
+	int loop, size = src->size, pick;
+	image_make(dst,src->rows,src->cols);
 	switch (mask)
 	{
 		default:
@@ -182,18 +226,18 @@ my1image_t* image_size_size(my1image_t* image, my1image_t* check,
 	image_make(check,height,width);
 	image_fill(check,0);
 	/* browse all rows and cols in image */
-	for(rows=0;rows<image->height;rows++)
+	for(rows=0;rows<image->rows;rows++)
 	{
-		for(cols=0;cols<image->width;cols++,loop++)
+		for(cols=0;cols<image->cols;cols++,loop++)
 		{
 			/* check where this pixel fits in the target image */
-			irow = rows*check->height/image->height;
-			icol = cols*check->width/image->width;
+			irow = rows*check->rows/image->rows;
+			icol = cols*check->cols/image->cols;
 			/* validate position */
-			if (irow>=check->height||icol>=check->width)
+			if (irow>=check->rows||icol>=check->cols)
 				continue;
 			/* get index */
-			temp = irow*check->width+icol;
+			temp = irow*check->cols+icol;
 			if (image->mask==IMASK_COLOR)
 			{
 				decode_rgb(image->data[loop],&r,&g,&b);
@@ -205,16 +249,16 @@ my1image_t* image_size_size(my1image_t* image, my1image_t* check,
 			/* update count */
 			buff3.data[temp]++;
 			/* check multiple targets */
-			if (check->height>image->height||check->width>image->width)
+			if (check->rows>image->rows||check->cols>image->cols)
 			{
-				trow = (rows+1)*check->height/image->height;
-				tcol = (cols+1)*check->width/image->width;
-				for (zrow=irow;zrow<trow&&zrow<check->height;zrow++)
+				trow = (rows+1)*check->rows/image->rows;
+				tcol = (cols+1)*check->cols/image->cols;
+				for (zrow=irow;zrow<trow&&zrow<check->rows;zrow++)
 				{
-					for (zcol=icol;zcol<tcol&&zcol<check->width;zcol++)
+					for (zcol=icol;zcol<tcol&&zcol<check->cols;zcol++)
 					{
 						if (zrow==irow&&zcol==icol) continue;
-						temp = zrow*check->width+zcol;
+						temp = zrow*check->cols+zcol;
 						if (image->mask==IMASK_COLOR)
 						{
 							check->data[temp] += (int)r;
@@ -230,7 +274,7 @@ my1image_t* image_size_size(my1image_t* image, my1image_t* check,
 	}
 	check->mask = image->mask;
 	/* update all rows and cols in check */
-	for(loop=0;loop<check->length;loop++)
+	for(loop=0;loop<check->size;loop++)
 	{
 		if (!buff3.data[loop]) continue;
 		/* get average */
@@ -256,9 +300,11 @@ my1image_t* image_size_size(my1image_t* image, my1image_t* check,
 my1image_t* image_size_this(my1image_t* image, my1image_t* check,
 	int height, int width)
 {
-	if (image->height!=height||image->width!=width)
+	if (image->rows!=height||image->cols!=width)
 		return image_size_size(image,check,height,width);
 	image_copy(check,image);
 	return check;
 }
+/*----------------------------------------------------------------------------*/
+#endif /** __MY1IMAGE_CRGBC__ */
 /*----------------------------------------------------------------------------*/

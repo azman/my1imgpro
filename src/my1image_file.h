@@ -10,5 +10,5 @@ int image_load(my1image_t *image, char *filename);
 int image_save(my1image_t *image, char *filename);
 int image_cdat(my1image_t *image, char *filename); /* in c-array format */
 /*----------------------------------------------------------------------------*/
-#endif
+#endif /** __MY1IMAGE_FILEH__ */
 /*----------------------------------------------------------------------------*/

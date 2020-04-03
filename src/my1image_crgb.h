@@ -2,10 +2,9 @@
 #ifndef __MY1IMAGE_CRGBH__
 #define __MY1IMAGE_CRGBH__
 /*----------------------------------------------------------------------------*/
-#include "my1image.h"
+#include "my1image_gray.h"
 /*----------------------------------------------------------------------------*/
 /* image color (rgb) stuffs */
-/*----------------------------------------------------------------------------*/
 #define IMASK_GRAY    0x00000000
 #define IMASK_COLOR   0x00FFFFFF
 #define IMASK_COLOR_R 0x00FF0000
@@ -33,18 +32,24 @@ int color2gray(int data);
 /* swap b and r channels */
 int color_swap(int data);
 /* color information - structure member 'mask' MUST BE assigned! */
+/** will be changed to image_from_rgb */
 int image_make_rgb(my1image_t *image, cbyte *rgb);
-int image_from_rgb(my1image_t *image, cbyte *rgb);
+/** was image_from_rgb */
+int image_form_rgb(my1image_t *image, cbyte *rgb);
 /* enforce color modes */
 void image_grayscale(my1image_t *image);
 void image_colormode(my1image_t *image);
+/* color-aware invert */
+void image_invert_this(my1image_t *image);
 /* hack for gdk_draw_rgb_32_image - requires alpha to be 0xff */
 void image_copy_color2bgr(my1image_t *dst, my1image_t *src);
+/* to recover from above! */
+void image_copy_color2rgb(my1image_t *dst, my1image_t *src);
 /* color channel extract */
 void image_copy_color_channel(my1image_t *dst, my1image_t *src, int mask);
-/* image sizing - requires color info! */
+/* color aware image sizing */
 my1image_t* image_size_this(my1image_t* image, my1image_t* check,
 	int height, int width);
 /*----------------------------------------------------------------------------*/
-#endif
+#endif /** __MY1IMAGE_CRGBH__ */
 /*----------------------------------------------------------------------------*/

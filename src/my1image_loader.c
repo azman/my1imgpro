@@ -1,6 +1,5 @@
 /*----------------------------------------------------------------------------*/
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
 /*----------------------------------------------------------------------------*/
 #include "my1image_file.h"
@@ -42,7 +41,7 @@ int main(int argc, char* argv[])
 		printf("done![%x]\n",(unsigned)test);
 		printf("-- File: %s\n",pname);
 		printf("-- Size: %d x %d (Size:%d) {Mask:%08X}\n",
-			buff.width,buff.height,buff.length,buff.mask);
+			buff.cols,buff.rows,buff.size,buff.mask);
 		if(psave)
 		{
 			printf("Saving image data to %s... ",psave);

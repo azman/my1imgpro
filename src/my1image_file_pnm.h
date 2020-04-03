@@ -15,5 +15,5 @@
 int image_load_pnm(my1image_t *image, FILE *pnmfile);
 int image_save_pnm(my1image_t *image, FILE *pnmfile);
 /*----------------------------------------------------------------------------*/
-#endif
+#endif /** __MY1IMAGE_FILE_PNMH__ */
 /*----------------------------------------------------------------------------*/

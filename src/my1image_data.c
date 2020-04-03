@@ -1,4 +1,7 @@
 /*----------------------------------------------------------------------------*/
+#ifndef __MY1IMAGE_DATAC__
+#define __MY1IMAGE_DATAC__
+/*----------------------------------------------------------------------------*/
 #include "my1image_data.h"
 #include "my1image_file.h"
 #include "my1image_chsv.h"
@@ -22,48 +25,55 @@ void image_data_init(my1image_data_t* data)
 	data->maxh = DEFAULT_MAX_HEIGHT;
 	data->maxw = DEFAULT_MAX_WIDTH;
 	data->flag = DATA_FLAG_OK;
-	image_init(&data->currimage);
 	data->image = 0x0;
-	image_view_init(&data->view);
-	image_hist_init(&data->hist,&data->view);
-	data->view.draw_more = (void*) &image_data_histogram;
-	data->view.draw_more_data = (void*) &data->hist;
+	image_appw_init(&data->appw);
+	data->appw.doshow = 1;
+	data->appw.view.draw_more = (void*) &image_data_histogram;
+	data->appw.view.draw_more_data = (void*) &data->hist;
+	image_hist_init(&data->hist,&data->appw);
 	buffer_init(&data->work);
-	data->pflist = image_work_create_all();
+	data->pflist = 0x0;
 	data->pfcurr = 0x0;
 }
 /*----------------------------------------------------------------------------*/
 void image_data_free(my1image_data_t* data)
 {
-	image_free(&data->currimage);
-	image_view_free(&data->view);
-	image_hist_free(&data->hist);
+	if (data->pflist) filter_free_clones(data->pflist);
+	if (data->pfcurr) filter_free_clones(data->pfcurr);
 	buffer_free(&data->work);
-	if (data->pflist) filter_clean(data->pflist);
-	if (data->pfcurr) filter_clean(data->pfcurr);
+	image_hist_free(&data->hist);
+	image_appw_free(&data->appw);
 }
 /*----------------------------------------------------------------------------*/
 void image_data_draw(my1image_data_t* data)
 {
-	image_view_make(&data->view,data->image);
-	image_view_draw(&data->view,data->image);
+	image_appw_draw(&data->appw,data->image);
 }
 /*----------------------------------------------------------------------------*/
 void image_data_make(my1image_data_t* data, my1image_t* that)
 {
-	image_copy(&data->currimage,that); /* keep original */
-	data->image = &data->currimage;
+	if (that)
+	{
+		image_copy(&data->appw.main,that); /* keep original */
+		image_copy(&data->appw.buff,that);
+		data->image = &data->appw.buff;
+	}
 	if (data->dosize)
 	{
-		if (data->image->width>data->maxw||data->image->height>data->maxh)
+		if (data->image->cols>data->maxw||data->image->rows>data->maxh)
 		{
 			data->image = image_size_this(data->image,data->work.next,
 				data->maxh,data->maxw);
 			buffer_swap(&data->work);
 		}
 	}
-	image_view_make(&data->view,data->image);
-	image_view_draw(&data->view,data->image);
+	image_appw_make(&data->appw,data->image);
+}
+/*----------------------------------------------------------------------------*/
+void image_data_work(my1image_data_t* data)
+{
+	if (!data->pflist)
+		data->pflist = image_work_create_all();
 }
 /*----------------------------------------------------------------------------*/
 void image_data_filter_more(my1image_data_t* data, filter_info_t* info)
@@ -86,7 +96,7 @@ void image_data_filter_load(my1image_data_t* data, char* name)
 {
 	my1image_filter_t *ipass, *tpass = 0x0;
 	ipass = filter_search(data->pflist,name);
-	if (ipass) tpass = filter_clone(ipass);
+	if (ipass) tpass = filter_cloned(ipass);
 	if (tpass)
 	{
 		tpass->buffer = &data->work;
@@ -100,7 +110,7 @@ void image_data_filter_exec(my1image_data_t* data)
 		data->image = image_filter(data->image,data->pfcurr);
 }
 /*----------------------------------------------------------------------------*/
-void set_menu_position(GtkMenu *menu, gint *x, gint *y,
+void data_set_menu_position(GtkMenu *menu, gint *x, gint *y,
 	gboolean *push_in, gpointer user_data)
 {
 	GtkWidget *window = (GtkWidget*)user_data;
@@ -109,7 +119,8 @@ void set_menu_position(GtkMenu *menu, gint *x, gint *y,
 	*y += window->allocation.y + window->allocation.height/2;
 }
 /*----------------------------------------------------------------------------*/
-gboolean on_key_press(GtkWidget *widget, GdkEventKey *kevent, gpointer data)
+gboolean data_on_key_press(GtkWidget *widget, GdkEventKey *kevent,
+	gpointer data)
 {
 	my1image_data_t *q = (my1image_data_t*) data;
 	if(kevent->type == GDK_KEY_PRESS)
@@ -123,14 +134,14 @@ gboolean on_key_press(GtkWidget *widget, GdkEventKey *kevent, gpointer data)
 		}
 		else if(kevent->keyval == GDK_KEY_space) /** GDK_KEY_Return */
 		{
-			gtk_menu_popup(GTK_MENU(q->view.domenu),0x0,0x0,
-				&set_menu_position,(gpointer)q->view.window,0x0,0x0);
+			gtk_menu_popup(GTK_MENU(q->appw.domenu),0x0,0x0,
+				&data_set_menu_position,(gpointer)q->appw.window,0x0,0x0);
 			return TRUE;
 		}
 		else if(kevent->keyval == GDK_KEY_F||kevent->keyval == GDK_KEY_f)
 		{
-			q->view.gofull = !q->view.gofull;
-			image_view_full(&q->view,q->view.gofull);
+			q->appw.gofull = !q->appw.gofull;
+			image_appw_full(&q->appw,q->appw.gofull);
 			return TRUE;
 		}
 	}
@@ -141,15 +152,15 @@ gboolean on_key_press(GtkWidget *widget, GdkEventKey *kevent, gpointer data)
 #define MIDDLE_CLICK 2
 #define LEFT_CLICK 1
 /*----------------------------------------------------------------------------*/
-gboolean on_mouse_click(GtkWidget *widget, GdkEventButton *event, gpointer data)
+gboolean data_on_mouse_click(GtkWidget *widget, GdkEventButton *event,
+	gpointer data)
 {
 	if (event->type == GDK_BUTTON_PRESS)
 	{
 		my1image_data_t *q = (my1image_data_t*) data;
 		if (event->button == RIGHT_CLICK)
 		{
-			GtkWidget* menu = (GtkWidget*) q->view.domenu;
-			gtk_menu_popup(GTK_MENU(menu),0x0,0x0,0x0,0x0,
+			gtk_menu_popup(GTK_MENU(q->appw.domenu),0x0,0x0,0x0,0x0,
 				event->button,event->time);
 		}
 		else if (event->button == MIDDLE_CLICK)
@@ -157,22 +168,23 @@ gboolean on_mouse_click(GtkWidget *widget, GdkEventButton *event, gpointer data)
 			/* show info on status bar */
 			gchar *buff;
 			buff = g_strdup_printf("Size:%dx%d Mask:0x%08x",
-				q->view.buff.width,q->view.buff.height,q->view.buff.mask);
-			image_view_stat_time(&q->view,(char*)buff,5);
+				q->appw.view.buff.cols,q->appw.view.buff.rows,
+				q->appw.view.buff.mask);
+			image_appw_stat_time(&q->appw,(char*)buff,5);
 			g_free(buff);
 		}
 		else if (event->button == LEFT_CLICK)
 		{
 			gchar *buff; my1rgb_t *temp; my1hsv_t that;
-			int mask = q->view.buff.mask;
-			int dpix = image_get_pixel(&q->view.buff,event->y,event->x);
+			int mask = q->appw.view.buff.mask;
+			int dpix = image_get_pixel(&q->appw.view.buff,event->y,event->x);
 			dpix &= mask; /* remove alpha */
 			dpix = color_swap(dpix); /* get rgb from bgr */
 			temp = (my1rgb_t*)&dpix;
 			that = rgb2hsv(*temp);
 			buff = g_strdup_printf("[PIXEL] %08X{%08X}<%d>@(%d,%d)",
 				dpix,mask,that.h,(int)event->x,(int)event->y);
-			image_view_stat_time(&q->view,(char*)buff,3);
+			image_appw_stat_time(&q->appw,(char*)buff,3);
 			g_free(buff);
 		}
 		return TRUE;
@@ -180,100 +192,94 @@ gboolean on_mouse_click(GtkWidget *widget, GdkEventButton *event, gpointer data)
 	return FALSE;
 }
 /*----------------------------------------------------------------------------*/
-void on_image_original(my1image_data_t *data)
+void data_on_image_original(my1image_data_t *data)
 {
-	data->image = &data->currimage;
-	image_view_make(&data->view,data->image);
-	image_view_draw(&data->view,data->image);
-	image_view_stat_time(&data->view,"Original Image restored!",1);
+	image_copy(&data->appw.buff,&data->appw.main);
+	data->image = &data->appw.buff;
+	image_appw_draw(&data->appw,data->image);
+	image_appw_stat_time(&data->appw,"Original Image restored!",1);
 }
 /*----------------------------------------------------------------------------*/
-void on_image_grayscale(my1image_data_t *data)
+void data_on_image_grayscale(my1image_data_t *data)
 {
+	image_copy_color2rgb(&data->appw.buff,&data->appw.view.buff);
+	data->image = &data->appw.buff;
 	image_grayscale(data->image);
-	image_view_draw(&data->view,data->image);
+	image_appw_draw(&data->appw,data->image);
 }
 /*----------------------------------------------------------------------------*/
-void on_image_invert(my1image_data_t *data)
+void data_on_image_invert(my1image_data_t *data)
 {
-	if (data->image->mask==IMASK_COLOR)
-	{
-		cbyte r, g, b;
-		int loop, size = data->image->length;
-		for(loop=0;loop<size;loop++)
-		{
-			decode_rgb(data->image->data[loop],&r,&g,&b);
-			r = WHITE - r; g = WHITE - g; b = WHITE - b;
-			data->image->data[loop] = encode_rgb(r,g,b);
-		}
-	}
-	else image_invert(data->image);
-	image_view_draw(&data->view,data->image);
+	image_copy_color2rgb(&data->appw.buff,&data->appw.view.buff);
+	data->image = &data->appw.buff;
+	image_invert_this(data->image);
+	image_appw_draw(&data->appw,data->image);
 }
 /*----------------------------------------------------------------------------*/
-void on_image_rotate_cw90(my1image_data_t *data)
+void data_on_image_rotate_cw90(my1image_data_t *data)
 {
-	image_turn(data->work.curr,data->work.next,IMAGE_TURN_270);
-	buffer_swap(&data->work);
+	image_copy_color2rgb(&data->appw.buff,&data->appw.view.buff);
+	image_turn(&data->appw.buff,data->work.curr,IMAGE_TURN_270);
 	data->image = data->work.curr;
-	image_view_make(&data->view,data->image);
+	image_appw_draw(&data->appw,data->image);
 }
 /*----------------------------------------------------------------------------*/
-void on_image_rotate_ccw90(my1image_data_t *data)
+void data_on_image_rotate_ccw90(my1image_data_t *data)
 {
-	image_turn(data->work.curr,data->work.next,IMAGE_TURN_090);
-	buffer_swap(&data->work);
+	image_copy_color2rgb(&data->appw.buff,&data->appw.view.buff);
+	image_turn(&data->appw.buff,data->work.curr,IMAGE_TURN_090);
 	data->image = data->work.curr;
-	image_view_make(&data->view,data->image);
+	image_appw_draw(&data->appw,data->image);
 }
 /*----------------------------------------------------------------------------*/
-void on_image_flip_v(my1image_data_t *data)
+void data_on_image_flip_v(my1image_data_t *data)
 {
-	image_flip(data->work.curr,data->work.next,IMAGE_FLIP_VERTICAL);
-	buffer_swap(&data->work);
+	image_copy_color2rgb(&data->appw.buff,&data->appw.view.buff);
+	image_flip(&data->appw.buff,data->work.curr,IMAGE_FLIP_VERTICAL);
 	data->image = data->work.curr;
-	image_view_draw(&data->view,data->image);
+	image_appw_draw(&data->appw,data->image);
 }
 /*----------------------------------------------------------------------------*/
-void on_image_flip_h(my1image_data_t *data)
+void data_on_image_flip_h(my1image_data_t *data)
 {
-	image_flip(data->work.curr,data->work.next,IMAGE_FLIP_HORIZONTAL);
-	buffer_swap(&data->work);
+	image_copy_color2rgb(&data->appw.buff,&data->appw.view.buff);
+	image_flip(&data->appw.buff,data->work.curr,IMAGE_FLIP_HORIZONTAL);
 	data->image = data->work.curr;
-	image_view_draw(&data->view,data->image);
+	image_appw_draw(&data->appw,data->image);
 }
 /*----------------------------------------------------------------------------*/
-void on_toggle_histogram(my1image_data_t *data, GtkCheckMenuItem *menu_item)
+void data_on_toggle_histogram(my1image_data_t *data, GtkCheckMenuItem *menu_item)
 {
 	data->hist.dohide = !data->hist.dohide;
 	gtk_check_menu_item_set_active(menu_item,data->hist.dohide?FALSE:TRUE);
 	image_hist_show(&data->hist);
 }
 /*----------------------------------------------------------------------------*/
-void on_toggle_aspectratio(my1image_data_t *data, GtkCheckMenuItem *menu_item)
+void data_on_toggle_aspectratio(my1image_data_t *data, GtkCheckMenuItem *menu_item)
 {
-	data->view.aspect = !data->view.aspect;
-	gtk_check_menu_item_set_active(menu_item,data->view.aspect?TRUE:FALSE);
-	image_view_draw(&data->view,data->image);
+	data->appw.view.aspect = !data->appw.view.aspect;
+	gtk_check_menu_item_set_active(menu_item,data->appw.view.aspect?TRUE:FALSE);
+	image_appw_draw(&data->appw,data->image);
 }
 /*----------------------------------------------------------------------------*/
-void on_limit_size(my1image_data_t *data, GtkCheckMenuItem *menu_item)
+void data_on_limit_size(my1image_data_t *data, GtkCheckMenuItem *menu_item)
 {
 	data->dosize = !data->dosize;
 	gtk_check_menu_item_set_active(menu_item,data->dosize?TRUE:FALSE);
-	image_data_make(data,&data->currimage);
+	image_data_make(data,0x0); /* reevaluate size */
+	image_appw_draw(&data->appw,data->image);
 }
 /*----------------------------------------------------------------------------*/
 void image_data_events(my1image_data_t* data)
 {
-	g_signal_connect(G_OBJECT(data->view.window),"key_press_event",
-		G_CALLBACK(on_key_press),(gpointer)data);
+	g_signal_connect(G_OBJECT(data->appw.window),"key_press_event",
+		G_CALLBACK(data_on_key_press),(gpointer)data);
 }
 /*----------------------------------------------------------------------------*/
-void on_file_open_main(my1image_data_t* data)
+void data_on_file_open_main(my1image_data_t* data)
 {
 	GtkWidget *doopen = gtk_file_chooser_dialog_new("Open Image File",
-		GTK_WINDOW(data->view.window),GTK_FILE_CHOOSER_ACTION_OPEN,
+		GTK_WINDOW(data->appw.window),GTK_FILE_CHOOSER_ACTION_OPEN,
 		GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
 		GTK_STOCK_OPEN, GTK_RESPONSE_ACCEPT, NULL);
 	if (gtk_dialog_run(GTK_DIALOG(doopen))==GTK_RESPONSE_ACCEPT)
@@ -292,7 +298,7 @@ void on_file_open_main(my1image_data_t* data)
 			image_data_make(data,&that);
 			buff = g_strdup_printf("[LOAD] '%s'",filename);
 		}
-		image_view_stat_time(&data->view,(char*)buff,STATUS_TIMEOUT);
+		image_appw_stat_time(&data->appw,(char*)buff,STATUS_TIMEOUT);
 		g_free(buff);
 		g_free(filename);
 		image_free(&that);
@@ -300,10 +306,10 @@ void on_file_open_main(my1image_data_t* data)
 	gtk_widget_destroy(doopen);
  }
 /*----------------------------------------------------------------------------*/
-void on_file_save_main(my1image_data_t* data)
+void data_on_file_save_main(my1image_data_t* data)
 {
 	GtkWidget *dosave = gtk_file_chooser_dialog_new("Save Image File",
-		GTK_WINDOW(data->view.window),GTK_FILE_CHOOSER_ACTION_SAVE,
+		GTK_WINDOW(data->appw.window),GTK_FILE_CHOOSER_ACTION_SAVE,
 		GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
 		GTK_STOCK_SAVE, GTK_RESPONSE_ACCEPT, NULL);
 	gtk_file_chooser_set_do_overwrite_confirmation(GTK_FILE_CHOOSER(dosave),
@@ -312,22 +318,26 @@ void on_file_save_main(my1image_data_t* data)
 	{
 		int test;
 		gchar *filename, *buff;
+		my1image_t that;
+		image_init(&that);
+		image_copy_color2rgb(&that,&data->appw.view.buff);
 		filename = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(dosave));
-		if ((test=image_save(&data->view.buff,filename))<0)
+		if ((test=image_save(&that,filename))<0)
 			buff = g_strdup_printf("Error saving '%s'! (%d)",filename,test);
 		else
 			buff = g_strdup_printf("[SAVE] '%s'",filename);
-		image_view_stat_time(&data->view,(char*)buff,STATUS_TIMEOUT);
+		image_appw_stat_time(&data->appw,(char*)buff,STATUS_TIMEOUT);
+		image_free(&that);
 		g_free(buff);
 		g_free(filename);
 	}
 	gtk_widget_destroy(dosave);
 }
 /*----------------------------------------------------------------------------*/
-void on_load_filter(my1image_data_t* data)
+void data_on_load_filter(my1image_data_t* data)
 {
 	GtkWidget *doopen = gtk_file_chooser_dialog_new("Open Filter List",
-		GTK_WINDOW(data->view.window),GTK_FILE_CHOOSER_ACTION_OPEN,
+		GTK_WINDOW(data->appw.window),GTK_FILE_CHOOSER_ACTION_OPEN,
 		GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
 		GTK_STOCK_OPEN, GTK_RESPONSE_ACCEPT, NULL);
 	if (gtk_dialog_run(GTK_DIALOG(doopen))==GTK_RESPONSE_ACCEPT)
@@ -359,34 +369,34 @@ void on_load_filter(my1image_data_t* data)
 		else
 			buff = g_strdup_printf("[ERROR] Cannot load '%s'!",filename);
 		/* show info on status bar */
-		image_view_stat_time(&data->view,(char*)buff,5);
+		image_appw_stat_time(&data->appw,(char*)buff,5);
 		g_free(buff);
 		g_free(filename);
 	}
 	gtk_widget_destroy(doopen);
 }
 /*----------------------------------------------------------------------------*/
-void on_filter_select(my1image_data_t *data, GtkMenuItem *menu_item)
+void data_on_filter_select(my1image_data_t *data, GtkMenuItem *menu_item)
 {
 	image_data_filter_load(data,(char*)gtk_menu_item_get_label(menu_item));
 }
 /*----------------------------------------------------------------------------*/
-void on_filter_execute(my1image_data_t *data, GtkMenuItem *menu_item)
+void data_on_filter_execute(my1image_data_t *data, GtkMenuItem *menu_item)
 {
 	image_data_filter_exec(data);
-	image_view_draw(&data->view,data->image);
+	image_appw_draw(&data->appw,data->image);
 }
 /*----------------------------------------------------------------------------*/
-void on_filter_clear(my1image_data_t *data, GtkMenuItem *menu_item)
+void data_on_filter_clear(my1image_data_t *data, GtkMenuItem *menu_item)
 {
 	if (data->pfcurr)
 	{
-		filter_clean(data->pfcurr);
+		filter_free_clones(data->pfcurr);
 		data->pfcurr = 0x0;
 	}
 }
 /*----------------------------------------------------------------------------*/
-void on_list_current(my1image_data_t *data, GtkMenuItem *menu_item)
+void data_on_list_current(my1image_data_t *data, GtkMenuItem *menu_item)
 {
 	int flag = 0;
 	my1image_filter_t *temp;
@@ -401,21 +411,21 @@ void on_list_current(my1image_data_t *data, GtkMenuItem *menu_item)
 	/* create executor */
 	menu_exec = gtk_menu_item_new_with_label("Execute");
 	g_signal_connect_swapped(G_OBJECT(menu_exec),"activate",
-		G_CALLBACK(on_filter_execute),(gpointer)data);
+		G_CALLBACK(data_on_filter_execute),(gpointer)data);
 	gtk_menu_shell_append(GTK_MENU_SHELL(menu_main),menu_exec);
 	gtk_widget_set_sensitive(menu_exec,FALSE);
 	gtk_widget_show(menu_exec);
 	/* reset filter */
 	menu_clra = gtk_menu_item_new_with_label("Clear All");
 	g_signal_connect_swapped(G_OBJECT(menu_clra),"activate",
-		G_CALLBACK(on_filter_clear),(gpointer)data);
+		G_CALLBACK(data_on_filter_clear),(gpointer)data);
 	gtk_menu_shell_append(GTK_MENU_SHELL(menu_main),menu_clra);
 	gtk_widget_set_sensitive(menu_clra,FALSE);
 	gtk_widget_show(menu_clra);
 	/* filter load menu */
 	menu_temp = gtk_menu_item_new_with_label("Load...");
 	g_signal_connect_swapped(G_OBJECT(menu_temp),"activate",
-		G_CALLBACK(on_load_filter),(gpointer)data);
+		G_CALLBACK(data_on_load_filter),(gpointer)data);
 	gtk_menu_shell_append(GTK_MENU_SHELL(menu_main),menu_temp);
 	gtk_widget_show(menu_temp);
 	/* separator */
@@ -444,25 +454,25 @@ void image_data_domenu(my1image_data_t* data)
 	my1image_filter_t *temp;
 	GtkWidget *menu_main, *menu_item, *menu_subs, *menu_temp;
 	/* in case already created! */
-	if (data->view.domenu) return;
+	if (data->appw.domenu) return;
 	/* create popup menu for canvas */
 	menu_main = gtk_menu_new();
-	gtk_widget_add_events(data->view.canvas, GDK_BUTTON_PRESS_MASK);
-	g_signal_connect(GTK_OBJECT(data->view.canvas),"button-press-event",
-		G_CALLBACK(on_mouse_click),(gpointer)data);
+	gtk_widget_add_events(data->appw.view.canvas, GDK_BUTTON_PRESS_MASK);
+	g_signal_connect(GTK_OBJECT(data->appw.view.canvas),"button-press-event",
+		G_CALLBACK(data_on_mouse_click),(gpointer)data);
 	/* sub menu? */
 	menu_subs = gtk_menu_new();
 	/* file load menu */
 	menu_item = gtk_menu_item_new_with_mnemonic("_Load Image...");
 	gtk_menu_shell_append(GTK_MENU_SHELL(menu_subs),menu_item);
 	g_signal_connect_swapped(G_OBJECT(menu_item),"activate",
-		G_CALLBACK(on_file_open_main),(gpointer)data);
+		G_CALLBACK(data_on_file_open_main),(gpointer)data);
 	gtk_widget_show(menu_item);
 	/* file save as menu */
 	menu_item = gtk_menu_item_new_with_mnemonic("_Save Image...");
 	gtk_menu_shell_append(GTK_MENU_SHELL(menu_subs),menu_item);
 	g_signal_connect_swapped(G_OBJECT(menu_item),"activate",
-		G_CALLBACK(on_file_save_main),(gpointer)data);
+		G_CALLBACK(data_on_file_save_main),(gpointer)data);
 	gtk_widget_show(menu_item);
 	/* temp menu to insert as sub-menu */
 	menu_temp = gtk_menu_item_new_with_mnemonic("_File Load/Save");
@@ -476,19 +486,19 @@ void image_data_domenu(my1image_data_t* data)
 	menu_item = gtk_menu_item_new_with_mnemonic("_Original");
 	gtk_menu_shell_append(GTK_MENU_SHELL(menu_subs),menu_item);
 	g_signal_connect_swapped(G_OBJECT(menu_item),"activate",
-		G_CALLBACK(on_image_original),(gpointer)data);
+		G_CALLBACK(data_on_image_original),(gpointer)data);
 	gtk_widget_show(menu_item);
 	/* grayscale menu */
 	menu_item = gtk_menu_item_new_with_mnemonic("_Grayscale");
 	gtk_menu_shell_append(GTK_MENU_SHELL(menu_subs),menu_item);
 	g_signal_connect_swapped(G_OBJECT(menu_item),"activate",
-		G_CALLBACK(on_image_grayscale),(gpointer)data);
+		G_CALLBACK(data_on_image_grayscale),(gpointer)data);
 	gtk_widget_show(menu_item);
 	/* invert menu */
 	menu_item = gtk_menu_item_new_with_mnemonic("_Invert");
 	gtk_menu_shell_append(GTK_MENU_SHELL(menu_subs),menu_item);
 	g_signal_connect_swapped(G_OBJECT(menu_item),"activate",
-		G_CALLBACK(on_image_invert),(gpointer)data);
+		G_CALLBACK(data_on_image_invert),(gpointer)data);
 	gtk_widget_show(menu_item);
 	/* temp menu to insert as sub-menu */
 	menu_temp = gtk_menu_item_new_with_mnemonic("_Image");
@@ -502,25 +512,25 @@ void image_data_domenu(my1image_data_t* data)
 	menu_item = gtk_menu_item_new_with_mnemonic("_Rotate CW90");
 	gtk_menu_shell_append(GTK_MENU_SHELL(menu_subs),menu_item);
 	g_signal_connect_swapped(G_OBJECT(menu_item),"activate",
-		G_CALLBACK(on_image_rotate_cw90),(gpointer)data);
+		G_CALLBACK(data_on_image_rotate_cw90),(gpointer)data);
 	gtk_widget_show(menu_item);
 	/* rotate menu */
 	menu_item = gtk_menu_item_new_with_mnemonic("_Rotate CCW90");
 	gtk_menu_shell_append(GTK_MENU_SHELL(menu_subs),menu_item);
 	g_signal_connect_swapped(G_OBJECT(menu_item),"activate",
-		G_CALLBACK(on_image_rotate_ccw90),(gpointer)data);
+		G_CALLBACK(data_on_image_rotate_ccw90),(gpointer)data);
 	gtk_widget_show(menu_item);
 	/* flip v menu */
 	menu_item = gtk_menu_item_new_with_mnemonic("Flip _Vertical");
 	gtk_menu_shell_append(GTK_MENU_SHELL(menu_subs),menu_item);
 	g_signal_connect_swapped(G_OBJECT(menu_item),"activate",
-		G_CALLBACK(on_image_flip_v),(gpointer)data);
+		G_CALLBACK(data_on_image_flip_v),(gpointer)data);
 	gtk_widget_show(menu_item);
 	/* flip h menu */
 	menu_item = gtk_menu_item_new_with_mnemonic("Flip _Horizontal");
 	gtk_menu_shell_append(GTK_MENU_SHELL(menu_subs),menu_item);
 	g_signal_connect_swapped(G_OBJECT(menu_item),"activate",
-		G_CALLBACK(on_image_flip_h),(gpointer)data);
+		G_CALLBACK(data_on_image_flip_h),(gpointer)data);
 	gtk_widget_show(menu_item);
 	/* temp menu to insert as sub-menu */
 	menu_temp = gtk_menu_item_new_with_mnemonic("_Orientation");
@@ -535,7 +545,7 @@ void image_data_domenu(my1image_data_t* data)
 		if (!menu_subs) menu_subs = gtk_menu_new();
 		menu_item = gtk_menu_item_new_with_label(temp->name);
 		g_signal_connect_swapped(G_OBJECT(menu_item),"activate",
-			G_CALLBACK(on_filter_select),(gpointer)data);
+			G_CALLBACK(data_on_filter_select),(gpointer)data);
 		gtk_menu_shell_append(GTK_MENU_SHELL(menu_subs),menu_item);
 		gtk_widget_show(menu_item);
 		temp = temp->next;
@@ -554,7 +564,7 @@ void image_data_domenu(my1image_data_t* data)
 		gtk_menu_item_set_submenu(GTK_MENU_ITEM(menu_temp),menu_subs);
 		gtk_menu_shell_append(GTK_MENU_SHELL(menu_main),menu_temp);
 		g_signal_connect_swapped(G_OBJECT(menu_temp),"activate",
-			G_CALLBACK(on_list_current),(gpointer)data);
+			G_CALLBACK(data_on_list_current),(gpointer)data);
 		gtk_widget_show(menu_temp);
 	}
 	/* data menu item */
@@ -563,15 +573,15 @@ void image_data_domenu(my1image_data_t* data)
 	gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(menu_item)
 		,data->hist.dohide?FALSE:TRUE);
 	g_signal_connect_swapped(G_OBJECT(menu_item),"activate",
-		G_CALLBACK(on_toggle_histogram),(gpointer)data);
+		G_CALLBACK(data_on_toggle_histogram),(gpointer)data);
 	gtk_widget_show(menu_item);
 	/* keep aspect ratio menu item */
 	menu_item = gtk_check_menu_item_new_with_label("Keep Aspect");
 	gtk_menu_shell_append(GTK_MENU_SHELL(menu_main),menu_item);
 	gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(menu_item)
-		,data->view.aspect?TRUE:FALSE);
+		,data->appw.view.aspect?TRUE:FALSE);
 	g_signal_connect_swapped(G_OBJECT(menu_item),"activate",
-		G_CALLBACK(on_toggle_aspectratio),(gpointer)data);
+		G_CALLBACK(data_on_toggle_aspectratio),(gpointer)data);
 	gtk_widget_show(menu_item);
 	/* limit size menu item */
 	menu_item = gtk_check_menu_item_new_with_label("Limit Size");
@@ -579,7 +589,7 @@ void image_data_domenu(my1image_data_t* data)
 	gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(menu_item)
 		,data->dosize?TRUE:FALSE);
 	g_signal_connect_swapped(G_OBJECT(menu_item),"activate",
-		G_CALLBACK(on_limit_size),(gpointer)data);
+		G_CALLBACK(data_on_limit_size),(gpointer)data);
 	gtk_widget_show(menu_item);
 	/* quit menu item */
 	menu_item = gtk_menu_item_new_with_mnemonic("_Quit");
@@ -588,8 +598,10 @@ void image_data_domenu(my1image_data_t* data)
 		G_CALLBACK(gtk_main_quit),0x0);
 	gtk_widget_show(menu_item);
 	/* save that menu */
-	data->view.domenu = menu_main;
+	data->appw.domenu = menu_main;
 	/* show it! */
-	gtk_widget_show(data->view.domenu);
+	gtk_widget_show(data->appw.domenu);
 }
+/*----------------------------------------------------------------------------*/
+#endif /** __MY1IMAGE_DATAC__ */
 /*----------------------------------------------------------------------------*/

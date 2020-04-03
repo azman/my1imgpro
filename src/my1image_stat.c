@@ -1,4 +1,7 @@
 /*----------------------------------------------------------------------------*/
+#ifndef __MY1IMAGE_STATC__
+#define __MY1IMAGE_STATC__
+/*----------------------------------------------------------------------------*/
 #include "my1image_stat.h"
 /*----------------------------------------------------------------------------*/
 void image_get_histogram(my1image_t *image, my1image_histogram_t *hist)
@@ -8,7 +11,7 @@ void image_get_histogram(my1image_t *image, my1image_histogram_t *hist)
 	for (loop=0;loop<GRAYLEVEL;loop++)
 		hist->count[loop] = 0;
 	/* count! */
-	for (loop=0;loop<image->length;loop++)
+	for (loop=0;loop<image->size;loop++)
 	{
 		temp = image->data[loop];
 		hist->count[temp]++;
@@ -51,8 +54,8 @@ void image_get_histogram(my1image_t *image, my1image_histogram_t *hist)
 /*----------------------------------------------------------------------------*/
 void image_smooth_histogram(my1image_t *image, my1image_histogram_t *hist)
 {
-	int loop, size = image->length, buff[GRAYLEVEL];
-	float alpha = (float)WHITE/image->length;
+	int loop, buff[GRAYLEVEL], size = image->size;
+	float alpha = (float)WHITE/size;
 	for (loop=1;loop<GRAYLEVEL;loop++)
 		buff[loop] = (int)(hist->count[loop]*alpha);
 	for(loop=0;loop<size;loop++)
@@ -97,4 +100,6 @@ void histogram_get_threshold(my1image_histogram_t *hist)
 	}
 	hist->threshold = mids;
 }
+/*----------------------------------------------------------------------------*/
+#endif /** __MY1IMAGE_STATC__ */
 /*----------------------------------------------------------------------------*/

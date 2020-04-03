@@ -1,15 +1,18 @@
 /*----------------------------------------------------------------------------*/
+#ifndef __MY1IMAGE_HISTC__
+#define __MY1IMAGE_HISTC__
+/*----------------------------------------------------------------------------*/
 #include "my1image_hist.h"
 #include "my1image_crgb.h"
 /*----------------------------------------------------------------------------*/
-void image_hist_init(my1image_hist_t* ihist, my1image_view_t* iview)
+void image_hist_init(my1image_hist_t* ihist, my1image_appw_t* appw)
 {
 	ihist->donext = 0x0;
 	ihist->dohist = 0x0;
 	ihist->dostxt = 0x0;
 	ihist->idstxt = 0;
 	ihist->dohide = 1;
-	ihist->view = iview;
+	ihist->appwin = appw;
 }
 /*----------------------------------------------------------------------------*/
 void image_hist_free(my1image_hist_t* ihist)
@@ -29,9 +32,10 @@ gboolean on_draw_hist_expose(GtkWidget *widget, GdkEventExpose *event,
 {
 	int loop, temp;
 	gchar *buff = 0x0;
+	my1image_t gray;
 	my1image_hist_t* v = (my1image_hist_t*) user_data;
 	my1image_histogram_t* h = &v->hist;
-	my1image_t* image = v->view->image;
+	my1image_t* image = v->appwin->view.image;
 	cairo_t *dodraw = gdk_cairo_create(v->dohist->window);
 	/* declared as double in case we want to use scaling later! */
 	double offs_x = (double)HISTSIZE_BORDER;
@@ -51,9 +55,16 @@ gboolean on_draw_hist_expose(GtkWidget *widget, GdkEventExpose *event,
 	cairo_set_source_rgb(dodraw,0.0,0.0,1.0);
 	cairo_move_to(dodraw,40,20);
 	cairo_set_font_size(dodraw,12);
-	cairo_show_text(dodraw,"HISTOGRAM CHART (Grayscale Images Only)");
-	if (image->mask==IMASK_GRAY)
+	cairo_show_text(dodraw,"HISTOGRAM CHART (Grayscale)");
+	if (image)
 	{
+		image_init(&gray);
+		if (image->mask!=IMASK_GRAY)
+		{
+			image_copy(&gray,image);
+			image_grayscale(&gray);
+			image = &gray;
+		}
 		image_get_histogram(image,h);
 		histogram_get_threshold(h);
 		/* scale drawing area */
@@ -97,7 +108,7 @@ gboolean on_draw_hist_expose(GtkWidget *widget, GdkEventExpose *event,
 		}
 		buff = g_strdup_printf("Len:%d,Max:%d(@%d),"
 			"Min:%d(@%d),Chk:%d(@%d),Dif:%d,Th@%d",
-			image->length,h->maxvalue,h->maxindex,
+			image->size,h->maxvalue,h->maxindex,
 			h->minvalue,h->minindex,h->chkvalue,h->chkindex,
 			(h->maxvalue-h->minvalue),h->threshold);
 		gtk_statusbar_push((GtkStatusbar*)v->dostxt,v->idstxt,buff);
@@ -107,6 +118,7 @@ gboolean on_draw_hist_expose(GtkWidget *widget, GdkEventExpose *event,
 		cairo_line_to(dodraw,next_x,offs_y);
 */
 		cairo_stroke(dodraw);
+		image_free(&gray);
 	}
 	cairo_destroy(dodraw);
 	if (buff) g_free(buff);
@@ -155,10 +167,12 @@ void image_hist_show(my1image_hist_t* ihist)
 	{
 		GdkRectangle rect;
 		/* update histogram window position & show it! */
-		gdk_window_get_frame_extents(ihist->view->window->window,&rect);
+		gdk_window_get_frame_extents(ihist->appwin->window->window,&rect);
 		gtk_window_move(GTK_WINDOW(ihist->donext),rect.x+rect.width,rect.y);
 		gtk_widget_show_all(ihist->donext);
 		gtk_widget_queue_draw(ihist->donext);
 	}
 }
+/*----------------------------------------------------------------------------*/
+#endif /** __MY1IMAGE_HISTC__ */
 /*----------------------------------------------------------------------------*/
