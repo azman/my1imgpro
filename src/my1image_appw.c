@@ -6,6 +6,8 @@
 #include "my1image_crgb.h"
 #include "my1image_file.h"
 /*----------------------------------------------------------------------------*/
+#include <string.h>
+/*----------------------------------------------------------------------------*/
 void image_appw_init(my1image_appw_t* appw)
 {
 	appw->window = 0x0;
@@ -18,6 +20,7 @@ void image_appw_init(my1image_appw_t* appw)
 	appw->gofull = 0;
 	appw->doshow = 0;
 	appw->show = 0x0;
+	strncpy(appw->classname,MAIN_WINDOW_CLASS,CLASSNAME_SIZE);
 	image_init(&appw->main);
 	image_init(&appw->buff);
 	image_view_init(&appw->view);
@@ -77,7 +80,7 @@ void image_appw_make(my1image_appw_t* appw, my1image_t* that)
 		/* create gtk window */
 		appw->window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
 		gtk_window_set_wmclass(GTK_WINDOW(appw->window),
-			MAIN_WINDOW_CLASS,MAIN_WINDOW_CLASS);
+			appw->classname,appw->classname);
 		gtk_window_set_title(GTK_WINDOW(appw->window),MAIN_WINDOW_TITLE);
 		gtk_window_set_default_size(GTK_WINDOW(appw->window),
 			that->cols,that->rows);
@@ -118,6 +121,13 @@ void image_appw_name(my1image_appw_t* appw,const char* name)
 	if (!appw->window) return;
 	/* set title */
 	gtk_window_set_title(GTK_WINDOW(appw->window),name);
+}
+/*----------------------------------------------------------------------------*/
+void image_appw_name_class(my1image_appw_t* appw,const char* name)
+{
+	/* must be named BEFORE window is realized! */
+	if (appw->window) return;
+	strncpy(appw->classname,name,CLASSNAME_SIZE);
 }
 /*----------------------------------------------------------------------------*/
 void image_appw_stat_show(my1image_appw_t* appw, const char* mesg)
