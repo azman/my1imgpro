@@ -4,7 +4,7 @@
 /*----------------------------------------------------------------------------*/
 #include "my1image_scan.h"
 /*----------------------------------------------------------------------------*/
-void scan_init(my1image_scan_t* scan, int* data, int rows, int cols, int skip)
+void iscan_init(my1image_scan_t* scan, int* data, int rows, int cols, int skip)
 {
 	scan->data = data;
 	scan->rows = rows;
@@ -14,7 +14,7 @@ void scan_init(my1image_scan_t* scan, int* data, int rows, int cols, int skip)
 	scan->bcol = cols - skip - 1;
 }
 /*----------------------------------------------------------------------------*/
-void scan_prep(my1image_scan_t* scan)
+void iscan_prep(my1image_scan_t* scan)
 {
 	scan->curr = scan->data;
 	scan->next = scan->curr + scan->cols;
@@ -24,7 +24,7 @@ void scan_prep(my1image_scan_t* scan)
 	scan->loop = -1;
 }
 /*----------------------------------------------------------------------------*/
-int scan_next(my1image_scan_t* scan)
+int iscan_next(my1image_scan_t* scan)
 {
 	int next = 1;
 	scan->loop++;
@@ -47,7 +47,7 @@ int scan_next(my1image_scan_t* scan)
 	return next;
 }
 /*----------------------------------------------------------------------------*/
-int scan_skip(my1image_scan_t* scan)
+int iscan_skip(my1image_scan_t* scan)
 {
 	if (scan->irow<scan->skip||scan->irow>scan->brow||
 			scan->icol<scan->skip||scan->icol>scan->bcol)

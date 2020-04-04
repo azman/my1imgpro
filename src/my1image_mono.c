@@ -37,11 +37,11 @@ void image_erode(my1image_t *img, my1image_t *res, int* elem)
 {
 	my1image_scan_t scan;
 	image_make(res,img->rows,img->cols);
-	scan_init(&scan,img->data,img->rows,img->cols,MY1IMAGE_SCAN_SKIP);
-	scan_prep(&scan);
-	while (scan_next(&scan))
+	iscan_init(&scan,img->data,img->rows,img->cols,MY1IMAGE_SCAN_SKIP);
+	iscan_prep(&scan);
+	while (iscan_next(&scan))
 	{
-		if (scan_skip(&scan)) res->data[scan.loop] = 0;
+		if (iscan_skip(&scan)) res->data[scan.loop] = 0;
 		else res->data[scan.loop] = morph_fit(&scan,elem);
 	}
 }
@@ -50,11 +50,11 @@ void image_dilate(my1image_t *img, my1image_t *res, int* elem)
 {
 	my1image_scan_t scan;
 	image_make(res,img->rows,img->cols);
-	scan_init(&scan,img->data,img->rows,img->cols,MY1IMAGE_SCAN_SKIP);
-	scan_prep(&scan);
-	while (scan_next(&scan))
+	iscan_init(&scan,img->data,img->rows,img->cols,MY1IMAGE_SCAN_SKIP);
+	iscan_prep(&scan);
+	while (iscan_next(&scan))
 	{
-		if (scan_skip(&scan)) res->data[scan.loop] = 0;
+		if (iscan_skip(&scan)) res->data[scan.loop] = 0;
 		else res->data[scan.loop] = morph_hit(&scan,elem);
 	}
 }

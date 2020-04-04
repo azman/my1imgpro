@@ -19,10 +19,10 @@ typedef struct _my1image_scan_t
 }
 my1image_scan_t;
 /*----------------------------------------------------------------------------*/
-void scan_init(my1image_scan_t* scan, int* data, int rows, int cols, int skip);
-void scan_prep(my1image_scan_t* scan);
-int scan_next(my1image_scan_t* scan);
-int scan_skip(my1image_scan_t* scan);
+void iscan_init(my1image_scan_t* scan, int* data, int rows, int cols, int skip);
+void iscan_prep(my1image_scan_t* scan);
+int iscan_next(my1image_scan_t* scan);
+int iscan_skip(my1image_scan_t* scan);
 /*----------------------------------------------------------------------------*/
 #endif /** __MY1IMAGE_SCANH__ */
 /*----------------------------------------------------------------------------*/
