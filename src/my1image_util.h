@@ -13,9 +13,13 @@ typedef my1image_t* (*pfilter_t)(my1image_t* curr, my1image_t* next,
 typedef void (*pfsetup_t)(struct _my1image_filter_t* filter);
 typedef void (*pfclean_t)(struct _my1image_filter_t* filter);
 /*----------------------------------------------------------------------------*/
+#define FILTER_FLAG_NONE 0x00
+#define FILTER_FLAG_GRAY 0x01
+/*----------------------------------------------------------------------------*/
 typedef struct _my1image_filter_t
 {
 	char name[FILTER_NAMESIZE];
+	int flag; /* filter properties flag (1-hot) */
 	void *data; /* pointer to user-defined data */
 	my1image_buffer_t *buffer; /* external shared buffer */
 	my1image_t *output; /* output image to write to */
@@ -36,6 +40,7 @@ my1ifilter_t* filter_search(my1ifilter_t* pass, char *name);
 my1ifilter_t* filter_cloned(my1ifilter_t* pass);
 /* apply filter on image */
 my1image_t* image_filter(my1image_t* data, my1ifilter_t* pass);
+my1image_t* image_filter_single(my1image_t* data, my1ifilter_t* pass);
 /*----------------------------------------------------------------------------*/
 typedef struct _filter_info_t
 {

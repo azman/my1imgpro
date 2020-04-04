@@ -5,7 +5,6 @@
 #include "my1image_mask.h"
 /*----------------------------------------------------------------------------*/
 #include <stdlib.h> /* for malloc and free? */
-//#include <string.h>
 /*----------------------------------------------------------------------------*/
 int* image_mask_init(my1image_mask_t *mask, int size)
 {
@@ -44,19 +43,18 @@ void image_mask_prep(my1image_mask_t *mask)
 /*----------------------------------------------------------------------------*/
 int* image_mask_scan(my1image_mask_t *mask)
 {
-	int *temp;
-	temp = &mask->factor[mask->step];
+	int *temp = &mask->factor[mask->step];
 	mask->step++;
 	mask->ocol++;
-	if (mask->ocol<=mask->origin)
+	if (mask->ocol>mask->origin)
 	{
 		mask->ocol = -mask->origin;
 		mask->orow++;
-		if (mask->orow<=mask->origin)
+		if (mask->orow>mask->origin)
 		{
 			mask->orow = -mask->origin;
 			mask->ocol--;
-			mask->step = -1;
+			mask->step = 0;
 			temp = 0x0;
 		}
 	}
@@ -75,6 +73,7 @@ int image_get_valid(my1image_t *image, int row, int col)
 void image_correlation(my1image_t *img, my1image_t *res, my1image_mask_t *mask)
 {
 	int irow, icol, data, mrow, mcol, *temp;
+	image_make(res,img->rows,img->cols);
 	image_mask_prep(mask);
 	for (irow=0;irow<img->rows;irow++)
 	{
@@ -96,6 +95,7 @@ void image_correlation(my1image_t *img, my1image_t *res, my1image_mask_t *mask)
 void image_convolution(my1image_t *img, my1image_t *res, my1image_mask_t *mask)
 {
 	int irow, icol, data, mrow, mcol, *temp;
+	image_make(res,img->rows,img->cols);
 	image_mask_prep(mask);
 	for (irow=0;irow<img->rows;irow++)
 	{
@@ -112,6 +112,19 @@ void image_convolution(my1image_t *img, my1image_t *res, my1image_mask_t *mask)
 			image_set_pixel(res,irow,icol,data);
 		}
 	}
+}
+/*----------------------------------------------------------------------------*/
+my1image_t* image_mask_this(my1image_t* img, my1image_t* res,
+	int mask_size, int data_size, int* pdata)
+{
+	my1image_mask_t mask;
+	if (!image_mask_init(&mask,mask_size))
+		return img;
+	image_mask_make(&mask,data_size,pdata);
+	image_correlation(img,res,&mask);
+	image_mask_free(&mask);
+	res->mask = 0; /* make sure tag as gray */
+	return res;
 }
 /*----------------------------------------------------------------------------*/
 #endif /** __MY1IMAGE_MASKC__ */

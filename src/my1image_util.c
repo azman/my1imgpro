@@ -3,6 +3,7 @@
 #define __MY1IMAGE_UTILC__
 /*----------------------------------------------------------------------------*/
 #include "my1image_util.h"
+#include "my1image_crgb.h"
 /*----------------------------------------------------------------------------*/
 #include <stdlib.h> /* for malloc and free? */
 #include <string.h>
@@ -10,6 +11,7 @@
 void filter_init(my1ifilter_t* pass, pfilter_t filter, my1ibuffer_t* buff)
 {
 	pass->name[0] = 0x0; /* anonymous */
+	pass->flag = FILTER_FLAG_NONE;
 	pass->data = 0x0;
 	pass->buffer = buff;
 	pass->output = 0x0;
@@ -109,6 +111,26 @@ my1image_t* image_filter(my1image_t* data, my1ifilter_t* pass)
 		pass = pass->next;
 	}
 	return data;
+}
+/*----------------------------------------------------------------------------*/
+my1image_t* image_filter_single(my1image_t* data, my1ifilter_t* pass)
+{
+	my1image_t buff;
+	/* assumes pass is always valid - output MUST BE defined */
+	my1image_t* done = pass->output;
+	if (!done) return done;
+	image_init(&buff);
+	if (pass->doinit) pass->doinit(pass);
+	if (pass->flag&FILTER_FLAG_GRAY)
+	{
+		image_copy(&buff,data);
+		image_grayscale(&buff);
+		data = &buff;
+	}
+	done = pass->filter(data,done,pass);
+	if (pass->dofree) pass->dofree(pass);
+	image_free(&buff);
+	return done;
 }
 /*----------------------------------------------------------------------------*/
 my1ifilter_t* info_create_filter(filter_info_t* info)

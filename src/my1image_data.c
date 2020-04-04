@@ -396,6 +396,22 @@ void data_on_filter_clear(my1image_data_t *data, GtkMenuItem *menu_item)
 	}
 }
 /*----------------------------------------------------------------------------*/
+void data_on_filter_soloexec(my1image_data_t *data, GtkMenuItem *menu_item)
+{
+	my1image_t *save;
+	char* name = (char*)gtk_menu_item_get_label(menu_item);
+	my1image_filter_t *pass = filter_search(data->pflist,name);
+	if (pass)
+	{
+		image_copy_color2rgb(&data->appw.buff,&data->appw.view.buff);
+		save = pass->output; /* just in case */
+		pass->output = data->work.curr;
+		data->image = image_filter_single(&data->appw.buff,pass);
+		pass->output = save;
+		image_appw_draw(&data->appw,data->image);
+	}
+}
+/*----------------------------------------------------------------------------*/
 void data_on_list_current(my1image_data_t *data, GtkMenuItem *menu_item)
 {
 	int flag = 0;
@@ -437,6 +453,8 @@ void data_on_list_current(my1image_data_t *data, GtkMenuItem *menu_item)
 	while (temp)
 	{
 		menu_temp = gtk_menu_item_new_with_label(temp->name);
+		g_signal_connect_swapped(G_OBJECT(menu_temp),"activate",
+			G_CALLBACK(data_on_filter_soloexec),(gpointer)data);
 		gtk_menu_shell_append(GTK_MENU_SHELL(menu_main),menu_temp);
 		gtk_widget_show(menu_temp);
 		temp = temp->next;

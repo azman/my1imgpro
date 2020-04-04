@@ -122,7 +122,10 @@ my1image_t* filter_resize(my1image_t* img, my1image_t* res,
 /*----------------------------------------------------------------------------*/
 void filter_resize_init(my1ifilter_t* filter)
 {
+	my1image_area_t *size;
 	filter->data = malloc(sizeof(my1image_area_t));
+	size = (my1image_area_t*) filter->data;
+	image_area_make(size,0,0,RESIZE_DEF_H,RESIZE_DEF_W);
 }
 /*----------------------------------------------------------------------------*/
 void filter_resize_free(my1ifilter_t* filter)
@@ -130,18 +133,9 @@ void filter_resize_free(my1ifilter_t* filter)
 	if (filter->data) free((void*)filter->data);
 }
 /*----------------------------------------------------------------------------*/
-my1image_t* image_mask_this(my1image_t* img, my1image_t* res,
-	int mask_size, int data_size, int* pdata)
+void filter_gray_init(my1ifilter_t* filter)
 {
-	my1image_mask_t mask;
-	if (!image_mask_init(&mask,mask_size))
-		return img;
-	image_mask_make(&mask,data_size,pdata);
-	image_make(res,img->rows,img->cols);
-	image_correlation(img,res,&mask);
-	image_mask_free(&mask);
-	res->mask = IMASK_GRAY;
-	return res;
+	filter->flag |= FILTER_FLAG_GRAY;
 }
 /*----------------------------------------------------------------------------*/
 my1image_t* filter_laplace(my1image_t* img, my1image_t* res,
@@ -448,14 +442,14 @@ static const filter_info_t MY1_IFILTER_DB[] =
 	{ IFNAME_COLORRED, filter_color_red, 0x0, 0x0 },
 	{ IFNAME_INVERT, filter_invert, 0x0, 0x0 },
 	{ IFNAME_RESIZE, filter_resize, filter_resize_init, filter_resize_free },
-	{ IFNAME_LAPLACE, filter_laplace, 0x0, 0x0 },
-	{ IFNAME_SOBELX, filter_sobel_x, 0x0, 0x0 },
-	{ IFNAME_SOBELY, filter_sobel_y, 0x0, 0x0 },
-	{ IFNAME_SOBEL, filter_sobel, 0x0, 0x0 },
-	{ IFNAME_GAUSS, filter_gauss, 0x0, 0x0 },
-	{ IFNAME_MAXSCALE, filter_maxscale, 0x0, 0x0 },
-	{ IFNAME_SUPPRESS, filter_suppress, 0x0, 0x0 },
-	{ IFNAME_THRESHOLD, filter_threshold, 0x0, 0x0 }
+	{ IFNAME_LAPLACE, filter_laplace, filter_gray_init, 0x0 },
+	{ IFNAME_SOBELX, filter_sobel_x, filter_gray_init, 0x0 },
+	{ IFNAME_SOBELY, filter_sobel_y, filter_gray_init, 0x0 },
+	{ IFNAME_SOBEL, filter_sobel, filter_gray_init, 0x0 },
+	{ IFNAME_GAUSS, filter_gauss, filter_gray_init, 0x0 },
+	{ IFNAME_MAXSCALE, filter_maxscale, filter_gray_init, 0x0 },
+	{ IFNAME_SUPPRESS, filter_suppress, filter_gray_init, 0x0 },
+	{ IFNAME_THRESHOLD, filter_threshold, filter_gray_init, 0x0 }
 };
 /*----------------------------------------------------------------------------*/
 const int IFILTER_DB_SIZE = sizeof(MY1_IFILTER_DB)/sizeof(filter_info_t);

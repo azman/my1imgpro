@@ -23,6 +23,9 @@ int* image_mask_scan(my1image_mask_t *mask);
 /* linear filter : cross-correlation & convolution */
 void image_correlation(my1image_t *img, my1image_t *res, my1image_mask_t *mask);
 void image_convolution(my1image_t *img, my1image_t *res, my1image_mask_t *mask);
+/* useful to have */
+my1image_t* image_mask_this(my1image_t* img, my1image_t* res,
+	int mask_size, int data_size, int* pdata);
 /*----------------------------------------------------------------------------*/
 #endif /** __MY1IMAGE_MASKH__ */
 /*----------------------------------------------------------------------------*/

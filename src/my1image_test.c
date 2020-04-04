@@ -50,6 +50,9 @@ int main(int argc, char* argv[])
 	data.appw.goquit = 1;
 	/* create all filters in my1image_work */
 	image_data_work(&data);
+	/** check requested filters */
+	for (test=2;test<argc;test++)
+		image_data_filter_load(&data,argv[test]);
 	/* assign image */
 	image_data_make(&data,&data.appw.buff);
 	/* allow histogram */
