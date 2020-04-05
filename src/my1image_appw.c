@@ -276,6 +276,14 @@ void appw_on_image_grayscale(my1image_appw_t *appw)
 	image_appw_draw(appw,REDRAW);
 }
 /*----------------------------------------------------------------------------*/
+void appw_on_image_binary(my1image_appw_t *appw)
+{
+	image_copy_color2rgb(&appw->buff,&appw->view.buff);
+	image_grayscale(&appw->buff);
+	image_binary(&appw->buff,0,WHITE);
+	image_appw_draw(appw,REDRAW);
+}
+/*----------------------------------------------------------------------------*/
 void appw_on_image_invert(my1image_appw_t *appw)
 {
 	image_copy_color2rgb(&appw->buff,&appw->view.buff);
@@ -361,6 +369,12 @@ void image_appw_domenu(my1image_appw_t* appw)
 	gtk_menu_shell_append(GTK_MENU_SHELL(menu_subs),menu_item);
 	g_signal_connect_swapped(G_OBJECT(menu_item),"activate",
 		G_CALLBACK(appw_on_image_grayscale),(gpointer)appw);
+	gtk_widget_show(menu_item);
+	/* binary menu */
+	menu_item = gtk_menu_item_new_with_mnemonic("_Binary");
+	gtk_menu_shell_append(GTK_MENU_SHELL(menu_subs),menu_item);
+	g_signal_connect_swapped(G_OBJECT(menu_item),"activate",
+		G_CALLBACK(appw_on_image_binary),(gpointer)appw);
 	gtk_widget_show(menu_item);
 	/* invert menu */
 	menu_item = gtk_menu_item_new_with_mnemonic("_Invert");

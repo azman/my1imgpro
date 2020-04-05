@@ -4,6 +4,7 @@
 /*----------------------------------------------------------------------------*/
 #include "my1image_util.h"
 /*----------------------------------------------------------------------------*/
+#define IFNAME_BINARY "binary"
 #define IFNAME_GRAYSCALE "grayscale"
 #define IFNAME_COLORBLUE "colorb"
 #define IFNAME_COLORGREEN "colorg"

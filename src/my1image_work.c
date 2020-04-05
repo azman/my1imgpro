@@ -13,6 +13,14 @@
 #include <stdlib.h>
 #include <string.h>
 /*----------------------------------------------------------------------------*/
+my1image_t* filter_binary(my1image_t* img, my1image_t* res, my1ifilter_t* pass)
+{
+	image_copy(res,img);
+	image_grayscale(res); /* just in case... */
+	image_binary(res,0,WHITE);
+	return res;
+}
+/*----------------------------------------------------------------------------*/
 my1image_t* filter_gray(my1image_t* img, my1image_t* res, my1ifilter_t* filter)
 {
 	int loop, size = img->size;
@@ -436,6 +444,7 @@ my1image_t* filter_threshold(my1image_t* img, my1image_t* res,
 /*----------------------------------------------------------------------------*/
 static const filter_info_t MY1_IFILTER_DB[] =
 {
+	{ IFNAME_BINARY, filter_binary, 0x0, 0x0 },
 	{ IFNAME_GRAYSCALE, filter_gray, 0x0, 0x0 },
 	{ IFNAME_COLORBLUE, filter_color_blue, 0x0, 0x0 },
 	{ IFNAME_COLORGREEN, filter_color_green, 0x0, 0x0 },

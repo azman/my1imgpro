@@ -216,6 +216,16 @@ void data_on_image_invert(my1image_data_t *data)
 	image_appw_draw(&data->appw,data->image);
 }
 /*----------------------------------------------------------------------------*/
+void data_on_image_binary(my1image_data_t *data)
+{
+	image_copy_color2rgb(&data->appw.buff,&data->appw.view.buff);
+	data->image = &data->appw.buff;
+	image_grayscale(data->image);
+	image_binary(data->image,0,WHITE);
+	image_invert_this(data->image);
+	image_appw_draw(&data->appw,data->image);
+}
+/*----------------------------------------------------------------------------*/
 void data_on_image_rotate_cw90(my1image_data_t *data)
 {
 	image_copy_color2rgb(&data->appw.buff,&data->appw.view.buff);
@@ -511,6 +521,12 @@ void image_data_domenu(my1image_data_t* data)
 	gtk_menu_shell_append(GTK_MENU_SHELL(menu_subs),menu_item);
 	g_signal_connect_swapped(G_OBJECT(menu_item),"activate",
 		G_CALLBACK(data_on_image_grayscale),(gpointer)data);
+	gtk_widget_show(menu_item);
+	/* binary menu */
+	menu_item = gtk_menu_item_new_with_mnemonic("_Binary");
+	gtk_menu_shell_append(GTK_MENU_SHELL(menu_subs),menu_item);
+	g_signal_connect_swapped(G_OBJECT(menu_item),"activate",
+		G_CALLBACK(data_on_image_binary),(gpointer)data);
 	gtk_widget_show(menu_item);
 	/* invert menu */
 	menu_item = gtk_menu_item_new_with_mnemonic("_Invert");
