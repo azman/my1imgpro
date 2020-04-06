@@ -27,16 +27,15 @@ gboolean on_done_hist(GtkWidget *widget, GdkEvent *event, gpointer data)
 	return TRUE;
 }
 /*----------------------------------------------------------------------------*/
-gboolean on_draw_hist_expose(GtkWidget *widget, GdkEventExpose *event,
-	gpointer user_data)
+gboolean on_draw_hist_callback(GtkWidget *widget, cairo_t *cr, gpointer data)
 {
 	int loop, temp;
 	gchar *buff = 0x0;
 	my1image_t gray;
-	my1image_hist_t* v = (my1image_hist_t*) user_data;
+	my1image_hist_t* v = (my1image_hist_t*) data;
 	my1image_histogram_t* h = &v->hist;
 	my1image_t* image = v->appwin->view.image;
-	cairo_t *dodraw = gdk_cairo_create(v->dohist->window);
+	cairo_t *dodraw = cr;
 	/* declared as double in case we want to use scaling later! */
 	double offs_x = (double)HISTSIZE_BORDER;
 	double offs_y = (double)HISTSIZE_BORDER;
@@ -120,7 +119,6 @@ gboolean on_draw_hist_expose(GtkWidget *widget, GdkEventExpose *event,
 		cairo_stroke(dodraw);
 		image_free(&gray);
 	}
-	cairo_destroy(dodraw);
 	if (buff) g_free(buff);
 	return TRUE;
 }
@@ -137,9 +135,9 @@ void image_hist_make(my1image_hist_t* ihist)
 		HISTSIZE_WIDTH,HISTSIZE_HEIGHT);
 	gtk_window_set_resizable(GTK_WINDOW(ihist->donext),FALSE);
 	/* container box */
-	vbox = gtk_vbox_new(FALSE, 0);
+	vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
 	gtk_container_add(GTK_CONTAINER(ihist->donext),vbox);
-	/* create draw canvas - deprecated in gtk3 in favor of cairo? */
+	/* create draw canvas */
 	ihist->dohist = gtk_drawing_area_new();
 	gtk_widget_set_size_request(ihist->dohist,HISTSIZE_WIDTH,HISTSIZE_HEIGHT);
 	gtk_box_pack_start(GTK_BOX(vbox),ihist->dohist,TRUE,TRUE,0);
@@ -152,8 +150,8 @@ void image_hist_make(my1image_hist_t* ihist)
 	/* connect event handlers */
 	g_signal_connect(G_OBJECT(ihist->donext),"delete-event",
 		G_CALLBACK(on_done_hist),(gpointer)ihist);
-	g_signal_connect(G_OBJECT(ihist->dohist),"expose-event",
-		G_CALLBACK(on_draw_hist_expose),(gpointer)ihist);
+	g_signal_connect(G_OBJECT(ihist->dohist),"draw",
+		G_CALLBACK(on_draw_hist_callback),(gpointer)ihist);
 }
 /*----------------------------------------------------------------------------*/
 void image_hist_show(my1image_hist_t* ihist)
@@ -165,9 +163,11 @@ void image_hist_show(my1image_hist_t* ihist)
 		gtk_widget_hide(ihist->donext);
 	else
 	{
+		GdkWindow* gwin;
 		GdkRectangle rect;
 		/* update histogram window position & show it! */
-		gdk_window_get_frame_extents(ihist->appwin->window->window,&rect);
+		gwin = gtk_widget_get_window(ihist->appwin->window);
+		gdk_window_get_frame_extents(gwin,&rect);
 		gtk_window_move(GTK_WINDOW(ihist->donext),rect.x+rect.width,rect.y);
 		gtk_widget_show_all(ihist->donext);
 		gtk_widget_queue_draw(ihist->donext);

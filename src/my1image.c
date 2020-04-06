@@ -28,8 +28,8 @@
 #endif
 #ifdef __MYIMAGE_APPW__
 #include "my1image_appw.c"
-#include "my1image_hist.c"
-#include "my1image_data.c"
+//#include "my1image_hist.c"
+//#include "my1image_data.c"
 #endif
 #include "my1image_scan.c"
 #include "my1image_mono.c"

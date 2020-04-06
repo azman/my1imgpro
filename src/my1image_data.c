@@ -110,15 +110,6 @@ void image_data_filter_exec(my1image_data_t* data)
 		data->image = image_filter(data->image,data->pfcurr);
 }
 /*----------------------------------------------------------------------------*/
-void data_set_menu_position(GtkMenu *menu, gint *x, gint *y,
-	gboolean *push_in, gpointer user_data)
-{
-	GtkWidget *window = (GtkWidget*)user_data;
-	gdk_window_get_origin(window->window, x, y);
-	*x += window->allocation.x + window->allocation.width/2;
-	*y += window->allocation.y + window->allocation.height/2;
-}
-/*----------------------------------------------------------------------------*/
 gboolean data_on_key_press(GtkWidget *widget, GdkEventKey *kevent,
 	gpointer data)
 {
@@ -134,8 +125,8 @@ gboolean data_on_key_press(GtkWidget *widget, GdkEventKey *kevent,
 		}
 		else if(kevent->keyval == GDK_KEY_space) /** GDK_KEY_Return */
 		{
-			gtk_menu_popup(GTK_MENU(q->appw.domenu),0x0,0x0,
-				&data_set_menu_position,(gpointer)q->appw.window,0x0,0x0);
+			gtk_menu_popup_at_widget(GTK_MENU(q->appw.domenu),q->appw.window,
+				GDK_GRAVITY_CENTER,GDK_GRAVITY_NORTH_WEST,0x0);
 			return TRUE;
 		}
 		else if(kevent->keyval == GDK_KEY_F||kevent->keyval == GDK_KEY_f)
@@ -160,8 +151,7 @@ gboolean data_on_mouse_click(GtkWidget *widget, GdkEventButton *event,
 		my1image_data_t *q = (my1image_data_t*) data;
 		if (event->button == RIGHT_CLICK)
 		{
-			gtk_menu_popup(GTK_MENU(q->appw.domenu),0x0,0x0,0x0,0x0,
-				event->button,event->time);
+			gtk_menu_popup_at_pointer(GTK_MENU(q->appw.domenu),0x0);
 		}
 		else if (event->button == MIDDLE_CLICK)
 		{
@@ -290,8 +280,8 @@ void data_on_file_open_main(my1image_data_t* data)
 {
 	GtkWidget *doopen = gtk_file_chooser_dialog_new("Open Image File",
 		GTK_WINDOW(data->appw.window),GTK_FILE_CHOOSER_ACTION_OPEN,
-		GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
-		GTK_STOCK_OPEN, GTK_RESPONSE_ACCEPT, NULL);
+		"_Cancel", GTK_RESPONSE_CANCEL,
+		"_Open", GTK_RESPONSE_ACCEPT, NULL);
 	if (gtk_dialog_run(GTK_DIALOG(doopen))==GTK_RESPONSE_ACCEPT)
 	{
 		int test;
@@ -320,8 +310,8 @@ void data_on_file_save_main(my1image_data_t* data)
 {
 	GtkWidget *dosave = gtk_file_chooser_dialog_new("Save Image File",
 		GTK_WINDOW(data->appw.window),GTK_FILE_CHOOSER_ACTION_SAVE,
-		GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
-		GTK_STOCK_SAVE, GTK_RESPONSE_ACCEPT, NULL);
+		"_Cancel", GTK_RESPONSE_CANCEL,
+		"_Save", GTK_RESPONSE_ACCEPT, NULL);
 	gtk_file_chooser_set_do_overwrite_confirmation(GTK_FILE_CHOOSER(dosave),
 		TRUE);
 	if (gtk_dialog_run(GTK_DIALOG(dosave))==GTK_RESPONSE_ACCEPT)
@@ -348,8 +338,8 @@ void data_on_load_filter(my1image_data_t* data)
 {
 	GtkWidget *doopen = gtk_file_chooser_dialog_new("Open Filter List",
 		GTK_WINDOW(data->appw.window),GTK_FILE_CHOOSER_ACTION_OPEN,
-		GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
-		GTK_STOCK_OPEN, GTK_RESPONSE_ACCEPT, NULL);
+		"_Cancel", GTK_RESPONSE_CANCEL,
+		"_Open", GTK_RESPONSE_ACCEPT, NULL);
 	if (gtk_dialog_run(GTK_DIALOG(doopen))==GTK_RESPONSE_ACCEPT)
 	{
 		char fname[FILTER_NAMESIZE], *pname;
@@ -486,7 +476,7 @@ void image_data_domenu(my1image_data_t* data)
 	/* create popup menu for canvas */
 	menu_main = gtk_menu_new();
 	gtk_widget_add_events(data->appw.view.canvas, GDK_BUTTON_PRESS_MASK);
-	g_signal_connect(GTK_OBJECT(data->appw.view.canvas),"button-press-event",
+	g_signal_connect(data->appw.view.canvas,"button-press-event",
 		G_CALLBACK(data_on_mouse_click),(gpointer)data);
 	/* sub menu? */
 	menu_subs = gtk_menu_new();

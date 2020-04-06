@@ -5,9 +5,7 @@
 #include "my1image_view.h"
 /*----------------------------------------------------------------------------*/
 #define MAIN_WINDOW_TITLE "MY1Image Viewer"
-#define MAIN_WINDOW_CLASS "my1image-appw"
 /*----------------------------------------------------------------------------*/
-#define CLASSNAME_SIZE 32
 #define STATUS_TIMEOUT 5
 /*----------------------------------------------------------------------------*/
 #define REDRAW 0x0
@@ -20,7 +18,6 @@ typedef struct _my1image_appw_t
 	int goquit; /* flag to call gtk_quit_main in on_done_all */
 	int gofull; /* full screen request/status flag  */
 	int doshow; /* flag to use external image */
-	char classname[CLASSNAME_SIZE]; /* classname */
 	my1image_t buff, main, *show; /* buffered image data */
 	my1image_view_t view; /* single image view */
 }

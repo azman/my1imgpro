@@ -22,11 +22,11 @@ TOOLLST = $(CHKSIZE) $(CHKLOAD) $(HSVTEST)
 
 CFLAGS += -Wall
 LFLAGS += -lm
-GFLAGS += $(shell pkg-config --libs gtk+-2.0)
+GFLAGS += $(shell pkg-config --libs gtk+-3.0)
 OFLAGS += $(GFLAGS) -lavcodec -lavutil -lavformat -lswscale -lavdevice
 VFLAGS = -DMY1APP_VERS=\"$(shell date +%Y%m%d)\"
 DFLAGS =
-TFLAGS += $(shell pkg-config --cflags gtk+-2.0)
+TFLAGS += $(shell pkg-config --cflags gtk+-3.0)
 
 RM = rm -f
 CC = gcc -c
@@ -37,7 +37,8 @@ ifeq ($(DO_DEBUG),YES)
 endif
 
 #test: DFLAGS += -D__MYIMAGE_NO_HSV__ -D__MYIMAGE_NO_FILE__
-test: DFLAGS += -D__MYIMAGE_FILE_PNG__ -D__MYIMAGE_WORK__
+test: DFLAGS += -D__MYIMAGE_FILE_PNG__ 
+# -D__MYIMAGE_WORK__
 test: DFLAGS += -D__MYIMAGE_VIEW__ -D__MYIMAGE_APPW__
 
 .PHONY: main test all image video new debug clean

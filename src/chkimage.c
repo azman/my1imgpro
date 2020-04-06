@@ -9,7 +9,7 @@
 /*----------------------------------------------------------------------------*/
 int main(int argc, char* argv[])
 {
-	my1image_data_t data;
+	my1image_appw_t data;
 	int loop, task = TASK_NONE;
 	char* pick = 0x0;
 	/* check parameter */
@@ -26,13 +26,13 @@ int main(int argc, char* argv[])
 	}
 	if (task&TASK_ERROR) return -1;
 	/* initialize image_date */
-	image_data_init(&data);
+	image_appw_init(&data);
 	/* setup auto-quit on close */
-	data.appw.goquit = 1;
+	data.goquit = 1;
 	/* load if requested */
 	if (pick)
 	{
-		if((loop=image_load(&data.appw.buff,pick))<0)
+		if((loop=image_load(&data.buff,pick))<0)
 		{
 			printf("Error loading file '%s'!(%x)\n",pick,(unsigned)loop);
 			return loop;
@@ -40,19 +40,19 @@ int main(int argc, char* argv[])
 	}
 	else
 	{
-		image_make(&data.appw.buff,240,320);
-		image_fill(&data.appw.buff,BLACK);
+		image_make(&data.buff,240,320);
+		image_fill(&data.buff,BLACK);
 	}
 	/* initialize gui */
 	gtk_init(&argc,&argv);
 	/* assign image */
-	image_data_make(&data,&data.appw.buff);
+	image_appw_make(&data,&data.buff);
 	/* create menu */
-	image_appw_domenu(&data.appw);
+	image_appw_domenu(&data);
 	/* main loop */
 	gtk_main();
 	/* cleanup */
-	image_data_free(&data);
+	image_appw_free(&data);
 	/* done! */
 	putchar('\n');
 	return 0;

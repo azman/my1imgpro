@@ -20,7 +20,6 @@ void image_appw_init(my1image_appw_t* appw)
 	appw->gofull = 0;
 	appw->doshow = 0;
 	appw->show = 0x0;
-	strncpy(appw->classname,MAIN_WINDOW_CLASS,CLASSNAME_SIZE);
 	image_init(&appw->main);
 	image_init(&appw->buff);
 	image_view_init(&appw->view);
@@ -79,18 +78,15 @@ void image_appw_make(my1image_appw_t* appw, my1image_t* that)
 	{
 		/* create gtk window */
 		appw->window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
-		gtk_window_set_wmclass(GTK_WINDOW(appw->window),
-			appw->classname,appw->classname);
 		gtk_window_set_title(GTK_WINDOW(appw->window),MAIN_WINDOW_TITLE);
 		gtk_window_set_default_size(GTK_WINDOW(appw->window),
 			that->cols,that->rows);
 		gtk_window_set_position(GTK_WINDOW(appw->window),GTK_WIN_POS_CENTER);
-		gtk_window_set_policy(GTK_WINDOW(appw->window),1,1,0);
 		/* connect event handlers */
 		g_signal_connect(G_OBJECT(appw->window),"delete-event",
 			G_CALLBACK(appw_on_done_all),(gpointer)appw);
 		/* container box for image */
-		vbox = gtk_vbox_new(FALSE,0);
+		vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL,0);
 		gtk_container_add(GTK_CONTAINER(appw->window),vbox);
 		/* canvas stuff */
 		image_view_make(&appw->view,that);
@@ -112,7 +108,8 @@ void image_appw_make(my1image_appw_t* appw, my1image_t* that)
 void image_appw_draw(my1image_appw_t* appw, my1image_t* that)
 {
 	if (that) image_appw_make(appw,that);
-	image_view_draw(&appw->view,REDRAW);
+	if (appw->view.canvas)
+		gtk_widget_queue_draw(appw->view.canvas);
 }
 /*----------------------------------------------------------------------------*/
 void image_appw_name(my1image_appw_t* appw,const char* name)
@@ -121,13 +118,6 @@ void image_appw_name(my1image_appw_t* appw,const char* name)
 	if (!appw->window) return;
 	/* set title */
 	gtk_window_set_title(GTK_WINDOW(appw->window),name);
-}
-/*----------------------------------------------------------------------------*/
-void image_appw_name_class(my1image_appw_t* appw,const char* name)
-{
-	/* must be named BEFORE window is realized! */
-	if (appw->window) return;
-	strncpy(appw->classname,name,CLASSNAME_SIZE);
 }
 /*----------------------------------------------------------------------------*/
 void image_appw_stat_show(my1image_appw_t* appw, const char* mesg)
@@ -188,8 +178,7 @@ gboolean appw_on_mouse_click(GtkWidget *widget,
 		my1image_appw_t *q = (my1image_appw_t*) data;
 		if (event->button == RIGHT_CLICK)
 		{
-			gtk_menu_popup(GTK_MENU(q->domenu),0x0,0x0,0x0,0x0,
-				event->button,event->time);
+			gtk_menu_popup_at_pointer(GTK_MENU(q->domenu),0x0);
 		}
 		return TRUE;
 	}
@@ -200,8 +189,8 @@ void appw_on_file_open_main(my1image_appw_t* appw)
 {
 	GtkWidget *doopen = gtk_file_chooser_dialog_new("Open Image File",
 		GTK_WINDOW(appw->window),GTK_FILE_CHOOSER_ACTION_OPEN,
-		GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
-		GTK_STOCK_OPEN, GTK_RESPONSE_ACCEPT, NULL);
+		"_Cancel", GTK_RESPONSE_CANCEL,
+		"_Open", GTK_RESPONSE_ACCEPT, NULL);
 	if (gtk_dialog_run(GTK_DIALOG(doopen))==GTK_RESPONSE_ACCEPT)
 	{
 		int test;
@@ -229,8 +218,8 @@ void appw_on_file_save_main(my1image_appw_t* appw)
 {
 	GtkWidget *dosave = gtk_file_chooser_dialog_new("Save Image File",
 		GTK_WINDOW(appw->window),GTK_FILE_CHOOSER_ACTION_SAVE,
-		GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
-		GTK_STOCK_SAVE, GTK_RESPONSE_ACCEPT, NULL);
+		"_Cancel", GTK_RESPONSE_CANCEL,
+		"_Save", GTK_RESPONSE_ACCEPT, NULL);
 	gtk_file_chooser_set_do_overwrite_confirmation(GTK_FILE_CHOOSER(dosave),
 		TRUE);
 	if (gtk_dialog_run(GTK_DIALOG(dosave))==GTK_RESPONSE_ACCEPT)
@@ -258,7 +247,7 @@ void appw_on_toggle_aspectratio(my1image_appw_t *appw,
 {
 	appw->view.aspect = !appw->view.aspect;
 	gtk_check_menu_item_set_active(menu_item,appw->view.aspect?TRUE:FALSE);
-	image_view_draw(&appw->view,0x0);
+	image_appw_draw(appw,REDRAW);
 }
 /*----------------------------------------------------------------------------*/
 void appw_on_image_original(my1image_appw_t *appw)
@@ -342,7 +331,7 @@ void image_appw_domenu(my1image_appw_t* appw)
 	/* create popup menu for canvas */
 	menu_main = gtk_menu_new();
 	gtk_widget_add_events(that, GDK_BUTTON_PRESS_MASK);
-	g_signal_connect(GTK_OBJECT(that),"button-press-event",
+	g_signal_connect(that,"button-press-event",
 		G_CALLBACK(appw_on_mouse_click),(gpointer)appw);
 	/* file load menu */
 	menu_item = gtk_menu_item_new_with_mnemonic("_Load Image...");
