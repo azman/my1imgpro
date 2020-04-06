@@ -9,6 +9,7 @@
 /*----------------------------------------------------------------------------*/
 int main(int argc, char* argv[])
 {
+	my1image_t buff;
 	my1image_appw_t data;
 	int loop, task = TASK_NONE;
 	char* pick = 0x0;
@@ -26,13 +27,11 @@ int main(int argc, char* argv[])
 	}
 	if (task&TASK_ERROR) return -1;
 	/* initialize image_date */
-	image_appw_init(&data);
-	/* setup auto-quit on close */
-	data.goquit = 1;
+	image_init(&buff);
 	/* load if requested */
 	if (pick)
 	{
-		if((loop=image_load(&data.buff,pick))<0)
+		if((loop=image_load(&buff,pick))<0)
 		{
 			printf("Error loading file '%s'!(%x)\n",pick,(unsigned)loop);
 			return loop;
@@ -40,19 +39,16 @@ int main(int argc, char* argv[])
 	}
 	else
 	{
-		image_make(&data.buff,240,320);
-		image_fill(&data.buff,BLACK);
+		image_make(&buff,240,320);
+		image_fill(&buff,BLACK);
 	}
 	/* initialize gui */
 	gtk_init(&argc,&argv);
-	/* assign image */
-	image_appw_make(&data,&data.buff);
-	/* create menu */
-	image_appw_domenu(&data);
+	/* show image */
+	image_appw_show(&data,&buff,0x0);
+	data.goquit = 1; /* single window, quit once done! */
 	/* main loop */
 	gtk_main();
-	/* cleanup */
-	image_appw_free(&data);
 	/* done! */
 	putchar('\n');
 	return 0;

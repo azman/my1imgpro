@@ -16,7 +16,8 @@ void image_appw_init(my1image_appw_t* appw)
 	appw->idstat = 0;
 	appw->idtime = 0;
 	appw->doquit = 0;
-	appw->goquit = 0;
+	appw->goquit = 1; /* by default, quit on close */
+	appw->gofree = 0;
 	appw->gofull = 0;
 	appw->doshow = 0;
 	appw->show = 0x0;
@@ -49,6 +50,7 @@ void image_appw_full(my1image_appw_t* appw, int full)
 gboolean appw_on_done_all(GtkWidget *widget, GdkEvent *event, gpointer data)
 {
 	my1image_appw_t* appw = (my1image_appw_t*) data;
+	if (appw->gofree) image_appw_free(appw);
 	if (appw->goquit) gtk_main_quit();
 	else appw->doquit = 1;
 	return TRUE;
@@ -166,6 +168,13 @@ void image_appw_stat_remove(my1image_appw_t* appw, guint mesg_id)
 {
 	if (!appw->dostat) return;
 	gtk_statusbar_remove((GtkStatusbar*)appw->dostat,appw->idstat,mesg_id);
+}
+/*----------------------------------------------------------------------------*/
+void image_appw_stat_hide(my1image_appw_t* appw, int hide)
+{
+	if (!appw->dostat) return;
+	if (hide) gtk_widget_hide(appw->dostat);
+	else gtk_widget_show(appw->dostat);
 }
 /*----------------------------------------------------------------------------*/
 #define RIGHT_CLICK 3
@@ -427,6 +436,17 @@ void image_appw_domenu(my1image_appw_t* appw)
 	appw->domenu = menu_main;
 	/* show it! */
 	gtk_widget_show(appw->domenu);
+}
+/*----------------------------------------------------------------------------*/
+void image_appw_show(my1image_appw_t* appw, my1image_t* that, char* name)
+{
+	image_appw_init(appw);
+	appw->gofree = 1; /* auto free on close! */
+	appw->goquit = 0; /* do not quit - assume there is another win! */
+	image_appw_make(appw,that);
+	if (name) image_appw_name(appw,name);
+	image_appw_stat_hide(appw,1);
+	image_appw_domenu(appw);
 }
 /*----------------------------------------------------------------------------*/
 #endif /** __MY1IMAGE_APPWC__ */
