@@ -14,6 +14,8 @@ IMGMONO = my1image_scan.o my1image_mono.o
 OBJSIMG = $(IMGBASE) $(IMGFILE) $(IMGUTIL) $(IMGWORK) $(IMGAPPW)
 OBJSIMG += $(IMGMONO) $(TESTIMG).o
 TESTVIS = my1video_test
+VISMAIN = my1video.o
+VISNAME = $(subst .o,,$(VISMAIN))
 OBJSVIS = $(IMGBASE) $(IMGFILE) $(IMGUTIL) $(IMGWORK)
 OBJSVIS += my1image_view.o my1image_appw.o my1video.o my1video_main.o
 OBJSVIS += $(TESTVIS).o
@@ -45,8 +47,8 @@ DFLAGS = -D__MYIMAGE_NO_WORK__
 
 main: image
 
-test: chkimage.o $(IMGMAIN)
-	$(LD) $(CFLAGS) -o $(TESTIMG) $+ $(LFLAGS) $(GFLAGS)
+test: chkimage.o $(IMGMAIN) $(VISMAIN)
+	$(LD) $(CFLAGS) -o $(TESTIMG) $+ $(LFLAGS) $(GFLAGS) $(OFLAGS)
 
 all: image video $(TOOLLST)
 
@@ -77,6 +79,9 @@ ${TESTVIS}: $(OBJSVIS)
 
 $(IMGMAIN): src/$(IMGNAME).c src/$(IMGNAME).h
 	$(CC) $(CFLAGS) $(DFLAGS) $(TFLAGS) -o $@ $<
+
+$(VISMAIN): src/$(VISNAME).c src/$(VISNAME).h
+	$(CC) $(CFLAGS) $(TFLAGS) -o $@ $<
 
 %.o: src/%.c src/%.h
 	$(CC) $(CFLAGS) $(TFLAGS) -o $@ $<

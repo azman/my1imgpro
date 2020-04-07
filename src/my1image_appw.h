@@ -7,7 +7,8 @@
 #define MAIN_WINDOW_TITLE "MY1Image Viewer"
 /*----------------------------------------------------------------------------*/
 #define STATUS_TIMEOUT 5
-#define ISDONE_TIMEOUT 3
+/* this is in microsec! */
+#define ISDONE_TIMEOUT 1000
 /*----------------------------------------------------------------------------*/
 #define REDRAW 0x0
 /*----------------------------------------------------------------------------*/
@@ -23,6 +24,7 @@ typedef struct _my1image_appw_t
 	int gofull; /* full screen request/status flag  */
 	int doshow; /* flag to use external image */
 	appw_task_t dotask; /* task to do in gtk loop - based on timer idtask */
+	void *dodata; /* data for dotask */
 	my1image_t buff, main, *show; /* buffered image data */
 	my1image_view_t view; /* single image view */
 }
@@ -43,7 +45,8 @@ void image_appw_domenu(my1image_appw_t* appw);
 void image_appw_is_done(void* that_appw);
 guint image_appw_task(my1image_appw_t* appw, appw_task_t task, int secs);
 /* special function to show an image in a window - DO NOT NEED init! */
-void image_appw_show(my1image_appw_t* appw, my1image_t* that, char* name);
+void image_appw_show(my1image_appw_t* appw, my1image_t* that,
+	char* name, int menu);
 /*----------------------------------------------------------------------------*/
 #endif /** __MY1IMAGE_APPWH__ */
 /*----------------------------------------------------------------------------*/

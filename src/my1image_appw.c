@@ -23,6 +23,7 @@ void image_appw_init(my1image_appw_t* appw)
 	appw->doshow = 0;
 	appw->show = 0x0;
 	appw->dotask = 0x0;
+	appw->dodata = 0x0;
 	image_init(&appw->main);
 	image_init(&appw->buff);
 	image_view_init(&appw->view);
@@ -461,16 +462,16 @@ gboolean appw_on_timer_dotask(gpointer data)
 	return 0; /* a one-shot */
 }
 /*----------------------------------------------------------------------------*/
-guint image_appw_task(my1image_appw_t* appw, appw_task_t task, int secs)
+guint image_appw_task(my1image_appw_t* appw, appw_task_t task, int usec)
 {
 	if (appw->dotask) return 0; /* cannot reassign, unless a one-shot */
 	appw->dotask = task;
-	appw->idtask = g_timeout_add_seconds(secs,
-		appw_on_timer_dotask,(gpointer)appw);
+	appw->idtask = g_timeout_add(usec,appw_on_timer_dotask,(gpointer)appw);
 	return appw->idtask;
 }
 /*----------------------------------------------------------------------------*/
-void image_appw_show(my1image_appw_t* appw, my1image_t* that, char* name)
+void image_appw_show(my1image_appw_t* appw, my1image_t* that,
+	char* name, int menu)
 {
 	image_appw_init(appw);
 	appw->gofree = 1; /* auto free on close! */
@@ -478,7 +479,7 @@ void image_appw_show(my1image_appw_t* appw, my1image_t* that, char* name)
 	image_appw_make(appw,that);
 	if (name) image_appw_name(appw,name);
 	image_appw_stat_hide(appw,1);
-	image_appw_domenu(appw);
+	if (menu) image_appw_domenu(appw);
 }
 /*----------------------------------------------------------------------------*/
 #endif /** __MY1IMAGE_APPWC__ */
