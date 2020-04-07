@@ -6,6 +6,7 @@
 #include "my1image_crgb.h"
 #include "my1image_mask.h"
 #include "my1image_stat.h"
+#include "my1image_mono.h"
 /*----------------------------------------------------------------------------*/
 /* needed for sqrt in sobel */
 #include <math.h>
@@ -17,6 +18,43 @@ my1image_t* filter_binary(my1image_t* img, my1image_t* res, my1ifilter_t* pass)
 {
 	image_copy(res,img);
 	image_grayscale(res); /* just in case... */
+	image_binary(res,0,WHITE);
+	return res;
+}
+/*----------------------------------------------------------------------------*/
+my1image_t* filter_binary_mid(my1image_t* img, my1image_t* res,
+	my1ifilter_t* pass)
+{
+	image_copy(res,img);
+	image_grayscale(res); /* just in case... */
+	image_binary(res,WHITE>>1,WHITE);
+	return res;
+}
+/*----------------------------------------------------------------------------*/
+my1image_t* filter_morph_erode(my1image_t* img, my1image_t* res,
+	my1ifilter_t* pass)
+{
+	int elem[] = { 1,1,1, 1,1,1, 1,1,1 };
+	my1image_t temp;
+	image_init(&temp);
+	image_copy(&temp,img);
+	image_grayscale(&temp); /* just in case... could be color? */
+	image_binary(&temp,0,WHITE);
+	image_erode(&temp,res,elem);
+	image_binary(res,0,WHITE);
+	return res;
+}
+/*----------------------------------------------------------------------------*/
+my1image_t* filter_morph_dilate(my1image_t* img, my1image_t* res,
+	my1ifilter_t* pass)
+{
+	int elem[] = { 1,1,1, 1,1,1, 1,1,1 };
+	my1image_t temp;
+	image_init(&temp);
+	image_copy(&temp,img);
+	image_grayscale(&temp); /* just in case... could be color? */
+	image_binary(&temp,0,WHITE);
+	image_dilate(&temp,res,elem);
 	image_binary(res,0,WHITE);
 	return res;
 }
@@ -445,6 +483,9 @@ my1image_t* filter_threshold(my1image_t* img, my1image_t* res,
 static const filter_info_t MY1_IFILTER_DB[] =
 {
 	{ IFNAME_BINARY, filter_binary, 0x0, 0x0 },
+	{ IFNAME_BINARY_MID, filter_binary_mid, 0x0, 0x0 },
+	{ IFNAME_MORPH_ERODE, filter_morph_erode, 0x0, 0x0 },
+	{ IFNAME_MORPH_DILATE, filter_morph_dilate, 0x0, 0x0 },
 	{ IFNAME_GRAYSCALE, filter_gray, 0x0, 0x0 },
 	{ IFNAME_COLORBLUE, filter_color_blue, 0x0, 0x0 },
 	{ IFNAME_COLORGREEN, filter_color_green, 0x0, 0x0 },

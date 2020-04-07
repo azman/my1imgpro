@@ -41,7 +41,7 @@ endif
 # for chkimage
 DFLAGS = -D__MYIMAGE_NO_WORK__
 
-.PHONY: main test all image video new debug clean
+.PHONY: main test all image video new debug clean tools
 
 main: image
 
@@ -53,6 +53,8 @@ all: image video $(TOOLLST)
 image: $(TESTIMG)
 
 video: $(TESTVIS)
+
+tools: $(TOOLLST)
 
 new: clean main
 
