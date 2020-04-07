@@ -1,5 +1,5 @@
 /*----------------------------------------------------------------------------*/
-#include "my1video_main.h"
+#include "my1video.h"
 /*----------------------------------------------------------------------------*/
 #include <stdio.h>
 /*----------------------------------------------------------------------------*/
@@ -80,12 +80,10 @@ int main(int argc, char* argv[])
 	gtk_init(&argc,&argv);
 	/* initialize */
 	video_main_init(&vmain);
-	vmain.vview.appw.view.draw_more = &video_main_draw_index;
-	vmain.vview.appw.view.draw_more_data = (void*)&vmain;
 	/* setup filters */
-	video_main_pass_load(&vmain,IFNAME_GRAYSCALE);
-	video_main_pass_load(&vmain,IFNAME_LAPLACE);
-	video_main_pass_load(&vmain,IFNAME_INVERT);
+	//video_main_pass_load(&vmain,IFNAME_GRAYSCALE);
+	//video_main_pass_load(&vmain,IFNAME_LAPLACE);
+	//video_main_pass_load(&vmain,IFNAME_INVERT);
 	/* setup capture */
 	video_main_capture(&vmain,psource,type);
 	/* setup display */
@@ -95,7 +93,7 @@ int main(int argc, char* argv[])
 	/* tell them */
 	printf("Starting main capture loop.\n\n%s",showkeys);
 	/* setup display/capture cycle */
-	video_main_loop(&vmain,DEFAULT_LOOP_TIME);
+	video_main_loop(&vmain,VGRAB_DELAY);
 	/* main loop */
 	gtk_main();
 	/* clean up */

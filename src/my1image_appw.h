@@ -41,6 +41,7 @@ void image_appw_stat_time(my1image_appw_t* appw, const char* mesg, int secs);
 guint image_appw_stat_push(my1image_appw_t* appw, const char* mesg);
 void image_appw_stat_pop(my1image_appw_t* appw);
 void image_appw_stat_remove(my1image_appw_t* appw, guint mesg_id);
+void image_appw_stat_hide(my1image_appw_t* appw, int hide);
 void image_appw_domenu(my1image_appw_t* appw);
 void image_appw_is_done(void* that_appw);
 guint image_appw_task(my1image_appw_t* appw, appw_task_t task, int secs);

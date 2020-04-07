@@ -25,7 +25,6 @@ typedef struct _my1video_t
 	int index; /* frame index for video file */
 	int width, height; /* set to desired size */
 	int flags; /* VIDEO_FLAGS_* */
-	int inkey; /* input key? */
 	void *display; /* pointer to display object */
 	void *capture; /* pointer to capture object */
 	void *parent_; /* pointer to parent object */

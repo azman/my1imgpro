@@ -20,7 +20,6 @@ void video_init(my1video_t *video)
 	video->flags &= ~VIDEO_FLAG_NEW_FRAME; /* no new frame */
 	video->flags &= ~VIDEO_FLAG_IS_PAUSED; /* NOT paused initially */
 	video->flags &= ~VIDEO_FLAG_DO_GOBACK; /* disable reverse flag! */
-	video->inkey = 0;
 	video->capture = 0x0;
 	video->display = 0x0;
 	video->parent_ = 0x0;

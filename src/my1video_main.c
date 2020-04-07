@@ -1,488 +1,121 @@
 /*----------------------------------------------------------------------------*/
+#ifndef __MY1VIDEO_MAINC__
+#define __MY1VIDEO_MAINC__
+/*----------------------------------------------------------------------------*/
 #include "my1video_main.h"
 #include "my1image_crgb.h"
 /*----------------------------------------------------------------------------*/
 /** need this to save a frame from video to file! */
 #include "my1image_file.h"
 /*----------------------------------------------------------------------------*/
-#include <libswscale/swscale.h>
-#include <libavutil/imgutils.h>
-#include <libavdevice/avdevice.h>
-/*----------------------------------------------------------------------------*/
-#include <gdk/gdkkeysyms.h>
-/*----------------------------------------------------------------------------*/
-void image_get_frame(my1image_t* image, AVFrame* frame)
+void video_main_draw_index(void* data)
 {
-	int index,count;
-	my1rgb_t temp, *pdat;
-	for (index=0,count=0;index<image->size;index++)
-	{
-		if (image->mask)
-		{
-			pdat = (my1rgb_t*)&image->data[index];
-			temp = *pdat;
-		}
-		else
-		{
-			temp.r = temp.g = temp.b = image->data[index];
-		}
-		frame->data[0][count++] = temp.b;
-		frame->data[0][count++] = temp.g;
-		frame->data[0][count++] = temp.r;
-		count++; /* ignore alpha */
-	}
-}
-/*----------------------------------------------------------------------------*/
-void image_set_frame(my1image_t* image, AVFrame* frame)
-{
-	int index, count, *pdat;
-	my1rgb_t temp;
-	temp.a = 0; /* alpha always zero? */
-	for (index=0,count=0;index<image->size;index++)
-	{
-		temp.b = frame->data[0][count++];
-		temp.g = frame->data[0][count++];
-		temp.r = frame->data[0][count++];
-		count++; /* ignore alpha */
-		pdat = (int*)&temp;
-		image->data[index] = *pdat;
-	}
-}
-/*----------------------------------------------------------------------------*/
-void capture_init(my1video_capture_t* vgrab, my1video_t* video)
-{
-	avcodec_register_all();
-	av_register_all();
-	avdevice_register_all();
-	vgrab->fcontext = 0x0;
-	vgrab->vstream = -1;
-	vgrab->ccontext = 0x0;
-	vgrab->rgb32fmt = 0x0;
-	vgrab->pixbuf = 0x0;
-	vgrab->strbuf = (uint8_t*)
-		malloc(STRBUF_SIZE+AV_INPUT_BUFFER_PADDING_SIZE);
-	memset((void*)vgrab->strbuf,0,STRBUF_SIZE+AV_INPUT_BUFFER_PADDING_SIZE);
-	vgrab->packet = av_packet_alloc();
-	vgrab->frame = 0x0;
-	vgrab->buffer = 0x0;
-	vgrab->ready = 0x0;
-	vgrab->video = video;
-	vgrab->index = -1;
-	video->capture = (void*) vgrab;
-}
-/*----------------------------------------------------------------------------*/
-void capture_free(my1video_capture_t* vgrab)
-{
-	if (vgrab->frame) av_free(vgrab->frame);
-	if (vgrab->buffer) av_free(vgrab->buffer);
-	if (vgrab->rgb32fmt) sws_freeContext(vgrab->rgb32fmt);
-	if (vgrab->pixbuf) av_free(vgrab->pixbuf);
-	if (vgrab->ccontext) avcodec_close(vgrab->ccontext);
-	if (vgrab->fcontext) avformat_close_input(&vgrab->fcontext);
-}
-/*----------------------------------------------------------------------------*/
-void* capture_grab_frame(my1video_capture_t* vgrab)
-{
-	int test, live = 0;
-	AVPacket packet;
-	AVFrame *frame = 0x0;
-	AVCodecContext *pCodecCtx = vgrab->ccontext;
-	AVFormatContext *pFormatCtx = vgrab->fcontext;
-	if (!pFormatCtx) return (void*)frame;
-	while (av_read_frame(pFormatCtx,&packet)>=0)
-	{
-		/* look for video stream packet */
-		if (packet.stream_index==vgrab->vstream)
-		{
-			/** TODO: NEED TO REFINE THIS! */
-			/* flush buffers for live feed */
-			if (vgrab->video->count<0&&!live)
-			{
-				/* enter draining mode */
-				avcodec_send_packet(pCodecCtx,NULL);
-				while (avcodec_receive_frame(pCodecCtx,vgrab->frame)>=0);
-				/* reset codec to resume decoding */
-				avcodec_flush_buffers(pCodecCtx);
-				live = 1;
-				continue;
-			}
-			/* decode video frame - NEW! */
-			test = avcodec_send_packet(pCodecCtx,&packet);
-			if (test>=0)
-			{
-				test = avcodec_receive_frame(pCodecCtx,vgrab->frame);
-				if (test>=0) /* 0: success */
-				{
-					/* did we get a complete frame? */
-					frame = vgrab->frame;
-				}
-/*
-AVERROR(EAGAIN):
-- output is not available in this state - user must try to send new input
-AVERROR_EOF:
-- the decoder has been fully flushed, and there will be no more output frames
-AVERROR(EINVAL):
-- codec not opened, or it is an encoder other negative values:
-  legitimate decoding errors
-*/
-			}
-		}
-		/* free the packet alloced by av_read_frame */
-		av_packet_unref(&packet);
-		if (frame) break;
-	}
-	return frame;
-}
-/**
- * to drain codec internal buffers:
- * - avcodec_send_packet(NULL,NULL); => enter draining mode
- * - avcodec_receive_frame(); => loop until AVERROR_EOF returned
- * to reset codec to resum decoding:
- * - avcodec_flush_buffers();
- *
-**/
-/*----------------------------------------------------------------------------*/
-void capture_reset(my1video_capture_t* vgrab)
-{
-	AVFormatContext *pFormatCtx = vgrab->fcontext;
-	if (!pFormatCtx) return;
-	if (avformat_seek_file(pFormatCtx, vgrab->vstream,
-		0, vgrab->video->index, vgrab->video->count-1,
-		AVSEEK_FLAG_ANY|AVSEEK_FLAG_FRAME)<0)
-	{
-		printf("error while seeking frame %d in '%s'!\n",
-			vgrab->video->index,pFormatCtx->filename);
-		exit(-1);
-	}
-	avcodec_flush_buffers(vgrab->ccontext);
-}
-/*----------------------------------------------------------------------------*/
-void capture_from_frame(my1video_capture_t* vgrab)
-{
-	/* convert to RGB! resize here as well? */
-	sws_scale(vgrab->rgb32fmt,
-		(const uint8_t**) vgrab->frame->data, vgrab->frame->linesize,
-		0, vgrab->video->height,
-		vgrab->buffer->data, vgrab->buffer->linesize);
-}
-/*----------------------------------------------------------------------------*/
-void capture_core(my1video_capture_t* vgrab, char *doname)
-{
-	int loop, size;
-	AVFormatContext *pFormatCtx = 0x0;
-	AVCodecContext *pCodecCtx;
-	AVCodec *pCodec = 0x0;
-	AVStream *pStream;
-	/* open resource - autodetect format & no dictionary */
-	if (avformat_open_input(&pFormatCtx,doname,NULL,NULL))
-	{
-		printf("Cannot open resource %s\n",doname);
-		exit(-1);
-	}
-	vgrab->fcontext = pFormatCtx;
-	/* retrieve stream information - no dictionary */
-	if (avformat_find_stream_info(pFormatCtx,NULL)<0)
-	{
-		printf("Cannot find stream info in resource %s\n",doname);
-		exit(-1);
-	}
-	/* find the best video stream - autodetect stream#, no pref, noflags */
-	loop = av_find_best_stream(pFormatCtx,AVMEDIA_TYPE_VIDEO,-1,-1,&pCodec,0);
-	if (loop<0)
-	{
-		av_dump_format(pFormatCtx,0,doname,0);
-		if (loop==AVERROR_STREAM_NOT_FOUND)
-		{
-			printf("Cannot find video stream(s) in %s!\n",doname);
-			exit(-1);
-		}
-		if (loop==AVERROR_DECODER_NOT_FOUND)
-		{
-			printf("Cannot find decoder for resource %s\n",doname);
-			exit(-1);
-		}
-	}
-	/* success! */
-	vgrab->vstream = loop;
-	/* find the decoder for the video stream */
-	pStream = pFormatCtx->streams[loop];
-	pCodec = avcodec_find_decoder(pStream->codecpar->codec_id);
-	if (pCodec==0x0)
-	{
-		av_dump_format(pFormatCtx,0,doname,0);
-		printf("Cannot find suitable codec for file %s!\n",doname);
-		exit(-1);
-	}
-	/* allocate memory for codec context */
-	pCodecCtx = avcodec_alloc_context3(pCodec);
-	avcodec_parameters_to_context(pCodecCtx,pStream->codecpar);
-	vgrab->ccontext = pCodecCtx;
-	/* prepare codec */
-	if (avcodec_open2(pCodecCtx,pCodec,NULL)<0)
-	{
-		printf("Cannot open codec for file %s!\n",doname);
-		exit(-1);
-	}
-	/* check size requirements */
-	if (!vgrab->video->height) vgrab->video->height = pCodecCtx->height;
-	if (!vgrab->video->width) vgrab->video->width = pCodecCtx->width;
-	/* create RGB32 converter context */
-	vgrab->rgb32fmt = sws_getContext(pCodecCtx->width, pCodecCtx->height,
-		pCodecCtx->pix_fmt, vgrab->video->width, vgrab->video->height,
-		AV_PIX_FMT_RGB32, SWS_BICUBIC, NULL, NULL, NULL);
-	if (vgrab->rgb32fmt==0x0)
-	{
-		printf("Cannot initialize the capture conversion context!\n");
-		exit(-1);
-	}
-	/* allocate video frames */
-	vgrab->frame = av_frame_alloc();
-	if (vgrab->frame==0x0)
-	{
-		printf("Cannot allocate memory for input frame!\n");
-		exit(-1);
-	}
-	vgrab->buffer = av_frame_alloc();
-	if (vgrab->buffer==0x0)
-	{
-		printf("Cannot allocate memory for video frame!\n");
-		exit(-1);
-	}
-	/* create RGB buffer - allocate the actual pixel buffer */
-	size = av_image_get_buffer_size(AV_PIX_FMT_RGB32,vgrab->video->width,
-		vgrab->video->height,32); /* byte alignment! */
-	vgrab->pixbuf = (uint8_t *)av_malloc(size*sizeof(uint8_t));
-	av_image_fill_arrays(vgrab->buffer->data,vgrab->buffer->linesize,
-		vgrab->pixbuf,AV_PIX_FMT_RGB32,
-		vgrab->video->width,vgrab->video->height,1);
-}
-/*----------------------------------------------------------------------------*/
-void capture_file(my1video_capture_t* vgrab, char *filename)
-{
-	/* check if captured... can we use this as captured flag? */
-	if (vgrab->fcontext) return;
-	/* abort if my1Video NOT defined! */
-	if (!vgrab->video) return;
-	/* try to initialize? */
-	capture_core(vgrab,filename);
-	if (!vgrab->fcontext) return;
-	/* count frame? */
-	vgrab->video->count = 0;
-	/* grab a 'sample' frame */
-	if (capture_grab_frame(vgrab))
-	{
-		capture_from_frame(vgrab); /* get frame in rgb format */
-		image_make(&vgrab->video->image,
-			vgrab->video->height,vgrab->video->width);
-		/* capture_from_frame always convert rgb? */
-		vgrab->video->image.mask = IMASK_COLOR;
-		image_set_frame(&vgrab->video->image,vgrab->buffer);
-		vgrab->video->frame = &vgrab->video->image;
-		do
-		{
-			vgrab->video->count++;
-		}
-		while (capture_grab_frame(vgrab));
-	}
-	else
-	{
-		printf("Cannot get frames from '%s'?\n",filename);
-		exit(-1);
-	}
-#ifdef MY1DEBUG
-	printf("Frame Count for '%s': %d\n",filename,vgrab->video->count);
-#endif
-	/** pCodecCtx->time_base has frame rate (struct with num/denom)! */
-	/* setup config data */
-	vgrab->video->index = 0;
-	vgrab->video->flags |= VIDEO_FLAG_DO_UPDATE;
-	vgrab->video->flags |= VIDEO_FLAG_STEP;
-	vgrab->video->flags |= VIDEO_FLAG_IS_PAUSED;
-}
-/*----------------------------------------------------------------------------*/
-void capture_live(my1video_capture_t* vgrab, char *camname)
-{
-	/* check if captured... can we use this as captured flag? */
-	if (vgrab->fcontext) return;
-	/* abort if my1Video NOT defined! */
-	if (!vgrab->video) return;
-	/* try to initialize? */
-	capture_core(vgrab,camname);
-	if (!vgrab->fcontext) return;
-	/* grab a 'sample' frame */
-	if (capture_grab_frame(vgrab))
-	{
-		capture_from_frame(vgrab); /* get frame in rgb format */
-		image_make(&vgrab->video->image,
-			vgrab->video->height,vgrab->video->width);
-		/* capture_from_frame always convert rgb? */
-		vgrab->video->image.mask = IMASK_COLOR;
-		image_set_frame(&vgrab->video->image,vgrab->buffer);
-		vgrab->video->frame = &vgrab->video->image;
-	}
-	/* create/init device */
-	vgrab->video->count = -1; /* already default! */
-	vgrab->video->index = -1;
-	vgrab->video->flags |= VIDEO_FLAG_DO_UPDATE;
-	vgrab->video->flags &= ~VIDEO_FLAG_STEP;
-}
-/*----------------------------------------------------------------------------*/
-void capture_grab(my1video_capture_t* vgrab)
-{
-	if (!vgrab->fcontext) return;
-	if (!vgrab->video) return;
-	vgrab->video->flags &= ~VIDEO_FLAG_NEW_FRAME;
-	vgrab->ready = 0x0;
-	if (!(vgrab->video->flags&VIDEO_FLAG_DO_UPDATE)) return;
-	if (vgrab->video->count<0) /* flag for livefeed */
-	{
-		vgrab->ready = capture_grab_frame(vgrab);
-	}
-	else
-	{
-		/* check reset request */
-		if (vgrab->video->index==0)
-		{
-			capture_reset(vgrab);
-			vgrab->index = 0;
-		}
-		else if (vgrab->video->index<vgrab->index)
-		{
-			/* try to reverse step? */
-			capture_reset(vgrab);
-			vgrab->index = vgrab->video->index;
-		}
-		/* compare index to see if grabbing is required */
-		if (vgrab->index<=vgrab->video->index)
-		{
-			vgrab->ready = capture_grab_frame(vgrab);
-			vgrab->index++;
-		}
-	}
-	if (vgrab->ready) /* create video internal copy if valid frame */
-	{
-		capture_from_frame(vgrab); /* get frame in rgb format */
-		image_make(&vgrab->video->image,
-			vgrab->video->height,vgrab->video->width);
-		/* capture_from_frame always convert rgb? */
-		vgrab->video->image.mask = IMASK_COLOR;
-		image_set_frame(&vgrab->video->image,vgrab->buffer);
-		vgrab->video->frame = &vgrab->video->image;
-		vgrab->video->flags |= VIDEO_FLAG_NEW_FRAME;
-	}
-	if (vgrab->video->flags&VIDEO_FLAG_STEP)
-		vgrab->video->flags &= ~VIDEO_FLAG_DO_UPDATE;
-}
-/*----------------------------------------------------------------------------*/
-void capture_stop(my1video_capture_t* vgrab)
-{
-	if (!vgrab->fcontext) return;
-	av_free(vgrab->frame);
-	vgrab->frame = 0x0;
-	av_free(vgrab->buffer);
-	vgrab->buffer = 0x0;
-	av_free(vgrab->pixbuf);
-	vgrab->pixbuf = 0x0;
-	sws_freeContext(vgrab->rgb32fmt);
-	vgrab->rgb32fmt = 0x0;
-	avcodec_close(vgrab->ccontext);
-	vgrab->ccontext = 0x0;
-	avformat_close_input(&vgrab->fcontext);
-	vgrab->fcontext = 0x0;
-}
-/*----------------------------------------------------------------------------*/
-void display_init(my1video_display_t* vview, my1video_t* video)
-{
-	vview->pixbuf = 0x0;
-	vview->timer = 0;
-	vview->inkey = 0;
-	vview->delms = FRAME_NEXT_MS;
-	vview->chkinput = 0x0;
-	vview->chkinput_data = 0x0;
-	vview->video = video;
-	image_appw_init(&vview->appw);
-	video->display = (void*) vview;
-}
-/*----------------------------------------------------------------------------*/
-void display_free(my1video_display_t* vview)
-{
-	if (vview->timer)
-		g_source_remove(vview->timer);
-	if (vview->pixbuf)
-		g_object_unref(vview->pixbuf);
-	image_appw_free(&vview->appw);
-}
-/*----------------------------------------------------------------------------*/
-gint on_display_key_press(GtkWidget *widget, GdkEventKey *kevent, gpointer data)
-{
-	if(kevent->type == GDK_KEY_PRESS)
-	{
-		my1video_t *video = (my1video_t*) data;
-		/** g_message("%d, %c", kevent->keyval, kevent->keyval); */
-		video->inkey = (int) kevent->keyval;
-		return TRUE;
-	}
-	return FALSE;
-}
-/*----------------------------------------------------------------------------*/
-void vmain_set_menu_position(GtkMenu *menu, gint *x, gint *y,
-	gboolean *push_in, gpointer user_data)
-{
-	GtkWidget *window = (GtkWidget*)user_data;
-	gdk_window_get_origin(window->window, x, y);
-	*x += window->allocation.x + window->allocation.width/2;
-	*y += window->allocation.y + window->allocation.height/2;
+	my1image_view_t* view = (my1image_view_t*) data;
+	my1vmain_t* vmain = (my1vmain_t*) view->draw_more_data;
+	my1video_t* video = &vmain->video;
+	my1vgrab_t* vgrab = &vmain->vgrab;
+	gchar *buff = 0x0;
+	if (video->count<0) return;
+	cairo_set_source_rgb(view->dodraw,0.0,0.0,1.0);
+	cairo_move_to(view->dodraw,20,20);
+	cairo_set_font_size(view->dodraw,12);
+	buff = g_strdup_printf("%d/%d(%d)",video->index,video->count,vgrab->index);
+	cairo_show_text(view->dodraw,buff);
+	cairo_stroke(view->dodraw);
+	g_free(buff);
 }
 /*----------------------------------------------------------------------------*/
 void video_main_check_input(void* data)
 {
-	my1vview_t* vview = (my1vview_t*) data;
-	my1vmain_t* vmain = (my1vmain_t*) vview->chkinput_data;
-	GtkWidget* menu = (GtkWidget*) vmain->vview.appw.domenu;
+	my1vmain_t* vmain = (my1vmain_t*) data;
+	my1vappw_t* vappw = (my1vappw_t*) &vmain->vappw;
+	GtkWidget* menu = (GtkWidget*) vappw->domenu;
 	if (!menu) return;
-	switch ((guint)vview->inkey)
+	switch ((guint)vmain->ikey)
 	{
 		case GDK_KEY_Return:
 			video_hold(&vmain->video,1);
-			gtk_menu_popup(GTK_MENU(vview->appw.domenu),0x0,0x0,
-				&vmain_set_menu_position,(gpointer)vview->appw.window,0x0,0x0);
-			vview->inkey = 0;
+			gtk_menu_popup_at_widget(GTK_MENU(vappw->domenu),vappw->window,
+				GDK_GRAVITY_CENTER,GDK_GRAVITY_NORTH_WEST,0x0);
+			vmain->ikey = 0;
 			break;
 	}
 }
 /*----------------------------------------------------------------------------*/
-#define RIGHT_CLICK 3
-/*----------------------------------------------------------------------------*/
-gboolean on_vmain_mouse_click(GtkWidget *widget,
-	GdkEventButton *event, gpointer data)
+void video_main_init(my1vmain_t* vmain)
 {
-	if (event->type == GDK_BUTTON_PRESS)
-	{
-		my1vmain_t *vmain = (my1vmain_t*) data;
-		if (event->button==RIGHT_CLICK)
-		{
-			GtkWidget* menu = (GtkWidget*) vmain->vview.appw.domenu;
-			if (!menu) return FALSE;
-			video_hold(&vmain->video,1);
-			gtk_menu_popup(GTK_MENU(menu),0x0,0x0,0x0,0x0,
-				event->button,event->time);
-			return TRUE;
-		}
-	}
-	return FALSE;
+	video_init(&vmain->video);
+	vmain->video.parent_ = (void*)vmain;
+	capture_init(&vmain->vgrab,&vmain->video);
+	image_appw_init(&vmain->vappw);
+	vmain->video.display = (void*)&vmain->vappw;
+	vmain->plist = image_work_create_all();
+	vmain->ikey = 0;
+	vmain->type = VIDEO_SOURCE_NONE;
+	vmain->xdel = VGRAB_DELAY;
+	/* pointers to functions and data */
+	vmain->data = 0x0;
+	vmain->grabber = 0x0;
+	vmain->grabber_data = 0x0;
+	vmain->vappw.view.draw_more = video_main_draw_index;
+	vmain->vappw.view.draw_more_data = (void*) vmain;
+	vmain->doinput = video_main_check_input;
+	vmain->doinput_data = (void*) vmain;
 }
 /*----------------------------------------------------------------------------*/
-void on_vmain_filter_clear(my1video_main_t *vmain, GtkMenuItem *menu_item)
+void video_main_free(my1vmain_t* vmain)
+{
+	/* using dynamically created filters */
+	video_main_pass_done(vmain);
+	if (vmain->plist)
+		filter_free_clones(vmain->plist);
+	image_appw_free(&vmain->vappw);
+	capture_free(&vmain->vgrab);
+	video_free(&vmain->video);
+}
+/*----------------------------------------------------------------------------*/
+void video_main_capture(my1vmain_t* vmain, char* vsrc, int type)
+{
+	/* setup capture */
+	switch (type)
+	{
+		case VIDEO_SOURCE_LIVE:
+			vmain->type = type;
+			capture_live(&vmain->vgrab,vsrc);
+			break;
+		case VIDEO_SOURCE_FILE:
+			vmain->type = type;
+			capture_file(&vmain->vgrab,vsrc);
+			break;
+		default:
+			vmain->type = VIDEO_SOURCE_NONE;
+			return;
+	}
+}
+/*----------------------------------------------------------------------------*/
+void video_main_display(my1vmain_t* vmain, char* name)
+{
+	image_appw_draw(&vmain->vappw,vmain->video.frame);
+	image_appw_name(&vmain->vappw,name);
+	image_appw_stat_hide(&vmain->vappw,1);
+}
+/*----------------------------------------------------------------------------*/
+void vmain_on_filter_select(my1video_main_t *vmain, GtkMenuItem *menu_item)
+{
+	video_main_pass_load(vmain,(char*)gtk_menu_item_get_label(menu_item));
+}
+/*----------------------------------------------------------------------------*/
+void vmain_on_filter_clear(my1video_main_t *vmain, GtkMenuItem *menu_item)
 {
 	video_main_pass_done(vmain);
 }
 /*----------------------------------------------------------------------------*/
-void on_vmain_load_filter(my1vmain_t* vmain)
+void vmain_on_load_filter(my1vmain_t* vmain)
 {
 	GtkWidget *doopen = gtk_file_chooser_dialog_new("Open Filter List",
-		GTK_WINDOW(vmain->vview.appw.window),GTK_FILE_CHOOSER_ACTION_OPEN,
-		GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
-		GTK_STOCK_OPEN, GTK_RESPONSE_ACCEPT, NULL);
+		GTK_WINDOW(vmain->vappw.window),GTK_FILE_CHOOSER_ACTION_OPEN,
+		"_Cancel", GTK_RESPONSE_CANCEL,
+		"_Open", GTK_RESPONSE_ACCEPT, NULL);
 	if (gtk_dialog_run(GTK_DIALOG(doopen))==GTK_RESPONSE_ACCEPT)
 	{
 		FILE* pfile;
@@ -513,19 +146,14 @@ void on_vmain_load_filter(my1vmain_t* vmain)
 		}
 		else
 			buff = g_strdup_printf("[ERROR] Cannot load '%s'!",filename);
-		image_appw_stat_time(&vmain->vview.appw,(char*)buff,5);
+		image_appw_stat_time(&vmain->vappw,(char*)buff,5);
 		g_free(buff);
 		g_free(filename);
 	}
 	gtk_widget_destroy(doopen);
 }
 /*----------------------------------------------------------------------------*/
-void on_vmain_filter_select(my1video_main_t *vmain, GtkMenuItem *menu_item)
-{
-	video_main_pass_load(vmain,(char*)gtk_menu_item_get_label(menu_item));
-}
-/*----------------------------------------------------------------------------*/
-void on_vmain_list_current(my1video_main_t *vmain, GtkMenuItem *menu_item)
+void vmain_on_list_current(my1video_main_t *vmain, GtkMenuItem *menu_item)
 {
 	int flag = 0;
 	my1image_filter_t *temp;
@@ -540,14 +168,14 @@ void on_vmain_list_current(my1video_main_t *vmain, GtkMenuItem *menu_item)
 	/* reset filter */
 	menu_clra = gtk_menu_item_new_with_label("Clear All");
 	g_signal_connect_swapped(G_OBJECT(menu_clra),"activate",
-		G_CALLBACK(on_vmain_filter_clear),(gpointer)vmain);
+		G_CALLBACK(vmain_on_filter_clear),(gpointer)vmain);
 	gtk_menu_shell_append(GTK_MENU_SHELL(menu_main),menu_clra);
 	gtk_widget_set_sensitive(menu_clra,FALSE);
 	gtk_widget_show(menu_clra);
 	/* filter load menu */
 	menu_temp = gtk_menu_item_new_with_label("Load...");
 	g_signal_connect_swapped(G_OBJECT(menu_temp),"activate",
-		G_CALLBACK(on_vmain_load_filter),(gpointer)vmain);
+		G_CALLBACK(vmain_on_load_filter),(gpointer)vmain);
 	gtk_menu_shell_append(GTK_MENU_SHELL(menu_main),menu_temp);
 	gtk_widget_show(menu_temp);
 	/* separator */
@@ -568,249 +196,66 @@ void on_vmain_list_current(my1video_main_t *vmain, GtkMenuItem *menu_item)
 		gtk_widget_set_sensitive(menu_clra,TRUE);
 }
 /*----------------------------------------------------------------------------*/
-void on_vmain_menu_resume(my1video_main_t *vmain, GtkMenuItem *menu_item)
-{
-	video_play(&vmain->video);
-}
-/*----------------------------------------------------------------------------*/
-void on_vmain_filter_toggle(my1video_main_t *vmain, GtkMenuItem *menu_item)
+void vmain_on_filter_toggle(my1video_main_t *vmain, GtkMenuItem *menu_item)
 {
 	my1video_t* video = &vmain->video;
-	my1vview_t* vview = &vmain->vview;
+	my1vappw_t* vappw = &vmain->vappw;
 	if (video->flags&VIDEO_FLAG_NO_FILTER)
 	{
 		video_skip_filter(video,0);
-		image_appw_stat_time(&vview->appw,"Filter ON",MESG_SHOWTIME);
+		image_appw_stat_time(vappw,"Filter ON",MESG_SHOWTIME);
 	}
 	else
 	{
 		video_skip_filter(video,1);
-		image_appw_stat_time(&vview->appw,"Filter OFF",MESG_SHOWTIME);
+		image_appw_stat_time(vappw,"Filter OFF",MESG_SHOWTIME);
 	}
 	gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(menu_item),
 		video->flags&VIDEO_FLAG_NO_FILTER?FALSE:TRUE);
 }
 /*----------------------------------------------------------------------------*/
-void display_make(my1video_display_t* vview)
+void vmain_on_menu_resume(my1video_main_t *vmain, GtkMenuItem *menu_item)
 {
-	/* must have image frame */
-	if (!vview->video||!vview->video->frame) return;
-	image_appw_make(&vview->appw,vview->video->frame);
+	video_play(&vmain->video);
 }
 /*----------------------------------------------------------------------------*/
-gboolean on_display_timer(gpointer data)
+gboolean vmain_on_done_all(gpointer data)
 {
-	my1video_t* video = (my1video_t*) data;
-	my1vmain_t* vmain = (my1vmain_t*)video->parent_;
-	my1vgrab_t* vgrab = (my1vgrab_t*)video->capture;
-	my1vview_t* vview = (my1vview_t*)video->display;
-	guint keyval = (guint)video->inkey;
-	if (vgrab->fcontext) capture_grab(vgrab);
-	else if (vmain->grabber)
-		vmain->grabber(vmain->grabber_data);
-	if (video->flags&VIDEO_FLAG_NEW_FRAME)
-	{
-		video_filter_frame(video);
-		video_post_frame(video);
-		display_draw(vview);
-	}
-	if (keyval == GDK_KEY_Escape||
-		keyval == GDK_KEY_q || vview->appw.doquit)
-	{
-		gtk_main_quit();
-	}
-	else if (keyval == GDK_KEY_c)
-	{
-		video_play(video);
-		image_appw_stat_time(&vview->appw,"Play",MESG_SHOWTIME);
-	}
-	else if (keyval == GDK_KEY_s)
-	{
-		video_stop(video);
-		image_appw_stat_time(&vview->appw,"Stop",MESG_SHOWTIME);
-	}
-	else if (keyval == GDK_KEY_space)
-	{
-		if (video->index!=video->count||video->flags&VIDEO_FLAG_LOOP)
-		{
-			if (video->flags&VIDEO_FLAG_IS_PAUSED)
-			{
-				video_hold(video,0);
-				image_appw_stat_time(&vview->appw,"Play",MESG_SHOWTIME);
-			}
-			else
-			{
-				video_hold(video,1);
-				image_appw_stat_time(&vview->appw,"Paused",MESG_SHOWTIME);
-			}
-		}
-	}
-	else if (keyval == GDK_KEY_f)
-	{
-		video_next_frame(video);
-		image_appw_stat_time(&vview->appw,"Next",MESG_SHOWTIME);
-	}
-	else if (keyval == GDK_KEY_b)
-	{
-		if (video->count<0)
-		{
-			image_appw_stat_time(&vview->appw,
-				"Not during live feed!",MESG_SHOWTIME);
-		}
-		else
-		{
-			video_prev_frame(video);
-			image_appw_stat_time(&vview->appw,"Previous",MESG_SHOWTIME);
-		}
-	}
-	else if (keyval == GDK_KEY_l)
-	{
-		if (video->flags&VIDEO_FLAG_LOOP)
-		{
-			video_loop(video,0);
-			image_appw_stat_time(&vview->appw,"Looping OFF",MESG_SHOWTIME);
-		}
-		else
-		{
-			video_loop(video,1);
-			image_appw_stat_time(&vview->appw,"Looping ON",MESG_SHOWTIME);
-		}
-	}
-	else if (keyval == GDK_KEY_g)
-	{
-		GtkWidget *dosave;
-		/* stop video on grabbing */
-		video_stop(video);
-		/* create save dialog */
-		dosave = gtk_file_chooser_dialog_new("Save Image File",
-			GTK_WINDOW(vview->appw.window),GTK_FILE_CHOOSER_ACTION_SAVE,
-			GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
-			GTK_STOCK_SAVE, GTK_RESPONSE_ACCEPT, NULL);
-		gtk_file_chooser_set_do_overwrite_confirmation(GTK_FILE_CHOOSER(dosave),
-			TRUE);
-		/* show it! */
-		if (gtk_dialog_run(GTK_DIALOG(dosave))==GTK_RESPONSE_ACCEPT)
-		{
-			gchar *filename;
-			filename = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(dosave));
-			if (image_save(video->frame,filename))
-				image_appw_stat_time(&vview->appw,"Grab failed!",MESG_SHOWTIME);
-			else
-				image_appw_stat_time(&vview->appw,"Frame saved!",MESG_SHOWTIME);
-			g_free(filename);
-		}
-		gtk_widget_destroy(dosave);
-	}
-	else if (keyval == GDK_KEY_z)
-	{
-		if (video->flags&VIDEO_FLAG_NO_FILTER)
-		{
-			video_skip_filter(video,0);
-			image_appw_stat_time(&vview->appw,"Filter ON",MESG_SHOWTIME);
-		}
-		else
-		{
-			video_skip_filter(video,1);
-			image_appw_stat_time(&vview->appw,"Filter OFF",MESG_SHOWTIME);
-		}
-	}
-	else if (keyval)
-	{
-		vview->inkey = keyval;
-		if (vview->chkinput)
-			vview->chkinput((void*)vview);
-	}
-	video->inkey = 0;
-	video_post_input(video);
-	return TRUE; /* return FALSE to stop */
+	my1vmain_t* vmain = (my1vmain_t*) data;
+	vmain->vappw.doquit = 1;
+	return TRUE;
 }
 /*----------------------------------------------------------------------------*/
-void display_loop(my1video_display_t* vview, int delms)
+gint vmain_on_display_key_press(GtkWidget *widget, GdkEventKey *kevent,
+	gpointer data)
 {
-	if (delms>0) vview->delms = delms;
-	/* ignore if one is running */
-	if (vview->timer) return;
-	vview->timer = g_timeout_add(vview->delms,on_display_timer,
-		(gpointer)vview->video);
-}
-/*----------------------------------------------------------------------------*/
-void display_draw(my1video_display_t* vview)
-{
-	/* must have image frame */
-	if (!vview->video||!vview->video->frame) return;
-	image_appw_draw(&vview->appw,vview->video->frame);
-}
-/*----------------------------------------------------------------------------*/
-void display_name(my1video_display_t* vview,const char *name,const char *icon)
-{
-	if (!vview->video) return;
-	/* set title */
-	image_appw_name(&vview->appw,name);
-	/* remove existing pixbuf */
-	if (vview->pixbuf)
-		g_object_unref(vview->pixbuf);
-	/* read new? */
-	if (icon)
+	if(kevent->type == GDK_KEY_PRESS)
 	{
-		vview->pixbuf = gdk_pixbuf_new_from_file(icon,0x0);
-		if (vview->pixbuf)
-			gtk_window_set_icon(GTK_WINDOW(vview->appw.window),vview->pixbuf);
+		my1vmain_t *vmain = (my1vmain_t*) data;
+		/** g_message("%d, %c", kevent->keyval, kevent->keyval); */
+		vmain->ikey = kevent->keyval;
+		return TRUE;
 	}
+	return FALSE;
 }
 /*----------------------------------------------------------------------------*/
-void video_main_init(my1vmain_t* vmain)
-{
-	video_init(&vmain->video);
-	vmain->video.parent_ = (void*)vmain;
-	capture_init(&vmain->vgrab,&vmain->video);
-	display_init(&vmain->vview,&vmain->video);
-	vmain->plist = image_work_create_all();
-	vmain->type = VIDEO_SOURCE_NONE;
-	vmain->data = 0x0;
-	vmain->grabber = 0x0;
-	vmain->grabber_data = 0x0;
-	/* pointers to functions and data */
-	vmain->vview.appw.view.draw_more = &video_main_draw_index;
-	vmain->vview.appw.view.draw_more_data = (void*) vmain;
-	vmain->vview.chkinput = &video_main_check_input;
-	vmain->vview.chkinput_data = (void*) vmain;
-}
+#define RIGHT_CLICK 3
 /*----------------------------------------------------------------------------*/
-void video_main_free(my1vmain_t* vmain)
+gboolean vmain_on_mouse_click(GtkWidget *widget,
+	GdkEventButton *event, gpointer data)
 {
-	/* using dynamically created filters */
-	video_main_pass_done(vmain);
-	if (vmain->plist)
-		filter_free_clones(vmain->plist);
-	display_free(&vmain->vview);
-	capture_free(&vmain->vgrab);
-	video_free(&vmain->video);
-}
-/*----------------------------------------------------------------------------*/
-void video_main_capture(my1vmain_t* vmain, char* vsrc, int type)
-{
-	/* setup capture */
-	switch (type)
+	if (event->type == GDK_BUTTON_PRESS)
 	{
-		case VIDEO_SOURCE_LIVE:
-			vmain->type = type;
-			capture_live(&vmain->vgrab,vsrc);
-			break;
-		case VIDEO_SOURCE_FILE:
-			vmain->type = type;
-			capture_file(&vmain->vgrab,vsrc);
-			break;
-		default:
-			vmain->type = VIDEO_SOURCE_NONE;
-			return;
+		my1vmain_t *vmain = (my1vmain_t*) data;
+		if (event->button==RIGHT_CLICK)
+		{
+			GtkWidget* menu = (GtkWidget*) vmain->vappw.domenu;
+			if (!menu) return FALSE;
+			gtk_menu_popup_at_pointer(GTK_MENU(menu),0x0);
+			return TRUE;
+		}
 	}
-}
-/*----------------------------------------------------------------------------*/
-void video_main_display(my1vmain_t* vmain, char* name)
-{
-	display_make(&vmain->vview);
-	display_draw(&vmain->vview);
-	display_name(&vmain->vview,name,0x0);
+	return FALSE;
 }
 /*----------------------------------------------------------------------------*/
 void video_main_prepare(my1vmain_t* vmain)
@@ -818,7 +263,7 @@ void video_main_prepare(my1vmain_t* vmain)
 	GtkWidget *menu_main, *menu_item, *menu_subs, *menu_temp;
 	my1image_filter_t *temp;
 	/* in case already assigned */
-	if (vmain->vview.appw.domenu) return;
+	if (vmain->vappw.domenu) return;
 	/* create popup menu for canvas */
 	menu_main = gtk_menu_new();
 	/* sub menu? - LIST ALL AVAILABLE FILTERS? */
@@ -828,7 +273,7 @@ void video_main_prepare(my1vmain_t* vmain)
 		if (!menu_subs) menu_subs = gtk_menu_new();
 		menu_item = gtk_menu_item_new_with_label(temp->name);
 		g_signal_connect_swapped(G_OBJECT(menu_item),"activate",
-			G_CALLBACK(on_vmain_filter_select),(gpointer)vmain);
+			G_CALLBACK(vmain_on_filter_select),(gpointer)vmain);
 		gtk_menu_shell_append(GTK_MENU_SHELL(menu_subs),menu_item);
 		gtk_widget_show(menu_item);
 		temp = temp->next;
@@ -847,7 +292,7 @@ void video_main_prepare(my1vmain_t* vmain)
 		gtk_menu_item_set_submenu(GTK_MENU_ITEM(menu_temp),menu_subs);
 		gtk_menu_shell_append(GTK_MENU_SHELL(menu_main),menu_temp);
 		g_signal_connect_swapped(G_OBJECT(menu_temp),"activate",
-			G_CALLBACK(on_vmain_list_current),(gpointer)vmain);
+			G_CALLBACK(vmain_on_list_current),(gpointer)vmain);
 		gtk_widget_show(menu_temp);
 	}
 	/* Filter */
@@ -856,52 +301,162 @@ void video_main_prepare(my1vmain_t* vmain)
 	gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(menu_item),
 		vmain->video.flags&VIDEO_FLAG_NO_FILTER?FALSE:TRUE);
 	g_signal_connect_swapped(G_OBJECT(menu_item),"activate",
-		G_CALLBACK(on_vmain_filter_toggle),(gpointer)vmain);
+		G_CALLBACK(vmain_on_filter_toggle),(gpointer)vmain);
 	gtk_widget_show(menu_item);
 	/* resume */
 	menu_item = gtk_menu_item_new_with_mnemonic("_Resume");
 	gtk_menu_shell_append(GTK_MENU_SHELL(menu_main),menu_item);
 	g_signal_connect_swapped(G_OBJECT(menu_item),"activate",
-		G_CALLBACK(on_vmain_menu_resume),(gpointer)vmain);
+		G_CALLBACK(vmain_on_menu_resume),(gpointer)vmain);
 	gtk_widget_show(menu_item);
 	/* quit menu item */
 	menu_item = gtk_menu_item_new_with_mnemonic("_Quit");
 	gtk_menu_shell_append(GTK_MENU_SHELL(menu_main),menu_item);
-	g_signal_connect(G_OBJECT(menu_item),"activate",
-		G_CALLBACK(gtk_main_quit),0x0);
+	g_signal_connect_swapped(G_OBJECT(menu_item),"activate",
+		G_CALLBACK(vmain_on_done_all),(gpointer)vmain);
 	gtk_widget_show(menu_item);
 	/* save that menu */
-	vmain->vview.appw.domenu = menu_main;
+	vmain->vappw.domenu = menu_main;
 	/* show it! */
-	gtk_widget_show(vmain->vview.appw.domenu);
+	gtk_widget_show(vmain->vappw.domenu);
 	/* setup gtk signal handler(s) */
-	g_signal_connect(G_OBJECT(vmain->vview.appw.window),"key_press_event",
-		G_CALLBACK(on_display_key_press),(gpointer)vmain->vview.video);
-	g_signal_connect(G_OBJECT(vmain->vview.appw.view.canvas),
-		"button-press-event",G_CALLBACK(on_vmain_mouse_click),(gpointer)vmain);
-	gtk_widget_add_events(vmain->vview.appw.view.canvas,GDK_BUTTON_PRESS_MASK);
+	g_signal_connect(G_OBJECT(vmain->vappw.window),"key_press_event",
+		G_CALLBACK(vmain_on_display_key_press),(gpointer)vmain);
+	g_signal_connect(G_OBJECT(vmain->vappw.view.canvas),
+		"button-press-event",G_CALLBACK(vmain_on_mouse_click),(gpointer)vmain);
+	gtk_widget_add_events(vmain->vappw.view.canvas,GDK_BUTTON_PRESS_MASK);
 }
 /*----------------------------------------------------------------------------*/
-void video_main_draw_index(void* data)
+void vmain_on_display_timer(void* data)
 {
-	my1image_view_t* view = (my1image_view_t*) data;
-	my1vmain_t* vmain = (my1vmain_t*) view->draw_more_data;
-	my1video_t* video = &vmain->video;
-	my1vgrab_t* vgrab = &vmain->vgrab;
-	gchar *buff = 0x0;
-	if (video->count<0) return;
-	cairo_set_source_rgb(view->dodraw,0.0,0.0,1.0);
-	cairo_move_to(view->dodraw,20,20);
-	cairo_set_font_size(view->dodraw,12);
-	buff = g_strdup_printf("%d/%d(%d)",video->index,video->count,vgrab->index);
-	cairo_show_text(view->dodraw,buff);
-	cairo_stroke(view->dodraw);
-	g_free(buff);
+	my1vappw_t* vappw = (my1vappw_t*) data;
+	my1vmain_t* vmain = (my1vmain_t*) vappw->dodata;
+	my1video_t* video = (my1video_t*) &vmain->video;
+	my1vgrab_t* vgrab = (my1vgrab_t*) &vmain->vgrab;
+	guint keyval = vmain->ikey;
+	if (vgrab->fcontext) capture_grab(vgrab);
+	else if (vmain->grabber)
+		vmain->grabber(vmain->grabber_data);
+	if (video->flags&VIDEO_FLAG_NEW_FRAME)
+	{
+		video_filter_frame(video);
+		video_post_frame(video);
+		image_appw_draw(vappw,video->frame);
+	}
+	if (keyval == GDK_KEY_Escape || keyval == GDK_KEY_q || vappw->doquit)
+	{
+		gtk_main_quit();
+	}
+	else if (keyval == GDK_KEY_c)
+	{
+		video_play(video);
+		image_appw_stat_time(vappw,"Play",MESG_SHOWTIME);
+	}
+	else if (keyval == GDK_KEY_s)
+	{
+		video_stop(video);
+		image_appw_stat_time(vappw,"Stop",MESG_SHOWTIME);
+	}
+	else if (keyval == GDK_KEY_space)
+	{
+		if (video->index!=video->count||video->flags&VIDEO_FLAG_LOOP)
+		{
+			if (video->flags&VIDEO_FLAG_IS_PAUSED)
+			{
+				video_hold(video,0);
+				image_appw_stat_time(vappw,"Play",MESG_SHOWTIME);
+			}
+			else
+			{
+				video_hold(video,1);
+				image_appw_stat_time(vappw,"Paused",MESG_SHOWTIME);
+			}
+		}
+	}
+	else if (keyval == GDK_KEY_f)
+	{
+		video_next_frame(video);
+		image_appw_stat_time(vappw,"Next",MESG_SHOWTIME);
+	}
+	else if (keyval == GDK_KEY_b)
+	{
+		if (video->count<0)
+		{
+			image_appw_stat_time(vappw,"Not during live feed!",MESG_SHOWTIME);
+		}
+		else
+		{
+			video_prev_frame(video);
+			image_appw_stat_time(vappw,"Previous",MESG_SHOWTIME);
+		}
+	}
+	else if (keyval == GDK_KEY_l)
+	{
+		if (video->flags&VIDEO_FLAG_LOOP)
+		{
+			video_loop(video,0);
+			image_appw_stat_time(vappw,"Looping OFF",MESG_SHOWTIME);
+		}
+		else
+		{
+			video_loop(video,1);
+			image_appw_stat_time(vappw,"Looping ON",MESG_SHOWTIME);
+		}
+	}
+	else if (keyval == GDK_KEY_g)
+	{
+		GtkWidget *dosave;
+		/* stop video on grabbing */
+		video_stop(video);
+		/* create save dialog */
+		dosave = gtk_file_chooser_dialog_new("Save Image File",
+			GTK_WINDOW(vappw->window),GTK_FILE_CHOOSER_ACTION_SAVE,
+			"_Cancel", GTK_RESPONSE_CANCEL,
+			"_Open", GTK_RESPONSE_ACCEPT, NULL);
+		gtk_file_chooser_set_do_overwrite_confirmation(GTK_FILE_CHOOSER(dosave),
+			TRUE);
+		/* show it! */
+		if (gtk_dialog_run(GTK_DIALOG(dosave))==GTK_RESPONSE_ACCEPT)
+		{
+			gchar *filename;
+			filename = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(dosave));
+			if (image_save(video->frame,filename))
+				image_appw_stat_time(vappw,"Grab failed!",MESG_SHOWTIME);
+			else
+				image_appw_stat_time(vappw,"Frame saved!",MESG_SHOWTIME);
+			g_free(filename);
+		}
+		gtk_widget_destroy(dosave);
+	}
+	else if (keyval == GDK_KEY_z)
+	{
+		if (video->flags&VIDEO_FLAG_NO_FILTER)
+		{
+			video_skip_filter(video,0);
+			image_appw_stat_time(vappw,"Filter ON",MESG_SHOWTIME);
+		}
+		else
+		{
+			video_skip_filter(video,1);
+			image_appw_stat_time(vappw,"Filter OFF",MESG_SHOWTIME);
+		}
+	}
+	else if (keyval)
+	{
+		vmain->ikey = keyval;
+		if (vmain->doinput)
+			vmain->doinput((void*)vmain);
+	}
+	video_post_input(video);
+	image_appw_task(&vmain->vappw,vmain_on_display_timer,vmain->xdel);
 }
 /*----------------------------------------------------------------------------*/
 void video_main_loop(my1vmain_t* vmain, int loopms)
 {
-	display_loop(&vmain->vview,loopms);
+	if (loopms>0) vmain->xdel = loopms;
+	if (vmain->vappw.dotask) return;
+	vmain->vappw.dodata = (void*) vmain;
+	image_appw_task(&vmain->vappw,vmain_on_display_timer,vmain->xdel);
 }
 /*----------------------------------------------------------------------------*/
 void video_main_pass_more(my1vmain_t* vmain, filter_info_t* info)
@@ -927,4 +482,6 @@ void video_main_pass_done(my1vmain_t* vmain)
 	filter_free_clones(vmain->video.ppass);
 	vmain->video.ppass = 0x0;
 }
+/*----------------------------------------------------------------------------*/
+#endif /** __MY1VIDEO_MAINC__ */
 /*----------------------------------------------------------------------------*/

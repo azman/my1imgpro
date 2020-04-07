@@ -11,14 +11,15 @@ IMGUTIL = my1image_mask.o my1image_area.o my1image_buff.o my1image_util.o
 IMGWORK = my1image_stat.o my1image_work.o
 IMGAPPW = my1image_view.o my1image_appw.o my1image_hist.o my1image_data.o
 IMGMONO = my1image_scan.o my1image_mono.o
-OBJSIMG = $(IMGBASE) $(IMGFILE) $(IMGUTIL) $(IMGWORK) $(IMGAPPW)
-OBJSIMG += $(IMGMONO) $(TESTIMG).o
+OBJSIMG = $(IMGBASE) $(IMGFILE) $(IMGUTIL) $(IMGWORK) $(IMGAPPW) $(IMGMONO)
+OBJSIMG += $(TESTIMG).o
 TESTVIS = my1video_test
 VISMAIN = my1video.o
 VISNAME = $(subst .o,,$(VISMAIN))
-OBJSVIS = $(IMGBASE) $(IMGFILE) $(IMGUTIL) $(IMGWORK)
-OBJSVIS += my1image_view.o my1image_appw.o my1video.o my1video_main.o
-OBJSVIS += $(TESTVIS).o
+VISAPPW = my1image_view.o my1image_appw.o
+VISBASE = my1video_base.o my1video_grab.o my1video_main.o
+OBJSVIS = $(IMGBASE) $(IMGFILE) $(IMGUTIL) $(IMGWORK) $(VISAPPW) $(IMGMONO)
+OBJSVIS += $(VISBASE) $(TESTVIS).o
 CHKSIZE = resizer
 CHKLOAD = imgload
 HSVTEST = testhsv
@@ -41,7 +42,7 @@ ifeq ($(DO_DEBUG),YES)
 endif
 
 # for chkimage
-DFLAGS = -D__MYIMAGE_NO_WORK__
+test: DFLAGS = -D__MYIMAGE_NO_WORK__
 
 .PHONY: main test all image video new debug clean tools
 
