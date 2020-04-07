@@ -2,6 +2,8 @@
 # - using libav & gtk for interfacing & display
 
 TESTIMG = my1image_test
+IMGMAIN = my1image.o
+IMGNAME = $(subst .o,,$(IMGMAIN))
 IMGBASE = my1image_base.o my1image_gray.o my1image_crgb.o my1image_chsv.o
 IMGFILE = my1image_file.o my1image_file_bmp.o
 IMGFILE += my1image_file_pnm.o my1image_file_png.o
@@ -36,17 +38,15 @@ ifeq ($(DO_DEBUG),YES)
 	DFLAGS += -g -DMY1DEBUG
 endif
 
-#test: DFLAGS += -D__MYIMAGE_NO_HSV__ -D__MYIMAGE_NO_FILE__
-test: DFLAGS += -D__MYIMAGE_FILE_PNG__ 
-# -D__MYIMAGE_WORK__
-test: DFLAGS += -D__MYIMAGE_VIEW__ -D__MYIMAGE_APPW__
+# for chkimage
+DFLAGS = -D__MYIMAGE_NO_WORK__
 
 .PHONY: main test all image video new debug clean
 
 main: image
 
-test: my1image.o chkimage.o
-	$(LD) $(CFLAGS) $(DFLAGS) -o $(TESTIMG) $+ $(LFLAGS) $(GFLAGS)
+test: chkimage.o $(IMGMAIN)
+	$(LD) $(CFLAGS) -o $(TESTIMG) $+ $(LFLAGS) $(GFLAGS)
 
 all: image video $(TOOLLST)
 
@@ -59,25 +59,28 @@ new: clean main
 debug: new
 
 $(CHKSIZE): $(IMGBASE) $(IMGFILE) my1image_resize.o
-	$(LD) $(CFLAGS) $(DFLAGS) -o $@ $+ $(LFLAGS) $(GFLAGS)
+	$(LD) $(CFLAGS) -o $@ $+ $(LFLAGS) $(GFLAGS)
 
 $(CHKLOAD): $(IMGBASE) $(IMGFILE) my1image_loader.o
-	$(LD) $(CFLAGS) $(DFLAGS) -o $@ $+ $(LFLAGS) $(GFLAGS)
+	$(LD) $(CFLAGS) -o $@ $+ $(LFLAGS) $(GFLAGS)
 
 $(HSVTEST): $(IMGBASE) my1image_testhsv.o
-	$(LD) $(CFLAGS) $(DFLAGS) -o $@ $+ $(LFLAGS) $(GFLAGS)
+	$(LD) $(CFLAGS) -o $@ $+ $(LFLAGS) $(GFLAGS)
 
 ${TESTIMG}: $(OBJSIMG)
-	$(LD) $(CFLAGS) $(DFLAGS) -o $@ $+ $(LFLAGS) $(GFLAGS)
+	$(LD) $(CFLAGS) -o $@ $+ $(LFLAGS) $(GFLAGS)
 
 ${TESTVIS}: $(OBJSVIS)
-	$(LD) $(CFLAGS) $(DFLAGS) -o $@ $+ $(LFLAGS) $(OFLAGS)
+	$(LD) $(CFLAGS) -o $@ $+ $(LFLAGS) $(OFLAGS)
 
-%.o: src/%.c src/%.h
+$(IMGMAIN): src/$(IMGNAME).c src/$(IMGNAME).h
 	$(CC) $(CFLAGS) $(DFLAGS) $(TFLAGS) -o $@ $<
 
+%.o: src/%.c src/%.h
+	$(CC) $(CFLAGS) $(TFLAGS) -o $@ $<
+
 %.o: src/%.c
-	$(CC) $(CFLAGS) $(DFLAGS) $(TFLAGS) $(VFLAGS) -o $@ $<
+	$(CC) $(CFLAGS) $(TFLAGS) $(VFLAGS) -o $@ $<
 
 clean:
 	-$(RM) $(TESTIMG) $(TESTVIS) $(TOOLLST) *.o *.pnm
