@@ -15,11 +15,12 @@ typedef void (*pfclean_t)(struct _my1image_filter_t* filter);
 /*----------------------------------------------------------------------------*/
 #define FILTER_FLAG_NONE 0x00
 #define FILTER_FLAG_GRAY 0x01
+#define FILTER_FLAG_PROG 0x08
 /*----------------------------------------------------------------------------*/
 typedef struct _my1image_filter_t
 {
 	char name[FILTER_NAMESIZE];
-	int flag; /* filter properties flag (1-hot) */
+	unsigned int flag; /* filter properties flag (1-hot) */
 	void *data; /* pointer to user-defined data */
 	my1image_buffer_t *buffer; /* external shared buffer */
 	my1image_t *output; /* output image to write to */
@@ -45,6 +46,7 @@ my1image_t* image_filter_single(my1image_t* data, my1ifilter_t* pass);
 typedef struct _filter_info_t
 {
 	char name[FILTER_NAMESIZE];
+	unsigned int flag;
 	pfilter_t filter;
 	pfsetup_t fsetup;
 	pfclean_t fclean;

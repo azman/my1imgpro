@@ -14,11 +14,14 @@
 #include <stdlib.h>
 #include <string.h>
 /*----------------------------------------------------------------------------*/
+#define FLAG_GRAY FILTER_FLAG_GRAY
+#define FLAG_PROG FILTER_FLAG_PROG
+/*----------------------------------------------------------------------------*/
 my1image_t* filter_binary(my1image_t* img, my1image_t* res, my1ifilter_t* pass)
 {
 	image_copy(res,img);
-	image_grayscale(res); /* just in case... */
 	image_binary(res,0,WHITE);
+	res->mask = IMASK_GRAY;
 	return res;
 }
 /*----------------------------------------------------------------------------*/
@@ -26,8 +29,8 @@ my1image_t* filter_binary_mid(my1image_t* img, my1image_t* res,
 	my1ifilter_t* pass)
 {
 	image_copy(res,img);
-	image_grayscale(res); /* just in case... */
 	image_binary(res,WHITE>>1,WHITE);
+	res->mask = IMASK_GRAY;
 	return res;
 }
 /*----------------------------------------------------------------------------*/
@@ -38,10 +41,9 @@ my1image_t* filter_morph_erode(my1image_t* img, my1image_t* res,
 	my1image_t temp;
 	image_init(&temp);
 	image_copy(&temp,img);
-	image_grayscale(&temp); /* just in case... could be color? */
-	image_binary(&temp,0,WHITE);
 	image_erode(&temp,res,elem);
 	image_binary(res,0,WHITE);
+	res->mask = IMASK_GRAY;
 	return res;
 }
 /*----------------------------------------------------------------------------*/
@@ -52,10 +54,9 @@ my1image_t* filter_morph_dilate(my1image_t* img, my1image_t* res,
 	my1image_t temp;
 	image_init(&temp);
 	image_copy(&temp,img);
-	image_grayscale(&temp); /* just in case... could be color? */
-	image_binary(&temp,0,WHITE);
 	image_dilate(&temp,res,elem);
 	image_binary(res,0,WHITE);
+	res->mask = IMASK_GRAY;
 	return res;
 }
 /*----------------------------------------------------------------------------*/
@@ -190,6 +191,7 @@ my1image_t* filter_laplace(my1image_t* img, my1image_t* res,
 	int coeff[] = { 0,-1,0, -1,4,-1, 0,-1,0 };
 	image_mask_this(img,res,3,9,coeff);
 	image_limit(res);
+	res->mask = IMASK_GRAY;
 	return res;
 }
 /*----------------------------------------------------------------------------*/
@@ -200,6 +202,7 @@ my1image_t* filter_sobel_x(my1image_t* img, my1image_t* res,
 	int coeff[] = { -1,0,1, -2,0,2, -1,0,1 };
 	image_mask_this(img,res,3,9,coeff);
 	image_limit(res);
+	res->mask = IMASK_GRAY;
 	return res;
 }
 /*----------------------------------------------------------------------------*/
@@ -210,6 +213,7 @@ my1image_t* filter_sobel_y(my1image_t* img, my1image_t* res,
 	int coeff[] = { 1,2,1, 0,0,0, -1,-2,-1 };
 	image_mask_this(img,res,3,9,coeff);
 	image_limit(res);
+	res->mask = IMASK_GRAY;
 	return res;
 }
 /*----------------------------------------------------------------------------*/
@@ -323,6 +327,7 @@ my1image_t* filter_gauss(my1image_t* img, my1image_t* res,
 	int coeff[] = { 1,2,1, 2,4,2, 1,2,1};
 	image_mask_this(img,res,3,9,coeff);
 	image_scale(res,(float)1/16); /* normalize? */
+	res->mask = IMASK_GRAY;
 	return res;
 }
 /*----------------------------------------------------------------------------*/
@@ -408,9 +413,9 @@ my1image_t* filter_suppress(my1image_t* img, my1image_t* res,
 {
 	int loop, size = img->size, curr, buff;
 	my1image_t *chk = (my1image_t*) filter->data;
+	if (!chk) return img;
 	/* assign to default if not specified */
 	if (!chk&&filter->buffer) chk = &filter->buffer->xtra;
-	if (!chk) return img;
 	image_make(res,img->rows,img->cols);
 	for (loop=0;loop<size;loop++)
 	{
@@ -482,24 +487,24 @@ my1image_t* filter_threshold(my1image_t* img, my1image_t* res,
 /*----------------------------------------------------------------------------*/
 static const filter_info_t MY1_IFILTER_DB[] =
 {
-	{ IFNAME_BINARY, filter_binary, 0x0, 0x0 },
-	{ IFNAME_BINARY_MID, filter_binary_mid, 0x0, 0x0 },
-	{ IFNAME_MORPH_ERODE, filter_morph_erode, 0x0, 0x0 },
-	{ IFNAME_MORPH_DILATE, filter_morph_dilate, 0x0, 0x0 },
-	{ IFNAME_GRAYSCALE, filter_gray, 0x0, 0x0 },
-	{ IFNAME_COLORBLUE, filter_color_blue, 0x0, 0x0 },
-	{ IFNAME_COLORGREEN, filter_color_green, 0x0, 0x0 },
-	{ IFNAME_COLORRED, filter_color_red, 0x0, 0x0 },
-	{ IFNAME_INVERT, filter_invert, 0x0, 0x0 },
-	{ IFNAME_RESIZE, filter_resize, filter_resize_init, filter_resize_free },
-	{ IFNAME_LAPLACE, filter_laplace, filter_gray_init, 0x0 },
-	{ IFNAME_SOBELX, filter_sobel_x, filter_gray_init, 0x0 },
-	{ IFNAME_SOBELY, filter_sobel_y, filter_gray_init, 0x0 },
-	{ IFNAME_SOBEL, filter_sobel, filter_gray_init, 0x0 },
-	{ IFNAME_GAUSS, filter_gauss, filter_gray_init, 0x0 },
-	{ IFNAME_MAXSCALE, filter_maxscale, filter_gray_init, 0x0 },
-	{ IFNAME_SUPPRESS, filter_suppress, filter_gray_init, 0x0 },
-	{ IFNAME_THRESHOLD, filter_threshold, filter_gray_init, 0x0 }
+	{ IFNAME_BINARY, FLAG_GRAY, filter_binary, 0x0, 0x0 },
+	{ IFNAME_BINARY_MID, FLAG_GRAY, filter_binary_mid, 0x0, 0x0 },
+	{ IFNAME_MORPH_ERODE, FLAG_GRAY, filter_morph_erode, 0x0, 0x0 },
+	{ IFNAME_MORPH_DILATE, FLAG_GRAY, filter_morph_dilate, 0x0, 0x0 },
+	{ IFNAME_GRAYSCALE, 0, filter_gray, 0x0, 0x0 },
+	{ IFNAME_COLORBLUE, 0, filter_color_blue, 0x0, 0x0 },
+	{ IFNAME_COLORGREEN, 0, filter_color_green, 0x0, 0x0 },
+	{ IFNAME_COLORRED, 0, filter_color_red, 0x0, 0x0 },
+	{ IFNAME_INVERT, 0, filter_invert, 0x0, 0x0 },
+	{ IFNAME_RESIZE, 0, filter_resize, filter_resize_init, filter_resize_free },
+	{ IFNAME_LAPLACE, FLAG_GRAY, filter_laplace, 0x0, 0x0 },
+	{ IFNAME_SOBELX, FLAG_GRAY, filter_sobel_x, 0x0, 0x0 },
+	{ IFNAME_SOBELY, FLAG_GRAY, filter_sobel_y, 0x0, 0x0 },
+	{ IFNAME_SOBEL, FLAG_GRAY, filter_sobel, 0x0, 0x0 },
+	{ IFNAME_GAUSS, FLAG_GRAY, filter_gauss, 0x0, 0x0 },
+	{ IFNAME_MAXSCALE, FLAG_GRAY, filter_maxscale, 0x0, 0x0 },
+	{ IFNAME_SUPPRESS, FLAG_GRAY|FLAG_PROG, filter_suppress, 0x0, 0x0 },
+	{ IFNAME_THRESHOLD, FLAG_GRAY, filter_threshold, 0x0, 0x0 }
 };
 /*----------------------------------------------------------------------------*/
 const int IFILTER_DB_SIZE = sizeof(MY1_IFILTER_DB)/sizeof(filter_info_t);

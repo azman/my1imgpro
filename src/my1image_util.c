@@ -140,6 +140,7 @@ my1ifilter_t* info_create_filter(filter_info_t* info)
 	{
 		filter_init(that,info->filter,0x0);
 		strncpy(that->name,info->name,FILTER_NAMESIZE);
+		that->flag = info->flag;
 		that->doinit = info->fsetup;
 		that->dofree = info->fclean;
 		if (that->doinit)
