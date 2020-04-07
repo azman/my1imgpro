@@ -4,29 +4,44 @@
 /*----------------------------------------------------------------------------*/
 #include "my1image.h"
 /*----------------------------------------------------------------------------*/
-#define TASK_ERROR 0x01
-#define TASK_NONE 0x00
+#define ERROR_FLAG 0x80
+#define IMAGE_NONE 0
+#define IMAGE_FILE 1
+#define VIDEO_FILE 2
+#define VIDEO_LIVE 3
 /*----------------------------------------------------------------------------*/
 int main(int argc, char* argv[])
 {
 	my1image_t buff;
-	my1image_appw_t data;
-	int loop, task = TASK_NONE;
+	my1image_appw_t iwin;
+	int loop, mode = IMAGE_NONE;
 	char* pick = 0x0;
 	/* check parameter */
 	for (loop=1;loop<argc;loop++)
 	{
-		if (loop==1) pick = argv[loop];
-		else if (!strncmp(argv[loop],"--none",7))
-			task |= TASK_NONE;
+		if (argv[loop][0]!='-')
+		{
+			mode = IMAGE_FILE;
+			pick = argv[loop];
+		}
+		else if (!strncmp(argv[loop],"--live",6))
+		{
+			mode = VIDEO_LIVE;
+			pick = argv[++loop];
+		}
+		else if (!strncmp(argv[loop],"--video",7))
+		{
+			mode = VIDEO_FILE;
+			pick = argv[++loop];
+		}
 		else
 		{
 			printf("Invalid argument! (%s)\n",argv[loop]);
-			task |= TASK_ERROR;
+			mode |= ERROR_FLAG;
 		}
 	}
-	if (task&TASK_ERROR) return -1;
-	/* initialize image_date */
+	if (mode&ERROR_FLAG) return -1;
+	/* initialize image */
 	image_init(&buff);
 	/* load if requested */
 	if (pick)
@@ -45,8 +60,9 @@ int main(int argc, char* argv[])
 	/* initialize gui */
 	gtk_init(&argc,&argv);
 	/* show image */
-	image_appw_show(&data,&buff,0x0);
-	data.goquit = 1; /* single window, quit once done! */
+	image_appw_show(&iwin,&buff,0x0);
+	/* check for done flag */
+	image_appw_task(&iwin,image_appw_is_done,ISDONE_TIMEOUT);
 	/* main loop */
 	gtk_main();
 	/* done! */

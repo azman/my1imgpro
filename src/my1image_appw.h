@@ -7,18 +7,22 @@
 #define MAIN_WINDOW_TITLE "MY1Image Viewer"
 /*----------------------------------------------------------------------------*/
 #define STATUS_TIMEOUT 5
+#define ISDONE_TIMEOUT 3
 /*----------------------------------------------------------------------------*/
 #define REDRAW 0x0
+/*----------------------------------------------------------------------------*/
+typedef void (*appw_task_t)(void* task);
 /*----------------------------------------------------------------------------*/
 typedef struct _my1image_appw_t
 {
 	GtkWidget *window, *domenu, *dostat;
-	guint idstat, idtime; /* gtk stuffs */
+	guint idstat, idtime, idtask; /* gtk stuffs */
 	int doquit; /* quit request flag */
 	int goquit; /* flag to call gtk_quit_main in on_done_all */
 	int gofree; /* flag to call image_appw_free in on_done_all */
 	int gofull; /* full screen request/status flag  */
 	int doshow; /* flag to use external image */
+	appw_task_t dotask; /* task to do in gtk loop - based on timer idtask */
 	my1image_t buff, main, *show; /* buffered image data */
 	my1image_view_t view; /* single image view */
 }
@@ -36,6 +40,8 @@ guint image_appw_stat_push(my1image_appw_t* appw, const char* mesg);
 void image_appw_stat_pop(my1image_appw_t* appw);
 void image_appw_stat_remove(my1image_appw_t* appw, guint mesg_id);
 void image_appw_domenu(my1image_appw_t* appw);
+void image_appw_is_done(void* that_appw);
+guint image_appw_task(my1image_appw_t* appw, appw_task_t task, int secs);
 /* special function to show an image in a window - DO NOT NEED init! */
 void image_appw_show(my1image_appw_t* appw, my1image_t* that, char* name);
 /*----------------------------------------------------------------------------*/

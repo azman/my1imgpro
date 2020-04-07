@@ -15,12 +15,14 @@ void image_appw_init(my1image_appw_t* appw)
 	appw->dostat = 0x0;
 	appw->idstat = 0;
 	appw->idtime = 0;
+	appw->idtask = 0;
 	appw->doquit = 0;
 	appw->goquit = 1; /* by default, quit on close */
 	appw->gofree = 0;
 	appw->gofull = 0;
 	appw->doshow = 0;
 	appw->show = 0x0;
+	appw->dotask = 0x0;
 	image_init(&appw->main);
 	image_init(&appw->buff);
 	image_view_init(&appw->view);
@@ -47,7 +49,7 @@ void image_appw_full(my1image_appw_t* appw, int full)
 	}
 }
 /*----------------------------------------------------------------------------*/
-gboolean appw_on_done_all(GtkWidget *widget, GdkEvent *event, gpointer data)
+gboolean appw_on_done_all(gpointer data)
 {
 	my1image_appw_t* appw = (my1image_appw_t*) data;
 	if (appw->gofree) image_appw_free(appw);
@@ -85,7 +87,7 @@ void image_appw_make(my1image_appw_t* appw, my1image_t* that)
 			that->cols,that->rows);
 		gtk_window_set_position(GTK_WINDOW(appw->window),GTK_WIN_POS_CENTER);
 		/* connect event handlers */
-		g_signal_connect(G_OBJECT(appw->window),"delete-event",
+		g_signal_connect_swapped(G_OBJECT(appw->window),"delete-event",
 			G_CALLBACK(appw_on_done_all),(gpointer)appw);
 		/* container box for image */
 		vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL,0);
@@ -429,13 +431,43 @@ void image_appw_domenu(my1image_appw_t* appw)
 	/* quit menu item */
 	menu_item = gtk_menu_item_new_with_mnemonic("_Quit");
 	gtk_menu_shell_append(GTK_MENU_SHELL(menu_main),menu_item);
-	g_signal_connect(G_OBJECT(menu_item),"activate",
-		G_CALLBACK(gtk_main_quit),0x0);
+	g_signal_connect_swapped(G_OBJECT(menu_item),"activate",
+		G_CALLBACK(appw_on_done_all),(gpointer)appw);
 	gtk_widget_show(menu_item);
 	/* save that menu */
 	appw->domenu = menu_main;
 	/* show it! */
 	gtk_widget_show(appw->domenu);
+}
+/*----------------------------------------------------------------------------*/
+void image_appw_is_done(void* that_appw)
+{
+	my1image_appw_t* appw = (my1image_appw_t*) that_appw;
+	if (appw->doquit) gtk_main_quit();
+	else image_appw_task(appw,image_appw_is_done,ISDONE_TIMEOUT);
+}
+/*----------------------------------------------------------------------------*/
+gboolean appw_on_timer_dotask(gpointer data)
+{
+	appw_task_t task;
+	my1image_appw_t *appw = (my1image_appw_t*) data;
+	appw->idtask = 0;
+	if (appw->dotask)
+	{
+		task = appw->dotask;
+		appw->dotask = 0x0; /* in case task wants to reset itself */
+		task((void*)appw);
+	}
+	return 0; /* a one-shot */
+}
+/*----------------------------------------------------------------------------*/
+guint image_appw_task(my1image_appw_t* appw, appw_task_t task, int secs)
+{
+	if (appw->dotask) return 0; /* cannot reassign, unless a one-shot */
+	appw->dotask = task;
+	appw->idtask = g_timeout_add_seconds(secs,
+		appw_on_timer_dotask,(gpointer)appw);
+	return appw->idtask;
 }
 /*----------------------------------------------------------------------------*/
 void image_appw_show(my1image_appw_t* appw, my1image_t* that, char* name)
