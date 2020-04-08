@@ -115,7 +115,7 @@ void image_appw_make(my1image_appw_t* appw, my1image_t* that)
 		appw->dostat = gtk_statusbar_new();
 		appw->idstat = gtk_statusbar_get_context_id(
 			(GtkStatusbar*)appw->dostat,"MY1ImageViewStat");
-		gtk_box_pack_start(GTK_BOX(vbox),appw->dostat,FALSE,FALSE,0);
+		gtk_box_pack_end(GTK_BOX(vbox),appw->dostat,FALSE,FALSE,0);
 		/* show window */
 		gtk_widget_show_all(appw->window);
 		if (appw->nostat) gtk_widget_hide(appw->dostat);

@@ -68,7 +68,7 @@ gboolean on_draw_callback(GtkWidget *widget, cairo_t *cr, gpointer data)
 			}
 		}
 		show = image_size_this(show,&mods,chkh,chkw);
-		/**printf("-- Dosize: %d x %d (%p)\n",show->cols,show->rows,show);*/
+		/**printf("-- DoSize: %d x %d (%p)\n",show->cols,show->rows,show);*/
 		image_free(&temp);
 	}
 	/* colormode abgr32 for gdk function */
@@ -78,24 +78,16 @@ gboolean on_draw_callback(GtkWidget *widget, cairo_t *cr, gpointer data)
 	/* draw! */
 	dotemp = gdk_pixbuf_new_from_data((const guchar*)show->data,
 		GDK_COLORSPACE_RGB,TRUE,8,show->cols,show->rows,show->cols<<2,0x0,0x0);
-	/*printf("Redraw: %d x %d (%p)\n",show->cols,show->rows,show);*/
+	/*printf("-- ReDraw: %d x %d (%p)\n",show->cols,show->rows,show);*/
 	view->dodraw = cr; /* required by draw_more */
 	gdk_cairo_set_source_pixbuf(view->dodraw,dotemp,0,0);
 	cairo_paint(view->dodraw);
 	if (view->draw_more) view->draw_more((void*)view);
 	image_free(&mods);
+	/* to enable user resize window to a smaller size */
+	gtk_widget_set_size_request(view->canvas,1,1);
 	return TRUE;
 }
-/*----------------------------------------------------------------------------*/
-/*
-gboolean on_canvas_resize(GtkWidget *widget, GtkAllocation *allocation,
-	gpointer user_data)
-{
-	my1image_view_t* view = (my1image_view_t*) user_data;
-	printf("-- Resize: %d x %d\n",allocation->width,allocation->height);
-	return TRUE;
-}
-*/
 /*----------------------------------------------------------------------------*/
 void image_view_make(my1image_view_t* view, my1image_t* that)
 {
@@ -107,11 +99,9 @@ void image_view_make(my1image_view_t* view, my1image_t* that)
 			G_CALLBACK(on_draw_callback),(gpointer)view);
 		g_signal_connect(G_OBJECT(view->canvas),"configure-event",
 			G_CALLBACK(on_conf_callback),(gpointer)view);
-/*
-		g_signal_connect(G_OBJECT(view->canvas),"size-allocate",
-			G_CALLBACK(on_canvas_resize),(gpointer)view);
-*/
 	}
+	/* to make sure we get full size on canvas */
+	gtk_widget_set_size_request(view->canvas,that->cols,that->rows);
 	view->image = that;
 }
 /*----------------------------------------------------------------------------*/
