@@ -42,7 +42,7 @@ ifeq ($(DO_DEBUG),YES)
 endif
 
 # for chkimage
-test: DFLAGS = -D__MYIMAGE_NO_WORK__
+test: DFLAGS = -D__MY1IMAGE_NO_WORK__ -D__MY1VIDEO_NO_MAIN__
 
 .PHONY: main test all image video new debug clean tools
 
@@ -82,7 +82,7 @@ $(IMGMAIN): src/$(IMGNAME).c src/$(IMGNAME).h
 	$(CC) $(CFLAGS) $(DFLAGS) $(TFLAGS) -o $@ $<
 
 $(VISMAIN): src/$(VISNAME).c src/$(VISNAME).h
-	$(CC) $(CFLAGS) $(TFLAGS) -o $@ $<
+	$(CC) $(CFLAGS) $(DFLAGS) $(TFLAGS) -o $@ $<
 
 %.o: src/%.c src/%.h
 	$(CC) $(CFLAGS) $(TFLAGS) -o $@ $<

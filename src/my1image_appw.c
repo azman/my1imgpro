@@ -8,6 +8,12 @@
 /*----------------------------------------------------------------------------*/
 #include <string.h>
 /*----------------------------------------------------------------------------*/
+void appw_handler_make(appw_handler_t* handler, appw_task_t task, void* data)
+{
+	handler->task = task;
+	handler->data = data;
+}
+/*----------------------------------------------------------------------------*/
 void image_appw_init(my1image_appw_t* appw)
 {
 	appw->window = 0x0;
@@ -20,13 +26,18 @@ void image_appw_init(my1image_appw_t* appw)
 	appw->goquit = 1; /* by default, quit on close */
 	appw->gofree = 0;
 	appw->gofull = 0;
-	appw->doshow = 0;
+	appw->docopy = 1; /* by default, copy on make */
 	appw->show = 0x0;
 	appw->dotask = 0x0;
 	appw->dodata = 0x0;
+	appw->show = &appw->buff; /* show MUST always point to valid space */
+	appw->orig = &appw->main; /* default original image */
 	image_init(&appw->main);
 	image_init(&appw->buff);
 	image_view_init(&appw->view);
+	appw_handler_make(&appw->clickL,0x0,0x0);
+	appw_handler_make(&appw->clickM,0x0,0x0);
+	appw_handler_make(&appw->dodone,0x0,0x0);
 }
 /*----------------------------------------------------------------------------*/
 void image_appw_free(my1image_appw_t* appw)
@@ -53,6 +64,8 @@ void image_appw_full(my1image_appw_t* appw, int full)
 gboolean appw_on_done_all(gpointer data)
 {
 	my1image_appw_t* appw = (my1image_appw_t*) data;
+	if (appw->dodone.task)
+		appw->dodone.task(appw->dodone.data);
 	if (appw->gofree) image_appw_free(appw);
 	if (appw->goquit) gtk_main_quit();
 	else appw->doquit = 1;
@@ -64,18 +77,18 @@ void image_appw_make(my1image_appw_t* appw, my1image_t* that)
 	GtkAllocation alloc;
 	GtkWidget* vbox;
 	/* check if assigned new image */
-	if (that)
+	if (!that||that!=appw->show)
 	{
-		if (appw->doshow) appw->show = that;
-		else
+		if (appw->docopy)
 		{
-			/** original in main, send buff to view */
 			image_copy(&appw->main,that);
 			image_copy(&appw->buff,that);
+			appw->orig = &appw->main;
 			appw->show = &appw->buff;
 		}
+		else appw->show = that; /* that MUST be a valid space */
+		that = appw->show;
 	}
-	that = appw->show;
 	/* must have image */
 	if (!that) return;
 	/* create window */
@@ -181,20 +194,42 @@ void image_appw_stat_hide(my1image_appw_t* appw, int hide)
 }
 /*----------------------------------------------------------------------------*/
 #define RIGHT_CLICK 3
+#define MIDDLE_CLICK 2
+#define LEFT_CLICK 1
 /*----------------------------------------------------------------------------*/
 gboolean appw_on_mouse_click(GtkWidget *widget,
 	GdkEventButton *event, gpointer data)
 {
+	gboolean done = FALSE;
 	if (event->type == GDK_BUTTON_PRESS)
 	{
-		my1image_appw_t *q = (my1image_appw_t*) data;
+		my1image_appw_t *appw = (my1image_appw_t*) data;
 		if (event->button == RIGHT_CLICK)
 		{
-			gtk_menu_popup_at_pointer(GTK_MENU(q->domenu),0x0);
+			if (appw->domenu)
+			{
+				gtk_menu_popup_at_pointer(GTK_MENU(appw->domenu),0x0);
+				done = TRUE;
+			}
 		}
-		return TRUE;
+		else if (event->button == MIDDLE_CLICK)
+		{
+			if (appw->clickM.task)
+			{
+				appw->clickM.task(appw->clickM.data);
+				done = TRUE;
+			}
+		}
+		else if (event->button == LEFT_CLICK)
+		{
+			if (appw->clickL.task)
+			{
+				appw->clickL.task(appw->clickL.data);
+				done = TRUE;
+			}
+		}
 	}
-	return FALSE;
+	return done;
 }
 /*----------------------------------------------------------------------------*/
 void appw_on_file_open_main(my1image_appw_t* appw)
@@ -207,19 +242,23 @@ void appw_on_file_open_main(my1image_appw_t* appw)
 	{
 		int test;
 		gchar *filename, *buff;
+		my1image_t load;
+		image_init(&load);
 		filename = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(doopen));
-		if((test=image_load(&appw->buff,filename))<0)
+		if((test=image_load(&load,filename))<0)
 		{
 			buff = g_strdup_printf("Error loading '%s'! (%d)",filename,test);
 		}
 		else
 		{
-			image_copy(&appw->main,&appw->buff);
-			image_appw_make(appw,&appw->buff);
-			image_appw_draw(appw,REDRAW);
+			/* ALWAYS load to orig & show! */
+			image_copy(appw->orig,&load);
+			image_copy(appw->show,&load);
+			image_appw_draw(appw,appw->show);
 			buff = g_strdup_printf("[LOAD] '%s'",filename);
 		}
 		image_appw_stat_time(appw,(char*)buff,STATUS_TIMEOUT);
+		image_free(&load);
 		g_free(buff);
 		g_free(filename);
 	}
@@ -264,31 +303,22 @@ void appw_on_toggle_aspectratio(my1image_appw_t *appw,
 /*----------------------------------------------------------------------------*/
 void appw_on_image_original(my1image_appw_t *appw)
 {
-	image_copy(&appw->buff,&appw->main);
-	image_appw_make(appw,&appw->buff);
-	image_appw_draw(appw,REDRAW);
+	image_copy(appw->show,appw->orig);
+	image_appw_draw(appw,appw->show);
 	image_appw_stat_time(appw,"Original Image restored!",1);
 }
 /*----------------------------------------------------------------------------*/
 void appw_on_image_grayscale(my1image_appw_t *appw)
 {
-	image_copy_color2rgb(&appw->buff,&appw->view.buff);
-	image_grayscale(&appw->buff);
-	image_appw_draw(appw,REDRAW);
-}
-/*----------------------------------------------------------------------------*/
-void appw_on_image_binary(my1image_appw_t *appw)
-{
-	image_copy_color2rgb(&appw->buff,&appw->view.buff);
-	image_grayscale(&appw->buff);
-	image_binary(&appw->buff,0,WHITE);
+	image_copy_color2rgb(appw->show,&appw->view.buff);
+	image_grayscale(appw->show);
 	image_appw_draw(appw,REDRAW);
 }
 /*----------------------------------------------------------------------------*/
 void appw_on_image_invert(my1image_appw_t *appw)
 {
-	image_copy_color2rgb(&appw->buff,&appw->view.buff);
-	image_invert_this(&appw->buff);
+	image_copy_color2rgb(appw->show,&appw->view.buff);
+	image_invert_this(appw->show);
 	image_appw_draw(appw,REDRAW);
 }
 /*----------------------------------------------------------------------------*/
@@ -297,9 +327,8 @@ void appw_on_image_rotate_cw90(my1image_appw_t *appw)
 	my1image_t temp;
 	image_init(&temp);
 	image_copy_color2rgb(&temp,&appw->view.buff);
-	image_turn(&temp,&appw->buff,IMAGE_TURN_270);
-	image_appw_make(appw,REDRAW);
-	image_appw_draw(appw,REDRAW);
+	image_turn(&temp,appw->show,IMAGE_TURN_270);
+	image_appw_draw(appw,appw->show);
 	image_free(&temp);
 }
 /*----------------------------------------------------------------------------*/
@@ -308,9 +337,8 @@ void appw_on_image_rotate_ccw90(my1image_appw_t *appw)
 	my1image_t temp;
 	image_init(&temp);
 	image_copy_color2rgb(&temp,&appw->view.buff);
-	image_turn(&temp,&appw->buff,IMAGE_TURN_090);
-	image_appw_make(appw,REDRAW);
-	image_appw_draw(appw,REDRAW);
+	image_turn(&temp,appw->show,IMAGE_TURN_090);
+	image_appw_draw(appw,appw->show);
 	image_free(&temp);
 }
 /*----------------------------------------------------------------------------*/
@@ -319,7 +347,7 @@ void appw_on_image_flip_v(my1image_appw_t *appw)
 	my1image_t temp;
 	image_init(&temp);
 	image_copy_color2rgb(&temp,&appw->view.buff);
-	image_flip(&temp,&appw->buff,IMAGE_FLIP_VERTICAL);
+	image_flip(&temp,appw->show,IMAGE_FLIP_VERTICAL);
 	image_appw_draw(appw,REDRAW);
 	image_free(&temp);
 }
@@ -329,35 +357,40 @@ void appw_on_image_flip_h(my1image_appw_t *appw)
 	my1image_t temp;
 	image_init(&temp);
 	image_copy_color2rgb(&temp,&appw->view.buff);
-	image_flip(&temp,&appw->buff,IMAGE_FLIP_HORIZONTAL);
+	image_flip(&temp,appw->show,IMAGE_FLIP_HORIZONTAL);
 	image_appw_draw(appw,REDRAW);
 	image_free(&temp);
 }
 /*----------------------------------------------------------------------------*/
-void image_appw_domenu(my1image_appw_t* appw)
+void image_appw_domenu_file(my1image_appw_t* appw, GtkWidget* menu_main)
 {
-	GtkWidget *menu_main, *menu_item, *menu_subs, *menu_temp, *that;
-	/* in case already created! */
-	if (appw->domenu) return;
-	that = appw->view.canvas;
-	/* create popup menu for canvas */
-	menu_main = gtk_menu_new();
-	gtk_widget_add_events(that, GDK_BUTTON_PRESS_MASK);
-	g_signal_connect(that,"button-press-event",
-		G_CALLBACK(appw_on_mouse_click),(gpointer)appw);
+	GtkWidget *menu_subs, *menu_item, *menu_temp;
+	/* top menu */
+	menu_subs = gtk_menu_new();
 	/* file load menu */
 	menu_item = gtk_menu_item_new_with_mnemonic("_Load Image...");
-	gtk_menu_shell_append(GTK_MENU_SHELL(menu_main),menu_item);
+	gtk_menu_shell_append(GTK_MENU_SHELL(menu_subs),menu_item);
 	g_signal_connect_swapped(G_OBJECT(menu_item),"activate",
 		G_CALLBACK(appw_on_file_open_main),(gpointer)appw);
 	gtk_widget_show(menu_item);
-	/* file save as menu */
+	/* file save menu */
 	menu_item = gtk_menu_item_new_with_mnemonic("_Save Image...");
-	gtk_menu_shell_append(GTK_MENU_SHELL(menu_main),menu_item);
+	gtk_menu_shell_append(GTK_MENU_SHELL(menu_subs),menu_item);
 	g_signal_connect_swapped(G_OBJECT(menu_item),"activate",
 		G_CALLBACK(appw_on_file_save_main),(gpointer)appw);
 	gtk_widget_show(menu_item);
-	/* sub menu? */
+	/* holder menu to insert as sub-menu (label) */
+	menu_temp = gtk_menu_item_new_with_mnemonic("_File Load/Save");
+	gtk_menu_item_set_submenu(GTK_MENU_ITEM(menu_temp),menu_subs);
+	/* add to main menu */
+	gtk_menu_shell_append(GTK_MENU_SHELL(menu_main),menu_temp);
+	gtk_widget_show(menu_temp);
+}
+/*----------------------------------------------------------------------------*/
+void image_appw_domenu_image(my1image_appw_t* appw, GtkWidget* menu_main)
+{
+	GtkWidget *menu_subs, *menu_item, *menu_temp;
+	/* top menu */
 	menu_subs = gtk_menu_new();
 	/* original menu */
 	menu_item = gtk_menu_item_new_with_mnemonic("_Original");
@@ -371,12 +404,6 @@ void image_appw_domenu(my1image_appw_t* appw)
 	g_signal_connect_swapped(G_OBJECT(menu_item),"activate",
 		G_CALLBACK(appw_on_image_grayscale),(gpointer)appw);
 	gtk_widget_show(menu_item);
-	/* binary menu */
-	menu_item = gtk_menu_item_new_with_mnemonic("_Binary");
-	gtk_menu_shell_append(GTK_MENU_SHELL(menu_subs),menu_item);
-	g_signal_connect_swapped(G_OBJECT(menu_item),"activate",
-		G_CALLBACK(appw_on_image_binary),(gpointer)appw);
-	gtk_widget_show(menu_item);
 	/* invert menu */
 	menu_item = gtk_menu_item_new_with_mnemonic("_Invert");
 	gtk_menu_shell_append(GTK_MENU_SHELL(menu_subs),menu_item);
@@ -384,12 +411,17 @@ void image_appw_domenu(my1image_appw_t* appw)
 		G_CALLBACK(appw_on_image_invert),(gpointer)appw);
 	gtk_widget_show(menu_item);
 	/* temp menu to insert as sub-menu */
-	menu_temp = gtk_menu_item_new_with_mnemonic("_Process");
+	menu_temp = gtk_menu_item_new_with_mnemonic("_Image");
 	gtk_menu_item_set_submenu(GTK_MENU_ITEM(menu_temp),menu_subs);
 	/* add to main menu */
 	gtk_menu_shell_append(GTK_MENU_SHELL(menu_main),menu_temp);
 	gtk_widget_show(menu_temp);
-	/* sub menu? */
+}
+/*----------------------------------------------------------------------------*/
+void image_appw_domenu_orientation(my1image_appw_t* appw, GtkWidget* menu_main)
+{
+	GtkWidget *menu_subs, *menu_item, *menu_temp;
+	/* top menu */
 	menu_subs = gtk_menu_new();
 	/* rotate menu */
 	menu_item = gtk_menu_item_new_with_mnemonic("_Rotate CW90");
@@ -421,24 +453,61 @@ void image_appw_domenu(my1image_appw_t* appw)
 	/* add to main menu */
 	gtk_menu_shell_append(GTK_MENU_SHELL(menu_main),menu_temp);
 	gtk_widget_show(menu_temp);
+}
+/*----------------------------------------------------------------------------*/
+void image_appw_domenu_extra(my1image_appw_t* appw)
+{
+	GtkWidget *menu_item;
+	if (!appw->domenu) return;
 	/* keep aspect ratio menu item */
 	menu_item = gtk_check_menu_item_new_with_label("Keep Aspect");
-	gtk_menu_shell_append(GTK_MENU_SHELL(menu_main),menu_item);
+	gtk_menu_shell_append(GTK_MENU_SHELL(appw->domenu),menu_item);
 	gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(menu_item),
 		appw->view.aspect?TRUE:FALSE);
 	g_signal_connect_swapped(G_OBJECT(menu_item),"activate",
 		G_CALLBACK(appw_on_toggle_aspectratio),(gpointer)appw);
 	gtk_widget_show(menu_item);
+}
+/*----------------------------------------------------------------------------*/
+void image_appw_domenu_quit(my1image_appw_t* appw)
+{
+	GtkWidget *menu_item;
+	if (!appw->domenu) return;
 	/* quit menu item */
 	menu_item = gtk_menu_item_new_with_mnemonic("_Quit");
-	gtk_menu_shell_append(GTK_MENU_SHELL(menu_main),menu_item);
+	gtk_menu_shell_append(GTK_MENU_SHELL(appw->domenu),menu_item);
 	g_signal_connect_swapped(G_OBJECT(menu_item),"activate",
 		G_CALLBACK(appw_on_done_all),(gpointer)appw);
 	gtk_widget_show(menu_item);
-	/* save that menu */
-	appw->domenu = menu_main;
-	/* show it! */
-	gtk_widget_show(appw->domenu);
+}
+/*----------------------------------------------------------------------------*/
+void image_appw_domenu(my1image_appw_t* appw)
+{
+	GtkWidget *menu_main;
+	/* get main menu or create one */
+	if (appw->domenu) menu_main = appw->domenu;
+	else
+	{
+		menu_main = gtk_menu_new();
+		/* add event handler IF a new menu is created */
+		gtk_widget_add_events(appw->view.canvas, GDK_BUTTON_PRESS_MASK);
+		g_signal_connect(appw->view.canvas,"button-press-event",
+			G_CALLBACK(appw_on_mouse_click),(gpointer)appw);
+		appw->domenu = menu_main;
+		/* show it! */
+		gtk_widget_show(appw->domenu);
+	}
+	/* file menu */
+	image_appw_domenu_file(appw,menu_main);
+	image_appw_domenu_image(appw,menu_main);
+	image_appw_domenu_orientation(appw,menu_main);
+}
+/*----------------------------------------------------------------------------*/
+void image_appw_domenu_full(my1image_appw_t* appw)
+{
+	image_appw_domenu(appw);
+	image_appw_domenu_extra(appw);
+	image_appw_domenu_quit(appw);
 }
 /*----------------------------------------------------------------------------*/
 void image_appw_is_done(void* that_appw)
@@ -479,7 +548,7 @@ void image_appw_show(my1image_appw_t* appw, my1image_t* that,
 	image_appw_make(appw,that);
 	if (name) image_appw_name(appw,name);
 	image_appw_stat_hide(appw,1);
-	if (menu) image_appw_domenu(appw);
+	if (menu) image_appw_domenu_full(appw);
 }
 /*----------------------------------------------------------------------------*/
 #endif /** __MY1IMAGE_APPWC__ */

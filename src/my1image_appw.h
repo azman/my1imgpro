@@ -14,6 +14,15 @@
 /*----------------------------------------------------------------------------*/
 typedef void (*appw_task_t)(void* task);
 /*----------------------------------------------------------------------------*/
+typedef struct _appw_handler_t
+{
+	appw_task_t task;
+	void* data;
+}
+appw_handler_t;
+/*----------------------------------------------------------------------------*/
+void appw_handler_make(appw_handler_t* handler, appw_task_t task, void* data);
+/*----------------------------------------------------------------------------*/
 typedef struct _my1image_appw_t
 {
 	GtkWidget *window, *domenu, *dostat;
@@ -22,11 +31,13 @@ typedef struct _my1image_appw_t
 	int goquit; /* flag to call gtk_quit_main in on_done_all */
 	int gofree; /* flag to call image_appw_free in on_done_all */
 	int gofull; /* full screen request/status flag  */
-	int doshow; /* flag to use external image */
+	int docopy; /* flag to copy on make, use local buffers */
 	appw_task_t dotask; /* task to do in gtk loop - based on timer idtask */
 	void *dodata; /* data for dotask */
-	my1image_t buff, main, *show; /* buffered image data */
+	my1image_t buff, main, *show, *orig; /* buffered image data */
 	my1image_view_t view; /* single image view */
+	appw_handler_t clickL, clickM; /* handler for click left and middle */
+	appw_handler_t dodone; /* will be run when window's delete event */
 }
 my1image_appw_t;
 /*----------------------------------------------------------------------------*/
@@ -43,6 +54,9 @@ void image_appw_stat_pop(my1image_appw_t* appw);
 void image_appw_stat_remove(my1image_appw_t* appw, guint mesg_id);
 void image_appw_stat_hide(my1image_appw_t* appw, int hide);
 void image_appw_domenu(my1image_appw_t* appw);
+void image_appw_domenu_extra(my1image_appw_t* appw);
+void image_appw_domenu_quit(my1image_appw_t* appw);
+void image_appw_domenu_full(my1image_appw_t* appw);
 void image_appw_is_done(void* that_appw);
 guint image_appw_task(my1image_appw_t* appw, appw_task_t task, int secs);
 /* special function to show an image in a window - DO NOT NEED init! */

@@ -115,7 +115,7 @@ int main(int argc, char* argv[])
 	iwin.dodata = (void*) &ivid;
 	if (mode==IMAGE_FILE)
 	{
-		image_appw_domenu(&iwin);
+		image_appw_domenu_full(&iwin);
 		image_appw_task(&iwin,image_appw_is_done,ISDONE_TIMEOUT);
 	}
 	else

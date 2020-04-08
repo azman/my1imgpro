@@ -2,11 +2,11 @@
 #include "my1image.h"
 /*----------------------------------------------------------------------------*/
 #ifdef __MY1IMAGE_BASIC__
-#define __MYIMAGE_NO_HSV__
-#define __MYIMAGE_NO_FILE__
-#define __MYIMAGE_NO_WORK__
+#define __MY1IMAGE_NO_HSV__
+#define __MY1IMAGE_NO_FILE__
+#define __MY1IMAGE_NO_WORK__
 /** #define __MYIMAGE_NO_DATA__ */
-#define __MYIMAGE_NO_VIEW__
+#define __MY1IMAGE_NO_VIEW__
 /** #define __MYIMAGE_NO_APPW__ */
 /** #define __MYIMAGE_NO_DATA__ */
 #endif
@@ -21,7 +21,7 @@
 #include "my1image_file.c"
 #include "my1image_file_bmp.c"
 #include "my1image_file_pnm.c"
-#ifndef __MYIMAGE_NO_PNG__
+#ifndef __MY1IMAGE_NO_PNG__
 #include "my1image_file_png.c"
 #endif
 #endif
@@ -32,7 +32,7 @@
 #include "my1image_stat.c"
 #include "my1image_scan.c"
 #include "my1image_mono.c"
-#ifndef __MYIMAGE_NO_WORK__
+#ifndef __MY1IMAGE_NO_WORK__
 #include "my1image_work.c"
 #else
 #ifndef __MY1IMAGE_NO_DATA__
