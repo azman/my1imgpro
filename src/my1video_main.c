@@ -105,6 +105,30 @@ void vmain_on_filter_select(my1video_main_t *vmain, GtkMenuItem *menu_item)
 	video_main_pass_load(vmain,(char*)gtk_menu_item_get_label(menu_item));
 }
 /*----------------------------------------------------------------------------*/
+void vmain_on_filter_remove(my1video_main_t *vmain, GtkMenuItem *menu_item)
+{
+	int size;
+	my1video_t *that;
+	my1vpass_t *prev, *curr;
+	char *name = (char*)gtk_menu_item_get_label(menu_item);
+	size = strlen(name);
+	that = &vmain->video;
+	prev = 0x0; curr = that->ppass;
+	while (curr)
+	{
+		if (!strncmp(curr->name,name,size))
+		{
+			if (prev) prev->next = curr->next;
+			else that->ppass = curr->next;
+			/* free this */
+			filter_free(curr);
+			free((void*)curr);
+		}
+		prev = curr;
+		curr = curr->next;
+	}
+}
+/*----------------------------------------------------------------------------*/
 void vmain_on_filter_clear(my1video_main_t *vmain, GtkMenuItem *menu_item)
 {
 	video_main_pass_done(vmain);
@@ -187,6 +211,8 @@ void vmain_on_list_current(my1video_main_t *vmain, GtkMenuItem *menu_item)
 	while (temp)
 	{
 		menu_temp = gtk_menu_item_new_with_label(temp->name);
+		g_signal_connect_swapped(G_OBJECT(menu_temp),"activate",
+			G_CALLBACK(vmain_on_filter_remove),(gpointer)vmain);
 		gtk_menu_shell_append(GTK_MENU_SHELL(menu_main),menu_temp);
 		gtk_widget_show(menu_temp);
 		temp = temp->next;
