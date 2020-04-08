@@ -25,7 +25,6 @@ void image_data_init(my1image_data_t* data)
 	data->maxh = DEFAULT_MAX_HEIGHT;
 	data->maxw = DEFAULT_MAX_WIDTH;
 	data->flag = DATA_FLAG_OK;
-	data->image = 0x0;
 	image_appw_init(&data->appw);
 	data->appw.goquit = 1;
 	data->appw.view.draw_more = (void*) &image_data_histogram;
@@ -47,11 +46,12 @@ void image_data_free(my1image_data_t* data)
 /*----------------------------------------------------------------------------*/
 void image_data_draw(my1image_data_t* data)
 {
-	image_appw_draw(&data->appw,data->image);
+	image_appw_draw(&data->appw,REDRAW);
 }
 /*----------------------------------------------------------------------------*/
 void image_data_make(my1image_data_t* data, my1image_t* that)
 {
+	my1image_t temp;
 	int cols, rows;
 	image_appw_make(&data->appw,that);
 	that = data->appw.show;
@@ -59,14 +59,14 @@ void image_data_make(my1image_data_t* data, my1image_t* that)
 	{
 		if (that->cols>data->maxw||that->rows>data->maxh)
 		{
+			image_init(&temp);
 			cols = that->cols>data->maxw ? data->maxw : that->cols;
 			rows = that->rows>data->maxh ? data->maxh : that->rows;
-			that = image_size_this(that,data->work.next,rows,cols);
-			buffer_swap(&data->work);
-			data->appw.show = that;
+			image_size_this(that,&temp,rows,cols);
+			image_copy(that,&temp);
+			image_free(&temp);
 		}
 	}
-	data->image = data->appw.show;
 }
 /*----------------------------------------------------------------------------*/
 void image_data_work(my1image_data_t* data)
@@ -115,10 +115,11 @@ void data_on_clickM(void* args)
 	gchar *buff;
 	appw_handler_t *hand = (appw_handler_t*) args;
 	my1image_data_t *data = (my1image_data_t*) hand->data;
+	my1image_t *last = data->appw.show; /* last image sent to viewer */
 	my1image_t *view = &data->appw.view.buff;
 	/* show info on status bar */
 	buff = g_strdup_printf("Size:%dx%d Mask:0x%08x",
-		view->cols,view->rows,view->mask);
+		view->cols,view->rows,last->mask);
 	image_appw_stat_time(&data->appw,(char*)buff,5);
 	g_free(buff);
 }
@@ -132,10 +133,11 @@ void data_on_clickL(void* args)
 	appw_handler_t *hand = (appw_handler_t*) args;
 	my1image_data_t *data = (my1image_data_t*) hand->data;
 	GdkEventButton *event = (GdkEventButton*) hand->xtra;
+	my1image_t *last = data->appw.show; /* last image sent to viewer */
 	my1image_t *view = &data->appw.view.buff;
-	mask = view->mask;
+	mask = last->mask;
 	dpix = image_get_pixel(view,event->y,event->x);
-	dpix &= mask; /* remove alpha */
+	dpix &= IMASK_COLOR; /* remove alpha */
 	dpix = color_swap(dpix); /* get rgb from bgr */
 	temp = (my1rgb_t*)&dpix;
 	that = rgb2hsv(*temp);
@@ -203,7 +205,7 @@ void data_on_filter_select(my1image_data_t *data, GtkMenuItem *menu_item)
 void data_on_filter_execute(my1image_data_t *data, GtkMenuItem *menu_item)
 {
 	image_data_filter_exec(data);
-	image_appw_draw(&data->appw,data->image);
+	image_appw_draw(&data->appw,REDRAW);
 }
 /*----------------------------------------------------------------------------*/
 void data_on_filter_clear(my1image_data_t *data, GtkMenuItem *menu_item)
@@ -217,17 +219,18 @@ void data_on_filter_clear(my1image_data_t *data, GtkMenuItem *menu_item)
 /*----------------------------------------------------------------------------*/
 void data_on_filter_soloexec(my1image_data_t *data, GtkMenuItem *menu_item)
 {
-	my1image_t *save;
+	my1image_t *save, *temp;
 	char* name = (char*)gtk_menu_item_get_label(menu_item);
 	my1image_filter_t *pass = filter_search(data->pflist,name);
 	if (pass)
 	{
-		image_copy_color2rgb(&data->appw.buff,&data->appw.view.buff);
+		image_copy_color2rgb(&data->work.main,&data->appw.view.buff);
 		save = pass->output; /* just in case */
-		pass->output = data->work.curr;
-		data->image = image_filter_single(&data->appw.buff,pass);
+		pass->output = &data->work.buff;
+		temp = image_filter_single(&data->work.main,pass);
 		pass->output = save;
-		image_appw_draw(&data->appw,data->image);
+		image_copy(data->appw.show,temp);
+		image_appw_draw(&data->appw,REDRAW);
 	}
 }
 /*----------------------------------------------------------------------------*/
@@ -382,8 +385,14 @@ void image_data_filter_load(my1image_data_t* data, char* name)
 /*----------------------------------------------------------------------------*/
 void image_data_filter_exec(my1image_data_t* data)
 {
+	my1image_t *temp;
 	if (data->pfcurr)
-		data->image = image_filter(data->image,data->pfcurr);
+	{
+		temp = data->appw.show;
+		temp = image_filter(temp,data->pfcurr);
+		image_copy(data->appw.show,temp);
+		image_appw_draw(&data->appw,REDRAW);
+	}
 }
 /*----------------------------------------------------------------------------*/
 #endif /** __MY1IMAGE_DATAC__ */

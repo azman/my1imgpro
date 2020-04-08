@@ -32,7 +32,7 @@ void image_appw_init(my1image_appw_t* appw)
 	appw->dotask = 0x0;
 	appw->dodata = 0x0;
 	appw->show = &appw->buff; /* show MUST always point to valid space */
-	appw->orig = &appw->main; /* default original image */
+	appw->orig = &appw->main; /* orig points to original image */
 	image_init(&appw->main);
 	image_init(&appw->buff);
 	image_view_init(&appw->view);
@@ -52,12 +52,12 @@ void image_appw_full(my1image_appw_t* appw, int full)
 {
 	if (full)
 	{
-		gtk_widget_hide(appw->dostat);
+		image_appw_stat_hide(appw,1);
 		gtk_window_fullscreen(GTK_WINDOW(appw->window));
 	}
 	else
 	{
-		gtk_widget_show(appw->dostat);
+		image_appw_stat_hide(appw,0);
 		gtk_window_unfullscreen(GTK_WINDOW(appw->window));
 	}
 }

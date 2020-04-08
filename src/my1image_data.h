@@ -17,8 +17,7 @@
 typedef struct _my1image_data_t
 {
 	int dosize, maxh, maxw, flag;
-	my1image_t *image;
-	my1image_appw_t appw;
+	my1image_appw_t appw; /* use show as main image pointer */
 	my1image_hist_t hist;
 	my1image_buffer_t work;
 	my1image_filter_t *pflist, *pfcurr;
