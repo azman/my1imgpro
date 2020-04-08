@@ -21,13 +21,14 @@ typedef struct _my1image_filter_t
 {
 	char name[FILTER_NAMESIZE];
 	unsigned int flag; /* filter properties flag (1-hot) */
-	void *data; /* pointer to user-defined data */
+	void *data; /* filter extra data */
 	my1image_buffer_t *buffer; /* external shared buffer */
 	my1image_t *output; /* output image to write to */
 	pfilter_t filter; /* pointer to filter function */
 	pfsetup_t doinit; /* pointer to setup function */
 	pfclean_t dofree; /* pointer to cleanup function */
 	struct _my1image_filter_t *next, *last; /* linked list - last in list */
+	struct _my1image_filter_t *prev; /* ONLY FOR PROCESSING! */
 }
 my1image_filter_t;
 /*----------------------------------------------------------------------------*/

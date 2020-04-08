@@ -6,6 +6,7 @@
 #include "my1image_crgb.h"
 #include "my1image_mask.h"
 #include "my1image_stat.h"
+#include "my1image_scan.h"
 #include "my1image_mono.h"
 /*----------------------------------------------------------------------------*/
 /* needed for sqrt in sobel */
@@ -28,8 +29,17 @@ my1image_t* filter_binary(my1image_t* img, my1image_t* res, my1ifilter_t* pass)
 my1image_t* filter_binary_mid(my1image_t* img, my1image_t* res,
 	my1ifilter_t* pass)
 {
-	image_copy(res,img);
-	image_binary(res,WHITE>>1,WHITE);
+	int loop, size = img->size, pmax, temp;
+	image_make(res,img->rows,img->cols);
+	/* find max value */
+	for (loop=0,pmax=0;loop<size;loop++)
+	{
+		temp = img->data[loop];
+		pmax += temp;
+		res->data[loop] = temp;
+	}
+	pmax /= size;
+	image_binary(res,pmax>>1,WHITE);
 	res->mask = IMASK_GRAY;
 	return res;
 }
@@ -64,16 +74,8 @@ my1image_t* filter_gray(my1image_t* img, my1image_t* res, my1ifilter_t* filter)
 {
 	int loop, size = img->size;
 	image_make(res,img->rows,img->cols);
-	if (img->mask==IMASK_COLOR)
-	{
-		for(loop=0;loop<size;loop++)
-			res->data[loop] = color2gray(img->data[loop]);
-	}
-	else
-	{
-		for(loop=0;loop<size;loop++)
-			res->data[loop] = img->data[loop];
-	}
+	for(loop=0;loop<size;loop++)
+		res->data[loop] = color2gray(img->data[loop]);
 	res->mask = IMASK_GRAY;
 	return res;
 }
@@ -83,17 +85,9 @@ my1image_t* filter_color_blue(my1image_t* img, my1image_t* res,
 {
 	int loop, size = img->size;
 	image_make(res,img->rows,img->cols);
-	if (img->mask==IMASK_COLOR)
-	{
-		for(loop=0;loop<size;loop++)
-			res->data[loop] = img->data[loop]&IMASK_COLOR_B;
-	}
-	else
-	{
-		for(loop=0;loop<size;loop++)
-			res->data[loop] = img->data[loop]&IMASK_COLOR_B;
-	}
-	res->mask = IMASK_COLOR;
+	for(loop=0;loop<size;loop++)
+		res->data[loop] = (img->data[loop]&IMASK_COLOR_B);
+	res->mask = IMASK_GRAY;
 	return res;
 }
 /*----------------------------------------------------------------------------*/
@@ -102,17 +96,9 @@ my1image_t* filter_color_green(my1image_t* img, my1image_t* res,
 {
 	int loop, size = img->size;
 	image_make(res,img->rows,img->cols);
-	if (img->mask==IMASK_COLOR)
-	{
-		for(loop=0;loop<size;loop++)
-			res->data[loop] = img->data[loop]&IMASK_COLOR_G;
-	}
-	else
-	{
-		for(loop=0;loop<size;loop++)
-			res->data[loop] = (img->data[loop]<<8)&IMASK_COLOR_G;
-	}
-	res->mask = IMASK_COLOR;
+	for(loop=0;loop<size;loop++)
+		res->data[loop] = (img->data[loop]&IMASK_COLOR_G)>>8;
+	res->mask = IMASK_GRAY;
 	return res;
 }
 /*----------------------------------------------------------------------------*/
@@ -121,16 +107,41 @@ my1image_t* filter_color_red(my1image_t* img, my1image_t* res,
 {
 	int loop, size = img->size;
 	image_make(res,img->rows,img->cols);
-	if (img->mask==IMASK_COLOR)
-	{
-		for(loop=0;loop<size;loop++)
-			res->data[loop] = img->data[loop]&IMASK_COLOR_R;
-	}
-	else
-	{
-		for(loop=0;loop<size;loop++)
-			res->data[loop] = (img->data[loop]<<16)&IMASK_COLOR_R;
-	}
+	for(loop=0;loop<size;loop++)
+		res->data[loop] = (img->data[loop]&IMASK_COLOR_R)>>16;
+	res->mask = IMASK_GRAY;
+	return res;
+}
+/*----------------------------------------------------------------------------*/
+my1image_t* filter_gray2b(my1image_t* img, my1image_t* res,
+	my1ifilter_t* filter)
+{
+	int loop, size = img->size;
+	image_make(res,img->rows,img->cols);
+	for(loop=0;loop<size;loop++)
+		res->data[loop] = (img->data[loop]&IMASK_COLOR_B);
+	res->mask = IMASK_COLOR;
+	return res;
+}
+/*----------------------------------------------------------------------------*/
+my1image_t* filter_gray2g(my1image_t* img, my1image_t* res,
+	my1ifilter_t* filter)
+{
+	int loop, size = img->size;
+	image_make(res,img->rows,img->cols);
+	for(loop=0;loop<size;loop++)
+		res->data[loop] = ((img->data[loop]<<8)&IMASK_COLOR_G);
+	res->mask = IMASK_COLOR;
+	return res;
+}
+/*----------------------------------------------------------------------------*/
+my1image_t* filter_gray2r(my1image_t* img, my1image_t* res,
+	my1ifilter_t* filter)
+{
+	int loop, size = img->size;
+	image_make(res,img->rows,img->cols);
+	for(loop=0;loop<size;loop++)
+		res->data[loop] = ((img->data[loop]<<16)&IMASK_COLOR_R);
 	res->mask = IMASK_COLOR;
 	return res;
 }
@@ -138,25 +149,8 @@ my1image_t* filter_color_red(my1image_t* img, my1image_t* res,
 my1image_t* filter_invert(my1image_t* img, my1image_t* res,
 	my1ifilter_t* filter)
 {
-	int loop, size = img->size;
-	image_make(res,img->rows,img->cols);
-	if (img->mask==IMASK_COLOR)
-	{
-		cbyte r, g, b;
-		for(loop=0;loop<size;loop++)
-		{
-			decode_rgb(img->data[loop],&r,&g,&b);
-			r = WHITE - r; g = WHITE - g; b = WHITE - b;
-			res->data[loop] = encode_rgb(r,g,b);
-		}
-	}
-	else
-	{
-		for(loop=0;loop<size;loop++)
-			res->data[loop] = img->data[loop];
-		image_invert(res);
-	}
-	res->mask = img->mask;
+	image_copy(res,img);
+	image_invert_this(res);
 	return res;
 }
 /*----------------------------------------------------------------------------*/
@@ -164,7 +158,9 @@ my1image_t* filter_resize(my1image_t* img, my1image_t* res,
 	my1ifilter_t* filter)
 {
 	my1image_area_t *size = (my1image_area_t*) filter->data;
-	return image_size_this(img,res,size->hval,size->wval);
+	if (size) return image_size_this(img,res,size->hval,size->wval);
+	image_copy(res,img);
+	return res;
 }
 /*----------------------------------------------------------------------------*/
 void filter_resize_init(my1ifilter_t* filter)
@@ -178,11 +174,6 @@ void filter_resize_init(my1ifilter_t* filter)
 void filter_resize_free(my1ifilter_t* filter)
 {
 	if (filter->data) free((void*)filter->data);
-}
-/*----------------------------------------------------------------------------*/
-void filter_gray_init(my1ifilter_t* filter)
-{
-	filter->flag |= FILTER_FLAG_GRAY;
 }
 /*----------------------------------------------------------------------------*/
 my1image_t* filter_laplace(my1image_t* img, my1image_t* res,
@@ -220,43 +211,27 @@ my1image_t* filter_sobel_y(my1image_t* img, my1image_t* res,
 my1image_t* filter_sobel(my1image_t* img, my1image_t* res,
 	my1ifilter_t* filter)
 {
-	my1image_t buff1, buff2, *chk = (my1image_t*) filter->data;
 	int irow, icol, x, y, z, p;
-	/* assign to default if not specified */
-	if (!chk&&filter->buffer) chk = &filter->buffer->xtra;
-	/* initialize buffer structures */
-	image_init(&buff1);
-	image_init(&buff2);
-	/* create temporary buffers */
-	if (!image_make(&buff1,img->rows,img->cols)||
-		!image_make(&buff2,img->rows,img->cols))
-	{
-		image_free(&buff1);
-		image_free(&buff2);
-		return img;
-	}
-	/* calculate directional edge */
-	filter_sobel_x(img,&buff1,0x0);
-	filter_sobel_y(img,&buff2,0x0);
-	/* prepare resulting image structure */
+	my1image_t *buff = (my1image_t*) filter->data;
+	/* prepare spaces */
+	image_make(&buff[0],img->rows,img->cols);
+	image_make(&buff[1],img->rows,img->cols);
+	image_make(&buff[2],img->rows,img->cols);
 	image_make(res,img->rows,img->cols);
-	if (chk)
-	{
-		image_make(chk,img->rows,img->cols);
-		chk->mask = IMASK_GRAY;
-	}
+	/* calculate directional edge */
+	filter_sobel_x(img,&buff[1],0x0);
+	filter_sobel_y(img,&buff[2],0x0);
 	/* calculate magnitude & phase for 3x3 neighbourhood */
 	for (irow=0;irow<img->rows;irow++)
 	{
 		for (icol=0;icol<img->cols;icol++)
 		{
-			x = image_get_pixel(&buff1,irow,icol);
-			y = image_get_pixel(&buff2,irow,icol);
+			x = image_get_pixel(&buff[1],irow,icol);
+			y = image_get_pixel(&buff[2],irow,icol);
 			/* can we do this WITHOUT the sqrt? */
 			z = (int)sqrt((y*y)+(x*x));
 			if (z>WHITE) z = WHITE;
 			image_set_pixel(res,irow,icol,z);
-			if (!chk) continue;
 			/* assign phase - use logic instead of (int)atan2(y,x) :p */
 			/* get 4 angles only: 0, 45, 90, 135! */
 			p = 0;
@@ -309,16 +284,35 @@ my1image_t* filter_sobel(my1image_t* img, my1image_t* res,
 					}
 				}
 			}
-			image_set_pixel(chk,irow,icol,p);
+			image_set_pixel(&buff[0],irow,icol,p);
 		}
 	}
 	res->mask = IMASK_GRAY;
-	image_limit(res);
-	/* clean-up */
-	image_free(&buff1);
-	image_free(&buff2);
-	/* return image structure with containing magnitude */
 	return res;
+}
+/*----------------------------------------------------------------------------*/
+void filter_sobel_init(my1ifilter_t* filter)
+{
+	int loop;
+	my1image_t *buff;
+	/* prepare 3 buffers for sobel */
+	filter->data = malloc(3*sizeof(my1image_t));
+	buff = (my1image_t*) filter->data;
+	for (loop=0;loop<3;loop++)
+		image_init(&buff[loop]);
+}
+/*----------------------------------------------------------------------------*/
+void filter_sobel_free(my1ifilter_t* filter)
+{
+	int loop;
+	my1image_t *buff;
+	if (filter->data)
+	{
+		buff = (my1image_t*) filter->data;
+		for (loop=0;loop<3;loop++)
+			image_free(&buff[loop]);
+		free((void*)filter->data);
+	}
 }
 /*----------------------------------------------------------------------------*/
 my1image_t* filter_gauss(my1image_t* img, my1image_t* res,
@@ -343,7 +337,7 @@ my1image_t* filter_maxscale(my1image_t* img, my1image_t* res,
 		if (temp>pmax)
 			pmax = temp;
 	}
-	pmax = GRAYLEVEL-pmax-1;
+	pmax = WHITE-pmax;
 	for (loop=0;loop<size;loop++)
 	{
 		temp = img->data[loop];
@@ -411,13 +405,19 @@ int image_check_suppress(my1image_t *img, my1image_t *chk, int pref, int pchk)
 my1image_t* filter_suppress(my1image_t* img, my1image_t* res,
 	my1ifilter_t* filter)
 {
-	int loop, size = img->size, curr, buff;
-	my1image_t *chk = (my1image_t*) filter->data;
-	if (!chk) return img;
+	/** maximal suppression (after sobel?) */
+	int loop, curr, buff;
+	my1image_t *chk;
+	my1ifilter_t *prev = filter->prev;
+	if (!prev||strncmp(prev->name,"sobel",6))
+	{
+		image_copy(res,img);
+		return res;
+	}
+	chk = (my1image_t*) prev->data;
 	/* assign to default if not specified */
-	if (!chk&&filter->buffer) chk = &filter->buffer->xtra;
 	image_make(res,img->rows,img->cols);
-	for (loop=0;loop<size;loop++)
+	for (loop=0;loop<img->size;loop++)
 	{
 		/* dummy loop */
 		do
@@ -495,12 +495,17 @@ static const filter_info_t MY1_IFILTER_DB[] =
 	{ IFNAME_COLORBLUE, 0, filter_color_blue, 0x0, 0x0 },
 	{ IFNAME_COLORGREEN, 0, filter_color_green, 0x0, 0x0 },
 	{ IFNAME_COLORRED, 0, filter_color_red, 0x0, 0x0 },
+	{ IFNAME_GRAYBLUE, 0, filter_gray2b, 0x0, 0x0 },
+	{ IFNAME_GRAYGREEN, 0, filter_gray2g, 0x0, 0x0 },
+	{ IFNAME_GRAYRED, 0, filter_gray2r, 0x0, 0x0 },
 	{ IFNAME_INVERT, 0, filter_invert, 0x0, 0x0 },
-	{ IFNAME_RESIZE, 0, filter_resize, filter_resize_init, filter_resize_free },
+	{ IFNAME_RESIZE, 0, filter_resize,
+			filter_resize_init, filter_resize_free },
 	{ IFNAME_LAPLACE, FLAG_GRAY, filter_laplace, 0x0, 0x0 },
 	{ IFNAME_SOBELX, FLAG_GRAY, filter_sobel_x, 0x0, 0x0 },
 	{ IFNAME_SOBELY, FLAG_GRAY, filter_sobel_y, 0x0, 0x0 },
-	{ IFNAME_SOBEL, FLAG_GRAY, filter_sobel, 0x0, 0x0 },
+	{ IFNAME_SOBEL, FLAG_GRAY, filter_sobel,
+			filter_sobel_init, filter_sobel_free },
 	{ IFNAME_GAUSS, FLAG_GRAY, filter_gauss, 0x0, 0x0 },
 	{ IFNAME_MAXSCALE, FLAG_GRAY, filter_maxscale, 0x0, 0x0 },
 	{ IFNAME_SUPPRESS, FLAG_GRAY|FLAG_PROG, filter_suppress, 0x0, 0x0 },

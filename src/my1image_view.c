@@ -72,7 +72,6 @@ gboolean on_draw_callback(GtkWidget *widget, cairo_t *cr, gpointer data)
 		image_free(&temp);
 	}
 	/* colormode abgr32 for gdk function */
-	image_make(&view->buff,show->rows,show->cols);
 	image_copy_color2bgr(&view->buff,show);
 	show = &view->buff;
 	/* draw! */
@@ -84,7 +83,7 @@ gboolean on_draw_callback(GtkWidget *widget, cairo_t *cr, gpointer data)
 	cairo_paint(view->dodraw);
 	if (view->draw_more) view->draw_more((void*)view);
 	image_free(&mods);
-	/* to enable user resize window to a smaller size */
+	/* enable user to resize canvas to a smaller size */
 	gtk_widget_set_size_request(view->canvas,1,1);
 	return TRUE;
 }

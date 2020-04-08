@@ -20,6 +20,7 @@ void filter_init(my1ifilter_t* pass, pfilter_t filter, my1ibuffer_t* buff)
 	pass->dofree = 0x0;
 	pass->next = 0x0; /* linked list */
 	pass->last = 0x0; /* last filter in chain */
+	pass->prev = 0x0; /* will be set by the previous filter in exec chain */
 }
 /*----------------------------------------------------------------------------*/
 void filter_free(my1ifilter_t* pass)
@@ -63,7 +64,7 @@ my1ifilter_t* filter_search(my1ifilter_t* pass, char *name)
 		if (pass->name)
 		{
 			size = strlen(pass->name);
-			if (!strncmp(pass->name,name,size))
+			if (!strncmp(pass->name,name,size+1))
 			{
 				find = pass;
 				break;
@@ -91,23 +92,23 @@ my1ifilter_t* filter_cloned(my1ifilter_t* pass)
 /*----------------------------------------------------------------------------*/
 my1image_t* image_filter(my1image_t* data, my1ifilter_t* pass)
 {
+	my1image_t* temp;
+	my1ibuffer_t* buff;
+	my1ifilter_t* prev = 0x0;
 	while (pass)
 	{
-		if (pass->filter)
+		if (prev) pass->prev = prev;
+		temp = pass->output;
+		buff = 0x0;
+		if (!temp)
 		{
-			my1image_buffer_t* buff = 0x0;
-			my1image_t* temp = pass->output;
-			if (!temp)
-			{
-				/* skip filter if no output and no buffer assigned */
-				buff = pass->buffer;
-				if (!buff) continue;
-				temp = buff->next;
-			}
-			data = pass->filter(data,temp,pass);
-			/* swap buffer if used */
-			if (buff) buffer_swap(buff);
+			buff = pass->buffer;
+			if (!buff) return 0x0;
+			temp = buff->next;
 		}
+		data = pass->filter(data,temp,pass);
+		if (buff) buffer_swap(buff);
+		prev = pass;
 		pass = pass->next;
 	}
 	return data;
@@ -120,7 +121,6 @@ my1image_t* image_filter_single(my1image_t* data, my1ifilter_t* pass)
 	my1image_t* done = pass->output;
 	if (!done) return done;
 	image_init(&buff);
-	if (pass->doinit) pass->doinit(pass);
 	if (pass->flag&FILTER_FLAG_GRAY)
 	{
 		image_copy(&buff,data);
@@ -128,7 +128,6 @@ my1image_t* image_filter_single(my1image_t* data, my1ifilter_t* pass)
 		data = &buff;
 	}
 	done = pass->filter(data,done,pass);
-	if (pass->dofree) pass->dofree(pass);
 	image_free(&buff);
 	return done;
 }

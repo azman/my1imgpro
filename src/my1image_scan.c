@@ -55,5 +55,21 @@ int iscan_skip(my1image_scan_t* scan)
 	else return 0;
 }
 /*----------------------------------------------------------------------------*/
+int iscan_skip_loop(my1image_scan_t* scan, int loop)
+{
+	int trow = loop / scan->cols;
+	int tcol = loop % scan->cols;
+	if (trow<scan->skip||trow>scan->brow||tcol<scan->skip||tcol>scan->bcol)
+		return 1;
+	else return 0;
+}
+/*----------------------------------------------------------------------------*/
+int iscan_skip_that(my1image_scan_t* scan, int trow, int tcol)
+{
+	if (trow<scan->skip||trow>scan->brow||tcol<scan->skip||tcol>scan->bcol)
+		return 1;
+	else return 0;
+}
+/*----------------------------------------------------------------------------*/
 #endif /** __MY1IMAGE_SCANC__ */
 /*----------------------------------------------------------------------------*/
