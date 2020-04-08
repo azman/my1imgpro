@@ -27,7 +27,7 @@ static char showkeys[] =
 /*----------------------------------------------------------------------------*/
 int main(int argc, char* argv[])
 {
-	int loop, stop = 0, type = VIDEO_SOURCE_NONE;
+	int loop, type = VIDEO_SOURCE_NONE;
 	char *psource = 0x0;
 	my1vmain_t vmain;
 	/* print tool info */
@@ -36,40 +36,21 @@ int main(int argc, char* argv[])
 	/* check parameter */
 	for (loop=1;loop<argc;loop++)
 	{
-		if (!strcmp(argv[loop],"--live"))
+		if (argv[loop][0]!='-')
 		{
-			if (psource)
-			{
-				printf("Multiple source? (%s&%s)\n",psource,argv[loop]);
-				stop++;
-			}
-			else if (loop<argc-1) /* still with param! */
-			{
-				/* on linux this should be /dev/video0 or something... */
-				psource = argv[++loop];
-				type = VIDEO_SOURCE_LIVE;
-			}
-			else
-			{
-				printf("No param for '--live'?\n");
-				stop++;
-			}
+			psource = argv[loop];
+			type = VIDEO_SOURCE_FILE;
+			break;
 		}
-		else
+		else if (!strcmp(argv[loop],"--live"))
 		{
-			if (psource)
-			{
-				printf("Multiple source? (%s&%s)\n",psource,argv[loop]);
-				stop++;
-			}
-			else
-			{
-				psource = argv[loop];
-				type = VIDEO_SOURCE_FILE;
-			}
+			/* on linux this should be /dev/video0 or something... */
+			psource = argv[++loop];
+			type = VIDEO_SOURCE_LIVE;
+			break;
 		}
+		else printf("-- Unknown param '%s'!\n",argv[loop]);
 	}
-	if (stop) return -stop;
 	/* check video source */
 	if (!psource)
 	{
@@ -81,9 +62,8 @@ int main(int argc, char* argv[])
 	/* initialize */
 	video_main_init(&vmain);
 	/* setup filters */
-	video_main_pass_load(&vmain,IFNAME_GRAYSCALE);
-	video_main_pass_load(&vmain,IFNAME_LAPLACE);
-	video_main_pass_load(&vmain,IFNAME_INVERT);
+	for (++loop;loop<argc;loop++)
+		video_main_pass_load(&vmain,argv[loop]);
 	/* setup capture */
 	video_main_capture(&vmain,psource,type);
 	/* setup display */

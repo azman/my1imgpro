@@ -214,11 +214,6 @@ void vmain_on_filter_toggle(my1video_main_t *vmain, GtkMenuItem *menu_item)
 		video->flags&VIDEO_FLAG_NO_FILTER?FALSE:TRUE);
 }
 /*----------------------------------------------------------------------------*/
-void vmain_on_menu_resume(my1video_main_t *vmain, GtkMenuItem *menu_item)
-{
-	video_play(&vmain->video);
-}
-/*----------------------------------------------------------------------------*/
 gboolean vmain_on_done_all(gpointer data)
 {
 	my1vmain_t* vmain = (my1vmain_t*) data;
@@ -302,12 +297,6 @@ void video_main_prepare(my1vmain_t* vmain)
 		vmain->video.flags&VIDEO_FLAG_NO_FILTER?FALSE:TRUE);
 	g_signal_connect_swapped(G_OBJECT(menu_item),"activate",
 		G_CALLBACK(vmain_on_filter_toggle),(gpointer)vmain);
-	gtk_widget_show(menu_item);
-	/* resume */
-	menu_item = gtk_menu_item_new_with_mnemonic("_Resume");
-	gtk_menu_shell_append(GTK_MENU_SHELL(menu_main),menu_item);
-	g_signal_connect_swapped(G_OBJECT(menu_item),"activate",
-		G_CALLBACK(vmain_on_menu_resume),(gpointer)vmain);
 	gtk_widget_show(menu_item);
 	/* quit menu item */
 	menu_item = gtk_menu_item_new_with_mnemonic("_Quit");
