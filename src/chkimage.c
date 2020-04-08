@@ -115,6 +115,7 @@ int main(int argc, char* argv[])
 	iwin.dodata = (void*) &ivid;
 	if (mode==IMAGE_FILE)
 	{
+		image_appw_name(&iwin,"MY1 Image");
 		image_appw_domenu_full(&iwin);
 		image_appw_task(&iwin,image_appw_is_done,ISDONE_TIMEOUT);
 	}
@@ -122,6 +123,7 @@ int main(int argc, char* argv[])
 	{
 		iwin.gofree = 0;
 		video_play(&ivid);
+		image_appw_name(&iwin,"MY1 Video");
 		image_appw_task(&iwin,prepare_video_next,CAPTURE_DELAY);
 	}
 	/* main loop */

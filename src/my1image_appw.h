@@ -18,6 +18,7 @@ typedef struct _appw_handler_t
 {
 	appw_task_t task;
 	void* data;
+	void* xtra; /* something extra :p */
 }
 appw_handler_t;
 /*----------------------------------------------------------------------------*/
@@ -32,6 +33,7 @@ typedef struct _my1image_appw_t
 	int gofree; /* flag to call image_appw_free in on_done_all */
 	int gofull; /* full screen request/status flag  */
 	int docopy; /* flag to copy on make, use local buffers */
+	int nostat; /* flag to hide status bar */
 	appw_task_t dotask; /* task to do in gtk loop - based on timer idtask */
 	void *dodata; /* data for dotask */
 	my1image_t buff, main, *show, *orig; /* buffered image data */

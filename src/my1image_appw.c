@@ -27,6 +27,7 @@ void image_appw_init(my1image_appw_t* appw)
 	appw->gofree = 0;
 	appw->gofull = 0;
 	appw->docopy = 1; /* by default, copy on make */
+	appw->nostat = 0; /* by default, show status bar */
 	appw->show = 0x0;
 	appw->dotask = 0x0;
 	appw->dodata = 0x0;
@@ -74,10 +75,11 @@ gboolean appw_on_done_all(gpointer data)
 /*----------------------------------------------------------------------------*/
 void image_appw_make(my1image_appw_t* appw, my1image_t* that)
 {
+	int rows, cols;
 	GtkAllocation alloc;
 	GtkWidget* vbox;
 	/* check if assigned new image */
-	if (!that||that!=appw->show)
+	if (that&&that!=appw->show)
 	{
 		if (appw->docopy)
 		{
@@ -87,8 +89,8 @@ void image_appw_make(my1image_appw_t* appw, my1image_t* that)
 			appw->show = &appw->buff;
 		}
 		else appw->show = that; /* that MUST be a valid space */
-		that = appw->show;
 	}
+	that = appw->show;
 	/* must have image */
 	if (!that) return;
 	/* create window */
@@ -116,11 +118,17 @@ void image_appw_make(my1image_appw_t* appw, my1image_t* that)
 		gtk_box_pack_start(GTK_BOX(vbox),appw->dostat,FALSE,FALSE,0);
 		/* show window */
 		gtk_widget_show_all(appw->window);
+		if (appw->nostat) gtk_widget_hide(appw->dostat);
 	}
 	else image_view_make(&appw->view,that);
-	gtk_widget_get_allocation(appw->dostat,&alloc);
-	gtk_window_resize(GTK_WINDOW(appw->window),
-		that->cols,that->rows+alloc.height);
+	rows = that->rows; cols = that->cols;
+	if (gtk_widget_is_drawable(appw->dostat))
+	{
+		gtk_widget_get_allocation(appw->dostat,&alloc);
+		rows += alloc.height;
+	}
+	/**printf("-- DoMake: %d x %d (%d)\n",cols,rows,that->rows);*/
+	gtk_window_resize(GTK_WINDOW(appw->window),cols,rows);
 }
 /*----------------------------------------------------------------------------*/
 void image_appw_draw(my1image_appw_t* appw, my1image_t* that)
@@ -189,8 +197,16 @@ void image_appw_stat_remove(my1image_appw_t* appw, guint mesg_id)
 void image_appw_stat_hide(my1image_appw_t* appw, int hide)
 {
 	if (!appw->dostat) return;
-	if (hide) gtk_widget_hide(appw->dostat);
-	else gtk_widget_show(appw->dostat);
+	if (hide)
+	{
+		gtk_widget_hide(appw->dostat);
+		appw->nostat = 1;
+	}
+	else
+	{
+		gtk_widget_show(appw->dostat);
+		appw->nostat = 0;
+	}
 }
 /*----------------------------------------------------------------------------*/
 #define RIGHT_CLICK 3
@@ -216,7 +232,8 @@ gboolean appw_on_mouse_click(GtkWidget *widget,
 		{
 			if (appw->clickM.task)
 			{
-				appw->clickM.task(appw->clickM.data);
+				appw->clickM.xtra = (void*)event;
+				appw->clickM.task((void*)&appw->clickM);
 				done = TRUE;
 			}
 		}
@@ -224,7 +241,8 @@ gboolean appw_on_mouse_click(GtkWidget *widget,
 		{
 			if (appw->clickL.task)
 			{
-				appw->clickL.task(appw->clickL.data);
+				appw->clickL.xtra = (void*)event;
+				appw->clickL.task((void*)&appw->clickL);
 				done = TRUE;
 			}
 		}
@@ -545,9 +563,9 @@ void image_appw_show(my1image_appw_t* appw, my1image_t* that,
 	image_appw_init(appw);
 	appw->gofree = 1; /* auto free on close! */
 	appw->goquit = 0; /* do not quit - assume there is another win! */
+	appw->nostat = 1; /* hide status bar */
 	image_appw_make(appw,that);
 	if (name) image_appw_name(appw,name);
-	image_appw_stat_hide(appw,1);
 	if (menu) image_appw_domenu_full(appw);
 }
 /*----------------------------------------------------------------------------*/

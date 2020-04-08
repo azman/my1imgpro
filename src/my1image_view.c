@@ -23,7 +23,7 @@ void image_view_free(my1image_view_t* view)
 	image_free(&view->buff);
 }
 /*----------------------------------------------------------------------------*/
-gboolean on_conf_callback(GtkWidget *widget, GdkEventConfigure *event, 
+gboolean on_conf_callback(GtkWidget *widget, GdkEventConfigure *event,
 	gpointer data)
 {
 	my1image_view_t* view = (my1image_view_t*) data;
@@ -49,7 +49,7 @@ gboolean on_draw_callback(GtkWidget *widget, cairo_t *cr, gpointer data)
 	/* check canvas size and the need to resize */
 	chkw = gtk_widget_get_allocated_width(view->canvas);
 	chkh = gtk_widget_get_allocated_height(view->canvas);
-	/**printf("DoDraw: %d x %d\n",chkw,chkh);*/
+	/**printf("-- DoDraw: %d x %d\n",chkw,chkh);*/
 	if (chkw!=show->cols||chkh!=show->rows)
 	{
 		image_init(&temp);
@@ -68,7 +68,7 @@ gboolean on_draw_callback(GtkWidget *widget, cairo_t *cr, gpointer data)
 			}
 		}
 		show = image_size_this(show,&mods,chkh,chkw);
-		/**printf("Dosize: %d x %d (%p)\n",show->cols,show->rows,show);*/
+		/**printf("-- Dosize: %d x %d (%p)\n",show->cols,show->rows,show);*/
 		image_free(&temp);
 	}
 	/* colormode abgr32 for gdk function */
