@@ -116,13 +116,14 @@ void vmain_on_filter_remove(my1video_main_t *vmain, GtkMenuItem *menu_item)
 	prev = 0x0; curr = that->ppass;
 	while (curr)
 	{
-		if (!strncmp(curr->name,name,size))
+		if (!strncmp(curr->name,name,size+1))
 		{
 			if (prev) prev->next = curr->next;
 			else that->ppass = curr->next;
 			/* free this */
 			filter_free(curr);
 			free((void*)curr);
+			break;
 		}
 		prev = curr;
 		curr = curr->next;
