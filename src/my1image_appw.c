@@ -53,12 +53,13 @@ void image_appw_full(my1image_appw_t* appw, int full)
 {
 	if (full)
 	{
-		image_appw_stat_hide(appw,1);
+		gtk_widget_hide(appw->dostat);
 		gtk_window_fullscreen(GTK_WINDOW(appw->window));
 	}
 	else
 	{
-		image_appw_stat_hide(appw,0);
+		if (!appw->nostat)
+			gtk_widget_show(appw->dostat);
 		gtk_window_unfullscreen(GTK_WINDOW(appw->window));
 	}
 }
@@ -87,13 +88,13 @@ gboolean appw_on_key_press(GtkWidget *widget, GdkEventKey *kevent,
 			appw_on_done_all(data);
 			return TRUE;
 		}
-		else if(kevent->keyval == GDK_KEY_space) /** GDK_KEY_Return */
+		else if(kevent->keyval == GDK_KEY_Return)
 		{
 			gtk_menu_popup_at_widget(GTK_MENU(appw->domenu),appw->window,
 				GDK_GRAVITY_CENTER,GDK_GRAVITY_NORTH_WEST,0x0);
 			return TRUE;
 		}
-		else if(kevent->keyval == GDK_KEY_F||kevent->keyval == GDK_KEY_f)
+		else if(kevent->keyval == GDK_KEY_f)
 		{
 			appw->gofull = !appw->gofull;
 			image_appw_full(appw,appw->gofull);
@@ -107,6 +108,47 @@ gboolean appw_on_key_press(GtkWidget *widget, GdkEventKey *kevent,
 		}
 	}
 	return FALSE;
+}
+/*----------------------------------------------------------------------------*/
+#define RIGHT_CLICK 3
+#define MIDDLE_CLICK 2
+#define LEFT_CLICK 1
+/*----------------------------------------------------------------------------*/
+gboolean appw_on_mouse_click(GtkWidget *widget,
+	GdkEventButton *event, gpointer data)
+{
+	gboolean done = FALSE;
+	if (event->type == GDK_BUTTON_PRESS)
+	{
+		my1image_appw_t *appw = (my1image_appw_t*) data;
+		if (event->button == RIGHT_CLICK)
+		{
+			if (appw->domenu)
+			{
+				gtk_menu_popup_at_pointer(GTK_MENU(appw->domenu),0x0);
+				done = TRUE;
+			}
+		}
+		else if (event->button == MIDDLE_CLICK)
+		{
+			if (appw->clickM.task)
+			{
+				appw->clickM.xtra = (void*)event;
+				appw->clickM.task((void*)&appw->clickM);
+				done = TRUE;
+			}
+		}
+		else if (event->button == LEFT_CLICK)
+		{
+			if (appw->clickL.task)
+			{
+				appw->clickL.xtra = (void*)event;
+				appw->clickL.task((void*)&appw->clickL);
+				done = TRUE;
+			}
+		}
+	}
+	return done;
 }
 /*----------------------------------------------------------------------------*/
 void image_appw_make(my1image_appw_t* appw, my1image_t* that)
@@ -138,11 +180,6 @@ void image_appw_make(my1image_appw_t* appw, my1image_t* that)
 		gtk_window_set_default_size(GTK_WINDOW(appw->window),
 			that->cols,that->rows);
 		gtk_window_set_position(GTK_WINDOW(appw->window),GTK_WIN_POS_CENTER);
-		/* connect event handlers */
-		g_signal_connect_swapped(G_OBJECT(appw->window),"delete-event",
-			G_CALLBACK(appw_on_done_all),(gpointer)appw);
-		g_signal_connect(G_OBJECT(appw->window),"key_press_event",
-			G_CALLBACK(appw_on_key_press),(gpointer)appw);
 		/* container box for image */
 		vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL,0);
 		gtk_container_add(GTK_CONTAINER(appw->window),vbox);
@@ -154,6 +191,14 @@ void image_appw_make(my1image_appw_t* appw, my1image_t* that)
 		appw->idstat = gtk_statusbar_get_context_id(
 			(GtkStatusbar*)appw->dostat,"MY1ImageViewStat");
 		gtk_box_pack_end(GTK_BOX(vbox),appw->dostat,FALSE,FALSE,0);
+		/* connect event handlers */
+		g_signal_connect_swapped(G_OBJECT(appw->window),"delete-event",
+			G_CALLBACK(appw_on_done_all),(gpointer)appw);
+		g_signal_connect(G_OBJECT(appw->window),"key_press_event",
+			G_CALLBACK(appw_on_key_press),(gpointer)appw);
+		gtk_widget_add_events(appw->view.canvas, GDK_BUTTON_PRESS_MASK);
+		g_signal_connect(appw->view.canvas,"button-press-event",
+			G_CALLBACK(appw_on_mouse_click),(gpointer)appw);
 		/* show window */
 		gtk_widget_show_all(appw->window);
 		if (appw->nostat) gtk_widget_hide(appw->dostat);
@@ -245,47 +290,6 @@ void image_appw_stat_hide(my1image_appw_t* appw, int hide)
 		gtk_widget_show(appw->dostat);
 		appw->nostat = 0;
 	}
-}
-/*----------------------------------------------------------------------------*/
-#define RIGHT_CLICK 3
-#define MIDDLE_CLICK 2
-#define LEFT_CLICK 1
-/*----------------------------------------------------------------------------*/
-gboolean appw_on_mouse_click(GtkWidget *widget,
-	GdkEventButton *event, gpointer data)
-{
-	gboolean done = FALSE;
-	if (event->type == GDK_BUTTON_PRESS)
-	{
-		my1image_appw_t *appw = (my1image_appw_t*) data;
-		if (event->button == RIGHT_CLICK)
-		{
-			if (appw->domenu)
-			{
-				gtk_menu_popup_at_pointer(GTK_MENU(appw->domenu),0x0);
-				done = TRUE;
-			}
-		}
-		else if (event->button == MIDDLE_CLICK)
-		{
-			if (appw->clickM.task)
-			{
-				appw->clickM.xtra = (void*)event;
-				appw->clickM.task((void*)&appw->clickM);
-				done = TRUE;
-			}
-		}
-		else if (event->button == LEFT_CLICK)
-		{
-			if (appw->clickL.task)
-			{
-				appw->clickL.xtra = (void*)event;
-				appw->clickL.task((void*)&appw->clickL);
-				done = TRUE;
-			}
-		}
-	}
-	return done;
 }
 /*----------------------------------------------------------------------------*/
 void appw_on_file_open_main(my1image_appw_t* appw)
@@ -540,20 +544,13 @@ void image_appw_domenu_quit(my1image_appw_t* appw)
 void image_appw_domenu(my1image_appw_t* appw)
 {
 	GtkWidget *menu_main;
-	/* get main menu or create one */
 	if (appw->domenu) menu_main = appw->domenu;
 	else
 	{
 		menu_main = gtk_menu_new();
-		/* add event handler IF a new menu is created */
-		gtk_widget_add_events(appw->view.canvas, GDK_BUTTON_PRESS_MASK);
-		g_signal_connect(appw->view.canvas,"button-press-event",
-			G_CALLBACK(appw_on_mouse_click),(gpointer)appw);
 		appw->domenu = menu_main;
-		/* show it! */
 		gtk_widget_show(appw->domenu);
 	}
-	/* file menu */
 	image_appw_domenu_file(appw,menu_main);
 	image_appw_domenu_image(appw,menu_main);
 	image_appw_domenu_orientation(appw,menu_main);

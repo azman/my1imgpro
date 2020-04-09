@@ -17,11 +17,11 @@ static char showkeys[] =
 	"\tc       - play video\n"
 	"\ts       - stop video\n"
 	"\t<SPACE> - pause/play video\n"
-	"\tf       - next frame\n"
-	"\tb       - previous frame\n"
+	"\t]       - next frame\n"
+	"\t[       - previous frame\n"
 	"\tl       - toggle looping\n"
 	"\tz       - toggle filter\n"
-	"\tq       - pause/play video\n"
+	"\tq@<ESC> - quit program\n"
 	"\t---------------------------\n"
 };
 /*----------------------------------------------------------------------------*/

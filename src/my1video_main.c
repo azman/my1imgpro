@@ -34,7 +34,6 @@ void video_main_check_input(void* data)
 	switch ((guint)vmain->ikey)
 	{
 		case GDK_KEY_Return:
-			video_hold(&vmain->video,1);
 			gtk_menu_popup_at_widget(GTK_MENU(vappw->domenu),vappw->window,
 				GDK_GRAVITY_CENTER,GDK_GRAVITY_NORTH_WEST,0x0);
 			vmain->ikey = 0;
@@ -55,7 +54,7 @@ void video_main_init(my1vmain_t* vmain)
 	vmain->xdel = VGRAB_DELAY;
 	/* pointers to functions and data */
 	vmain->data = 0x0;
-	vmain->grabber = 0x0;
+	vmain->grabber = 0x0; /* for custom video feed */
 	vmain->grabber_data = 0x0;
 	vmain->vappw.view.draw_more = video_main_draw_index;
 	vmain->vappw.view.draw_more_data = (void*) vmain;
@@ -248,36 +247,12 @@ gboolean vmain_on_done_all(gpointer data)
 	return TRUE;
 }
 /*----------------------------------------------------------------------------*/
-gint vmain_on_display_key_press(GtkWidget *widget, GdkEventKey *kevent,
-	gpointer data)
+void vmain_on_keychk(void* args)
 {
-	if(kevent->type == GDK_KEY_PRESS)
-	{
-		my1vmain_t *vmain = (my1vmain_t*) data;
-		/** g_message("%d, %c", kevent->keyval, kevent->keyval); */
-		vmain->ikey = kevent->keyval;
-		return TRUE;
-	}
-	return FALSE;
-}
-/*----------------------------------------------------------------------------*/
-#define RIGHT_CLICK 3
-/*----------------------------------------------------------------------------*/
-gboolean vmain_on_mouse_click(GtkWidget *widget,
-	GdkEventButton *event, gpointer data)
-{
-	if (event->type == GDK_BUTTON_PRESS)
-	{
-		my1vmain_t *vmain = (my1vmain_t*) data;
-		if (event->button==RIGHT_CLICK)
-		{
-			GtkWidget* menu = (GtkWidget*) vmain->vappw.domenu;
-			if (!menu) return FALSE;
-			gtk_menu_popup_at_pointer(GTK_MENU(menu),0x0);
-			return TRUE;
-		}
-	}
-	return FALSE;
+	appw_handler_t *hand = (appw_handler_t*) args;
+	my1vmain_t *vmain = (my1vmain_t*) hand->data;
+	GdkEventKey *event = (GdkEventKey*) hand->xtra;
+	vmain->ikey = event->keyval;
 }
 /*----------------------------------------------------------------------------*/
 void video_main_prepare(my1vmain_t* vmain)
@@ -335,12 +310,8 @@ void video_main_prepare(my1vmain_t* vmain)
 	vmain->vappw.domenu = menu_main;
 	/* show it! */
 	gtk_widget_show(vmain->vappw.domenu);
-	/* setup gtk signal handler(s) */
-	g_signal_connect(G_OBJECT(vmain->vappw.window),"key_press_event",
-		G_CALLBACK(vmain_on_display_key_press),(gpointer)vmain);
-	g_signal_connect(G_OBJECT(vmain->vappw.view.canvas),
-		"button-press-event",G_CALLBACK(vmain_on_mouse_click),(gpointer)vmain);
-	gtk_widget_add_events(vmain->vappw.view.canvas,GDK_BUTTON_PRESS_MASK);
+	/* setup keychk */
+	appw_handler_make(&vmain->vappw.keychk,vmain_on_keychk,(void*)vmain);
 }
 /*----------------------------------------------------------------------------*/
 void vmain_on_display_timer(void* data)
@@ -359,8 +330,9 @@ void vmain_on_display_timer(void* data)
 		video_post_frame(video);
 		image_appw_draw(vappw,video->frame);
 	}
-	if (keyval == GDK_KEY_Escape || keyval == GDK_KEY_q || vappw->doquit)
+	if (vappw->doquit)
 	{
+		/* GDK_KEY_Escape & GDK_KEY_q has been hadnled */
 		gtk_main_quit();
 	}
 	else if (keyval == GDK_KEY_c)
@@ -389,12 +361,12 @@ void vmain_on_display_timer(void* data)
 			}
 		}
 	}
-	else if (keyval == GDK_KEY_f)
+	else if (keyval == GDK_KEY_bracketright)
 	{
 		video_next_frame(video);
 		image_appw_stat_time(vappw,"Next",MESG_SHOWTIME);
 	}
-	else if (keyval == GDK_KEY_b)
+	else if (keyval == GDK_KEY_bracketleft)
 	{
 		if (video->count<0)
 		{
