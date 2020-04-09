@@ -12,7 +12,13 @@
 my1imgfmt_t ipnm = {PNM_ERROR_FLAG,"pnm",image_load_pnm,image_save_pnm,0x0};
 my1imgfmt_t ibmp = {BMP_ERROR_FLAG,"bmp",image_load_bmp,image_save_bmp,&ipnm};
 /*----------------------------------------------------------------------------*/
+#ifdef __MY1IMAGE_AUTO_PNG__
+#include "my1image_file_png.h"
+my1imgfmt_t ipng_auto = {PNG_ERROR_FLAG,"png",image_load_png,0x0,&ibmp};
+static my1image_format_t *init = &ipng_auto, *last = &ipnm;
+#else
 static my1image_format_t *init = &ibmp, *last = &ipnm;
+#endif
 /*----------------------------------------------------------------------------*/
 void image_format_insert(my1image_format_t* imgfmt)
 {
