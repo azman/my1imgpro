@@ -61,7 +61,7 @@ void image_appw_domenu_extra(my1image_appw_t* appw);
 void image_appw_domenu_quit(my1image_appw_t* appw);
 void image_appw_domenu_full(my1image_appw_t* appw);
 void image_appw_is_done(void* that_appw);
-guint image_appw_task(my1image_appw_t* appw, appw_task_t task, int secs);
+guint image_appw_task(my1image_appw_t* appw, appw_task_t task, int usec);
 /* special function to show an image in a window - DO NOT NEED init! */
 void image_appw_show(my1image_appw_t* appw, my1image_t* that,
 	char* name, int menu);

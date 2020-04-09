@@ -1,9 +1,5 @@
-- trim MY1IMAGE_FILE_ONLY options
-  = only need basic structure (color) and load/save functions
-  = processing functions can be separated?
 - improve 'auto-insert' png module
 - review MY1IMAGE_BASIC options
   = basic image structure with ALL operations
   = separate file option?
   = NO viewing stuffs
-

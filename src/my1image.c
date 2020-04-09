@@ -1,30 +1,41 @@
 /*----------------------------------------------------------------------------*/
 /** USEFUL PRESETS */
 #if defined(__MY1IMAGE_FILE_ONLY__)
-#define __MY1IMAGE_NO_HSV__
-#define __MY1IMAGE_NO_UTIL__
-/** #define __MYIMAGE_NO_WORK__ */
-/** #define __MYIMAGE_NO_DATA__ */
+#define __MY1IMAGE_NO_PROC__
+/** #define __MY1IMAGE_NO_HSV__ */
+/** #define __MY1IMAGE_NO_UTIL__ */
+/** #define __MY1IMAGE_NO_WORK__ */
+/** #define __MY1IMAGE_NO_DATA__ */
 #define __MY1IMAGE_NO_VIEW__
-/** #define __MYIMAGE_NO_APPW__ */
-/** #define __MYIMAGE_NO_DATA__ */
+/** #define __MY1IMAGE_NO_APPW__ */
+/** #define __MY1IMAGE_NO_DATA__ */
 #elif defined(__MY1IMAGE_BASIC__)
 #define __MY1IMAGE_NO_HSV__
 #define __MY1IMAGE_NO_FILE__
 #define __MY1IMAGE_NO_WORK__
-/** #define __MYIMAGE_NO_DATA__ */
+/** #define __MY1IMAGE_NO_DATA__ */
 #define __MY1IMAGE_NO_VIEW__
-/** #define __MYIMAGE_NO_APPW__ */
-/** #define __MYIMAGE_NO_DATA__ */
+/** #define __MY1IMAGE_NO_APPW__ */
+/** #define __MY1IMAGE_NO_DATA__ */
 #endif
 /*----------------------------------------------------------------------------*/
 #include "my1image_base.c"
+#include "my1image_argb.c"
+#ifndef __MY1IMAGE_NO_PROC__
 #include "my1image_gray.c"
 #include "my1image_crgb.c"
+#else
+#ifndef __MY1IMAGE_NO_HSV__
+#define __MY1IMAGE_NO_HSV__
+#endif
+#ifndef __MY1IMAGE_NO_UTIL__
+#define __MY1IMAGE_NO_UTIL__
+#endif
+#endif
 #ifndef __MY1IMAGE_NO_HSV__
 #include "my1image_chsv.c"
 #endif
-#ifndef __MYIMAGE_NO_FILE__
+#ifndef __MY1IMAGE_NO_FILE__
 #ifndef __MY1IMAGE_NO_PNG__
 #ifndef __MY1IMAGE_AUTO_PNG__
 #define __MY1IMAGE_AUTO_PNG__
@@ -37,7 +48,7 @@
 #include "my1image_file_png.c"
 #endif
 #endif
-#ifndef __MYIMAGE_NO_UTIL__
+#ifndef __MY1IMAGE_NO_UTIL__
 #include "my1image_mask.c"
 #include "my1image_area.c"
 #include "my1image_buff.c"

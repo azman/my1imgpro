@@ -4,7 +4,8 @@
 TESTIMG = my1image_test
 IMGMAIN = my1image.o
 IMGNAME = $(subst .o,,$(IMGMAIN))
-IMGBASE = my1image_base.o my1image_gray.o my1image_crgb.o my1image_chsv.o
+IMGCORE = my1image_base.o my1image_argb.o
+IMGBASE = $(IMGCORE) my1image_gray.o my1image_crgb.o my1image_chsv.o
 IMGFILE = my1image_file.o my1image_file_bmp.o
 IMGFILE += my1image_file_pnm.o my1image_file_png.o
 IMGUTIL = my1image_mask.o my1image_area.o my1image_buff.o my1image_util.o
@@ -43,6 +44,7 @@ endif
 
 # for chkimage
 test: DFLAGS = -D__MY1IMAGE_NO_WORK__ -D__MY1VIDEO_NO_MAIN__
+$(CHKLOAD): DFLAGS = -D__MY1IMAGE_FILE_ONLY__
 
 .PHONY: main test all image video new debug clean tools
 
@@ -66,7 +68,7 @@ debug: new
 $(CHKSIZE): $(IMGBASE) $(IMGFILE) my1image_resize.o
 	$(LD) $(CFLAGS) -o $@ $+ $(LFLAGS) $(GFLAGS)
 
-$(CHKLOAD): $(IMGBASE) $(IMGFILE) my1image_loader.o
+$(CHKLOAD): $(IMGMAIN) my1image_loader.o
 	$(LD) $(CFLAGS) -o $@ $+ $(LFLAGS) $(GFLAGS)
 
 $(HSVTEST): $(IMGBASE) my1image_testhsv.o
