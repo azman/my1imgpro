@@ -91,4 +91,4 @@ $(VISMAIN): src/$(VISNAME).c src/$(VISNAME).h
 	$(CC) $(CFLAGS) $(TFLAGS) $(VFLAGS) -o $@ $<
 
 clean:
-	-$(RM) $(TESTIMG) $(TESTVIS) $(TOOLLST) *.o *.pnm
+	-$(RM) $(TESTIMG) $(TESTVIS) $(TOOLLST) *.o

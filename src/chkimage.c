@@ -11,8 +11,67 @@
 #define VIDEO_FILE 2
 #define VIDEO_LIVE 3
 /*----------------------------------------------------------------------------*/
-/** in microsec! */
-#define CAPTURE_DELAY 10
+typedef struct _work_t
+{
+	my1image_t buff, *show;
+	my1video_t ivid;
+	my1vgrab_t grab;
+	my1image_appw_t iwin;
+	int mode;
+	char* pick;
+}
+work_t;
+/*----------------------------------------------------------------------------*/
+void work_init(work_t* work)
+{
+	image_init(&work->buff);
+	work->show = 0x0;
+	video_init(&work->ivid);
+	capture_init(&work->grab,&work->ivid);
+	image_appw_init(&work->iwin);
+	work->mode = IMAGE_NONE;
+	work->pick = 0x0;
+}
+/*----------------------------------------------------------------------------*/
+void work_free(work_t* work)
+{
+	image_appw_free(&work->iwin);
+	capture_free(&work->grab);
+	video_free(&work->ivid);
+	image_free(&work->buff);
+}
+/*----------------------------------------------------------------------------*/
+void work_args(work_t* work, int argc, char* argv[])
+{
+	int loop;
+	/* check parameter */
+	for (loop=1;loop<argc;loop++)
+	{
+		if (argv[loop][0]!='-')
+		{
+			work->mode = IMAGE_FILE;
+			work->pick = argv[loop];
+			break;
+		}
+		else if (!strncmp(argv[loop],"--live",6))
+		{
+			work->mode = VIDEO_LIVE;
+			work->pick = argv[++loop];
+			break;
+		}
+		else if (!strncmp(argv[loop],"--video",7))
+		{
+			work->mode = VIDEO_FILE;
+			work->pick = argv[++loop];
+			break;
+		}
+		else
+		{
+			printf("Invalid argument! (%s)\n",argv[loop]);
+			work->mode |= ERROR_FLAG;
+		}
+	}
+}
 /*----------------------------------------------------------------------------*/
 my1image_t* prepare_image_file(my1image_t* data, char* pick)
 {
@@ -37,6 +96,25 @@ my1image_t* prepare_video_feed(my1video_grab_t* grab, char* pick, int mode)
 	return grab->video->frame;
 }
 /*----------------------------------------------------------------------------*/
+void work_prep(work_t* work)
+{
+	if (work->mode&ERROR_FLAG) return;
+	/* prepare source */
+	switch (work->mode)
+	{
+		case VIDEO_FILE: case VIDEO_LIVE:
+			work->show = prepare_video_feed(&work->grab,work->pick,work->mode);
+			break;
+		case IMAGE_FILE: default:
+			work->mode = IMAGE_FILE;
+			work->show = prepare_image_file(&work->buff,work->pick);
+			break;
+	}
+}
+/*----------------------------------------------------------------------------*/
+/** in microsec! */
+#define CAPTURE_DELAY 10
+/*----------------------------------------------------------------------------*/
 void prepare_video_next(void* that_appw)
 {
 	my1image_appw_t* appw = (my1image_appw_t*) that_appw;
@@ -44,9 +122,6 @@ void prepare_video_next(void* that_appw)
 	my1vgrab_t* vgrab = (my1vgrab_t*)video->capture;
 	if (appw->doquit)
 	{
-		capture_free(vgrab);
-		video_free(video);
-		image_appw_free(appw);
 		gtk_main_quit();
 		return;
 	}
@@ -61,75 +136,42 @@ void prepare_video_next(void* that_appw)
 	image_appw_task(appw,prepare_video_next,CAPTURE_DELAY);
 }
 /*----------------------------------------------------------------------------*/
-int main(int argc, char* argv[])
+void work_show(work_t* work)
 {
-	my1image_t buff, *show;
-	my1video_t ivid;
-	my1video_grab_t grab;
-	my1image_appw_t iwin;
-	int loop, mode = IMAGE_NONE;
-	char* pick = 0x0;
-	/* check parameter */
-	for (loop=1;loop<argc;loop++)
+	image_appw_show(&work->iwin,work->show,0x0,0);
+	work->ivid.display = (void*) &work->iwin;
+	work->iwin.dodata = (void*) &work->ivid;
+	if (work->mode==IMAGE_FILE)
 	{
-		if (argv[loop][0]!='-')
-		{
-			mode = IMAGE_FILE;
-			pick = argv[loop];
-		}
-		else if (!strncmp(argv[loop],"--live",6))
-		{
-			mode = VIDEO_LIVE;
-			pick = argv[++loop];
-		}
-		else if (!strncmp(argv[loop],"--video",7))
-		{
-			mode = VIDEO_FILE;
-			pick = argv[++loop];
-		}
-		else
-		{
-			printf("Invalid argument! (%s)\n",argv[loop]);
-			mode |= ERROR_FLAG;
-		}
-	}
-	if (mode&ERROR_FLAG) return -1;
-	/* initialize data */
-	image_init(&buff);
-	video_init(&ivid);
-	capture_init(&grab,&ivid);
-	/* prepare source */
-	switch (mode)
-	{
-		case VIDEO_FILE: case VIDEO_LIVE:
-			show = prepare_video_feed(&grab,pick,mode); break;
-		case IMAGE_FILE: default:
-			mode = IMAGE_FILE;
-			show = prepare_image_file(&buff,pick); break;
-	}
-	/* initialize gui */
-	gtk_init(&argc,&argv);
-	/* show image */
-	image_appw_show(&iwin,show,0x0,0);
-	ivid.display = (void*) &iwin;
-	iwin.dodata = (void*) &ivid;
-	if (mode==IMAGE_FILE)
-	{
-		image_appw_name(&iwin,"MY1 Image");
-		image_appw_domenu_full(&iwin);
-		image_appw_task(&iwin,image_appw_is_done,ISDONE_TIMEOUT);
+		image_appw_name(&work->iwin,"MY1 Image");
+		image_appw_domenu_full(&work->iwin);
+		image_appw_task(&work->iwin,image_appw_is_done,ISDONE_TIMEOUT);
 	}
 	else
 	{
-		iwin.gofree = 0;
-		video_play(&ivid);
-		image_appw_name(&iwin,"MY1 Video");
-		image_appw_task(&iwin,prepare_video_next,CAPTURE_DELAY);
+		work->iwin.gofree = 0;
+		video_play(&work->ivid);
+		image_appw_name(&work->iwin,"MY1 Video");
+		image_appw_task(&work->iwin,prepare_video_next,CAPTURE_DELAY);
 	}
+}
+/*----------------------------------------------------------------------------*/
+int main(int argc, char* argv[])
+{
+	work_t data;
+	/* init data */
+	work_init(&data);
+	work_args(&data,argc,argv);
+	work_prep(&data);
+	/* initialize gui */
+	gtk_init(&argc,&argv);
+	/* show data */
+	work_show(&data);
 	/* main loop */
 	gtk_main();
+	/* clean up */
+	work_free(&data);
 	/* done! */
-	putchar('\n');
 	return 0;
 }
 /*----------------------------------------------------------------------------*/
