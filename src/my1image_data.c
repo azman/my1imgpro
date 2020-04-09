@@ -75,41 +75,6 @@ void image_data_work(my1image_data_t* data)
 		data->pflist = image_work_create_all();
 }
 /*----------------------------------------------------------------------------*/
-gboolean data_on_key_press(GtkWidget *widget, GdkEventKey *kevent,
-	gpointer data)
-{
-	my1image_data_t *q = (my1image_data_t*) data;
-	if(kevent->type == GDK_KEY_PRESS)
-	{
-		/** g_message("%d, %c", kevent->keyval, kevent->keyval); */
-		if(kevent->keyval == GDK_KEY_Escape||
-			kevent->keyval == GDK_KEY_q)
-		{
-			gtk_main_quit();
-			return TRUE;
-		}
-		else if(kevent->keyval == GDK_KEY_space) /** GDK_KEY_Return */
-		{
-			gtk_menu_popup_at_widget(GTK_MENU(q->appw.domenu),q->appw.window,
-				GDK_GRAVITY_CENTER,GDK_GRAVITY_NORTH_WEST,0x0);
-			return TRUE;
-		}
-		else if(kevent->keyval == GDK_KEY_F||kevent->keyval == GDK_KEY_f)
-		{
-			q->appw.gofull = !q->appw.gofull;
-			image_appw_full(&q->appw,q->appw.gofull);
-			return TRUE;
-		}
-	}
-	return FALSE;
-}
-/*----------------------------------------------------------------------------*/
-void image_data_events(my1image_data_t* data)
-{
-	g_signal_connect(G_OBJECT(data->appw.window),"key_press_event",
-		G_CALLBACK(data_on_key_press),(gpointer)data);
-}
-/*----------------------------------------------------------------------------*/
 void data_on_clickM(void* args)
 {
 	gchar *buff;

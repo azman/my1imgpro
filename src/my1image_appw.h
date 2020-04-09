@@ -40,6 +40,7 @@ typedef struct _my1image_appw_t
 	my1image_view_t view; /* single image view */
 	appw_handler_t clickL, clickM; /* handler for click left and middle */
 	appw_handler_t dodone; /* will be run when window's delete event */
+	appw_handler_t keychk; /* handler for key press */
 }
 my1image_appw_t;
 /*----------------------------------------------------------------------------*/

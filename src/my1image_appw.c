@@ -39,6 +39,7 @@ void image_appw_init(my1image_appw_t* appw)
 	appw_handler_make(&appw->clickL,0x0,0x0);
 	appw_handler_make(&appw->clickM,0x0,0x0);
 	appw_handler_make(&appw->dodone,0x0,0x0);
+	appw_handler_make(&appw->keychk,0x0,0x0);
 }
 /*----------------------------------------------------------------------------*/
 void image_appw_free(my1image_appw_t* appw)
@@ -73,6 +74,41 @@ gboolean appw_on_done_all(gpointer data)
 	return TRUE;
 }
 /*----------------------------------------------------------------------------*/
+gboolean appw_on_key_press(GtkWidget *widget, GdkEventKey *kevent,
+	gpointer data)
+{
+	my1image_appw_t *appw = (my1image_appw_t*) data;
+	if(kevent->type == GDK_KEY_PRESS)
+	{
+		/** g_message("%d, %c", kevent->keyval, kevent->keyval); */
+		if(kevent->keyval == GDK_KEY_Escape||
+			kevent->keyval == GDK_KEY_q)
+		{
+			appw_on_done_all(data);
+			return TRUE;
+		}
+		else if(kevent->keyval == GDK_KEY_space) /** GDK_KEY_Return */
+		{
+			gtk_menu_popup_at_widget(GTK_MENU(appw->domenu),appw->window,
+				GDK_GRAVITY_CENTER,GDK_GRAVITY_NORTH_WEST,0x0);
+			return TRUE;
+		}
+		else if(kevent->keyval == GDK_KEY_F||kevent->keyval == GDK_KEY_f)
+		{
+			appw->gofull = !appw->gofull;
+			image_appw_full(appw,appw->gofull);
+			return TRUE;
+		}
+		else if (appw->keychk.task)
+		{
+			appw->keychk.xtra = (void*)kevent;
+			appw->keychk.task((void*)&appw->keychk);
+			return TRUE; /* assume handled */
+		}
+	}
+	return FALSE;
+}
+/*----------------------------------------------------------------------------*/
 void image_appw_make(my1image_appw_t* appw, my1image_t* that)
 {
 	int rows, cols;
@@ -105,6 +141,8 @@ void image_appw_make(my1image_appw_t* appw, my1image_t* that)
 		/* connect event handlers */
 		g_signal_connect_swapped(G_OBJECT(appw->window),"delete-event",
 			G_CALLBACK(appw_on_done_all),(gpointer)appw);
+		g_signal_connect(G_OBJECT(appw->window),"key_press_event",
+			G_CALLBACK(appw_on_key_press),(gpointer)appw);
 		/* container box for image */
 		vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL,0);
 		gtk_container_add(GTK_CONTAINER(appw->window),vbox);

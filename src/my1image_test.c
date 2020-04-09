@@ -58,8 +58,6 @@ int main(int argc, char* argv[])
 	image_data_make(&data,&buff);
 	/* allow histogram */
 	image_hist_make(&data.hist);
-	/* event handlers */
-	image_data_events(&data);
 	/* menu stuff */
 	image_data_domenu(&data);
 	/* main loop */
