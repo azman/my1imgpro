@@ -25,22 +25,6 @@ void video_main_draw_index(void* data)
 	g_free(buff);
 }
 /*----------------------------------------------------------------------------*/
-void video_main_check_input(void* data)
-{
-	my1vmain_t* vmain = (my1vmain_t*) data;
-	my1vappw_t* vappw = (my1vappw_t*) &vmain->vappw;
-	GtkWidget* menu = (GtkWidget*) vappw->domenu;
-	if (!menu) return;
-	switch ((guint)vmain->ikey)
-	{
-		case GDK_KEY_Return:
-			gtk_menu_popup_at_widget(GTK_MENU(vappw->domenu),vappw->window,
-				GDK_GRAVITY_CENTER,GDK_GRAVITY_NORTH_WEST,0x0);
-			vmain->ikey = 0;
-			break;
-	}
-}
-/*----------------------------------------------------------------------------*/
 void video_main_init(my1vmain_t* vmain)
 {
 	video_init(&vmain->video);
@@ -58,8 +42,8 @@ void video_main_init(my1vmain_t* vmain)
 	vmain->grabber_data = 0x0;
 	vmain->vappw.view.draw_more = video_main_draw_index;
 	vmain->vappw.view.draw_more_data = (void*) vmain;
-	vmain->doinput = video_main_check_input;
-	vmain->doinput_data = (void*) vmain;
+	vmain->doinput = 0x0;
+	vmain->doinput_data = 0x0;
 }
 /*----------------------------------------------------------------------------*/
 void video_main_free(my1vmain_t* vmain)
@@ -96,7 +80,7 @@ void video_main_display(my1vmain_t* vmain, char* name)
 {
 	image_appw_draw(&vmain->vappw,vmain->video.frame);
 	image_appw_name(&vmain->vappw,name);
-	image_appw_stat_hide(&vmain->vappw,1);
+	/**image_appw_stat_hide(&vmain->vappw,1);*/
 }
 /*----------------------------------------------------------------------------*/
 void vmain_on_filter_select(my1video_main_t *vmain, GtkMenuItem *menu_item)
@@ -431,10 +415,10 @@ void vmain_on_display_timer(void* data)
 	}
 	else if (keyval)
 	{
-		vmain->ikey = keyval;
 		if (vmain->doinput)
 			vmain->doinput((void*)vmain);
 	}
+	vmain->ikey = 0;
 	video_post_input(video);
 	image_appw_task(&vmain->vappw,vmain_on_display_timer,vmain->xdel);
 }
