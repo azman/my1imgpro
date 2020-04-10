@@ -9,6 +9,7 @@ This is a simple image processing library (meant to support work on vision
 
 This software consists of several small modules:
 - my1image_base : basic my1image_t structure with management ops
+- my1image_argb : basic rgb support for image file load/save functions
 - my1image_gray : grayscale ops plus some basic functions (flip,turn,etc.)
 - my1image_crgb : rgb color support
 - my1image_chsv : hsv color support
@@ -39,7 +40,7 @@ Work-in-progress:
 For simplicity, building an image processing software based on this library
 can be done by just compiling in my1image.o (and including 'my1image.h').
 Refer to my1image.c or my1image.h on to learn control flags on which module
-to exclude/include (e.g. -D__MYIMAGE_NO_HSV__ to exclude HSV support).
+to exclude/include (e.g. -D__MY1IMAGE_NO_HSV__ to exclude HSV support).
 
 The my1image_view/my1image_appw module requires gtk, while the my1video_main
 module requires libav(ffmpeg).
