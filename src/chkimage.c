@@ -73,7 +73,7 @@ int show_what(void* data, void* that, void* xtra)
 	if (what->orig)
 	{
 		/* show original */
-		image_show(mdat->orig,&what->awin,"Source Image");
+		image_show(what->orig,&what->awin,"Source Image");
 		/* modify name for main win */
 		image_appw_name(&mdat->iwin,"Processed Image");
 	}
