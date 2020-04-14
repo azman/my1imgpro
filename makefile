@@ -10,7 +10,8 @@ IMGFILE = my1image_file.o my1image_file_bmp.o
 IMGFILE += my1image_file_pnm.o my1image_file_png.o
 IMGUTIL = my1image_mask.o my1image_area.o my1image_buff.o my1image_util.o
 IMGWORK = my1image_stat.o my1image_work.o
-IMGAPPW = my1image_view.o my1image_appw.o my1image_hist.o my1image_data.o
+IMGVIEW = my1image_task.o my1image_view.o
+IMGAPPW = $(IMGVIEW) my1image_appw.o my1image_hist.o my1image_data.o
 IMGMONO = my1image_scan.o my1image_mono.o
 OBJSIMG = $(IMGBASE) $(IMGFILE) $(IMGUTIL) $(IMGWORK) $(IMGAPPW) $(IMGMONO)
 OBJSIMG += $(TESTIMG).o
@@ -47,7 +48,7 @@ test: DFLAGS = -D__MY1IMAGE_DO_MAIN__
 
 $(CHKLOAD): DFLAGS = -D__MY1IMAGE_FILE_ONLY__
 
-.PHONY: main test all image video new debug clean tools new_image
+.PHONY: main test all image video new debug clean tools
 
 main: image
 
@@ -95,6 +96,3 @@ $(VISMAIN): src/$(VISNAME).c src/$(VISNAME).h
 
 clean:
 	-$(RM) $(TESTIMG) $(TESTVIS) $(TOOLLST) *.o
-
-new_image:
-	-$(RM) my1image.o

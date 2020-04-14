@@ -5,6 +5,7 @@
 #include "my1image_data.h"
 #include "my1image_file.h"
 #include "my1image_chsv.h"
+#include "my1image_task.h"
 /*----------------------------------------------------------------------------*/
 #include <stdio.h>
 #include <stdlib.h>
@@ -12,11 +13,13 @@
 /*----------------------------------------------------------------------------*/
 #include <gdk/gdkkeysyms.h>
 /*----------------------------------------------------------------------------*/
-void image_data_histogram(void* data)
+int image_data_histogram(void* data, void* that, void* xtra)
 {
-	my1image_view_t* view = (my1image_view_t*) data;
-	my1image_hist_t* hist = (my1image_hist_t*) view->draw_more_data;
+	my1dotask_t *task = (my1dotask_t*)data;
+	//my1image_view_t* view = (my1image_view_t*) that;
+	my1image_hist_t* hist = (my1image_hist_t*) task->data;
 	image_hist_show(hist);
+	return 0;
 }
 /*----------------------------------------------------------------------------*/
 void image_data_init(my1image_data_t* data)
@@ -27,8 +30,8 @@ void image_data_init(my1image_data_t* data)
 	data->flag = DATA_FLAG_OK;
 	image_appw_init(&data->appw);
 	data->appw.goquit = 1;
-	data->appw.view.draw_more = (void*) &image_data_histogram;
-	data->appw.view.draw_more_data = (void*) &data->hist;
+	dotask_make(&data->appw.view.domore,
+		image_data_histogram,(void*)&data->hist);
 	image_hist_init(&data->hist,&data->appw);
 	buffer_init(&data->work);
 	data->pflist = 0x0;
@@ -75,41 +78,41 @@ void image_data_work(my1image_data_t* data)
 		data->pflist = image_work_create_all();
 }
 /*----------------------------------------------------------------------------*/
-void data_on_clickM(void* args)
+int data_on_clickM(void* args, void* that, void* xtra)
 {
 	gchar *buff;
-	appw_handler_t *hand = (appw_handler_t*) args;
-	my1image_data_t *data = (my1image_data_t*) hand->data;
-	my1image_t *last = data->appw.show; /* last image sent to viewer */
-	my1image_t *view = &data->appw.view.buff;
+	my1image_appw_t *appw = (my1image_appw_t*) that;
+	my1image_t *last = appw->show; /* last image sent to viewer */
+	my1image_t *view = &appw->view.buff;
 	/* show info on status bar */
 	buff = g_strdup_printf("Size:%dx%d Mask:0x%08x",
 		view->cols,view->rows,last->mask);
-	image_appw_stat_time(&data->appw,(char*)buff,5);
+	image_appw_stat_time(appw,(char*)buff,5);
 	g_free(buff);
+	return 0;
 }
 /*----------------------------------------------------------------------------*/
-void data_on_clickL(void* args)
+int data_on_clickL(void* args, void* that, void* xtra)
 {
 	int mask, dpix;
 	gchar *buff;
 	my1rgb_t *temp;
-	my1hsv_t that;
-	appw_handler_t *hand = (appw_handler_t*) args;
-	my1image_data_t *data = (my1image_data_t*) hand->data;
-	GdkEventButton *event = (GdkEventButton*) hand->xtra;
-	my1image_t *last = data->appw.show; /* last image sent to viewer */
-	my1image_t *view = &data->appw.view.buff;
+	my1hsv_t chsv;
+	my1image_appw_t *appw = (my1image_appw_t*) that;
+	my1image_t *last = appw->show; /* last image sent to viewer */
+	my1image_t *view = &appw->view.buff;
+	GdkEventButton *event = (GdkEventButton*) xtra;
 	mask = last->mask;
 	dpix = image_get_pixel(view,event->y,event->x);
 	dpix &= IMASK_COLOR; /* remove alpha */
 	dpix = color_swap(dpix); /* get rgb from bgr */
 	temp = (my1rgb_t*)&dpix;
-	that = rgb2hsv(*temp);
+	chsv = rgb2hsv(*temp);
 	buff = g_strdup_printf("[PIXEL] %08X{%08X}<%d>@(%d,%d)",
-		dpix,mask,that.h,(int)event->x,(int)event->y);
-	image_appw_stat_time(&data->appw,(char*)buff,3);
+		dpix,mask,chsv.h,(int)event->x,(int)event->y);
+	image_appw_stat_time(appw,(char*)buff,3);
 	g_free(buff);
+	return 0;
 }
 /*----------------------------------------------------------------------------*/
 void data_on_toggle_histogram(my1image_data_t *data,
@@ -310,8 +313,8 @@ void image_data_domenu(my1image_data_t* data)
 	/* get main menu or create one */
 	if (!data->appw.domenu)
 		image_appw_domenu(&data->appw);
-	appw_handler_make(&data->appw.clickL,data_on_clickL,(void*)data);
-	appw_handler_make(&data->appw.clickM,data_on_clickM,(void*)data);
+	dotask_make(&data->appw.clickL,data_on_clickL,(void*)data);
+	dotask_make(&data->appw.clickM,data_on_clickM,(void*)data);
 	menu_main = data->appw.domenu;
 	/* add filters */
 	image_data_domenu_filters(data,menu_main);

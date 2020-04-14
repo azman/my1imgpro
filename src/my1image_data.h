@@ -34,7 +34,7 @@ void image_data_filter_more(my1image_data_t* data, filter_info_t* info);
 void image_data_filter_load(my1image_data_t* data, char* name);
 void image_data_filter_exec(my1image_data_t* data);
 /*----------------------------------------------------------------------------*/
-void image_data_histogram(void* data);
+int image_data_histogram(void* data, void* that, void* xtra);
 /*----------------------------------------------------------------------------*/
 #endif /** __MY1IMAGE_DATAH__ */
 /*----------------------------------------------------------------------------*/

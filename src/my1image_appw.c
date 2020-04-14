@@ -8,12 +8,6 @@
 /*----------------------------------------------------------------------------*/
 #include <string.h>
 /*----------------------------------------------------------------------------*/
-void appw_handler_make(appw_handler_t* handler, appw_task_t task, void* data)
-{
-	handler->task = task;
-	handler->data = data;
-}
-/*----------------------------------------------------------------------------*/
 void image_appw_init(my1image_appw_t* appw)
 {
 	appw->window = 0x0;
@@ -36,10 +30,10 @@ void image_appw_init(my1image_appw_t* appw)
 	image_init(&appw->main);
 	image_init(&appw->buff);
 	image_view_init(&appw->view);
-	appw_handler_make(&appw->clickL,0x0,0x0);
-	appw_handler_make(&appw->clickM,0x0,0x0);
-	appw_handler_make(&appw->dodone,0x0,0x0);
-	appw_handler_make(&appw->keychk,0x0,0x0);
+	dotask_make(&appw->clickL,0x0,0x0);
+	dotask_make(&appw->clickM,0x0,0x0);
+	dotask_make(&appw->dodone,0x0,0x0);
+	dotask_make(&appw->keychk,0x0,0x0);
 }
 /*----------------------------------------------------------------------------*/
 void image_appw_free(my1image_appw_t* appw)
@@ -67,8 +61,7 @@ void image_appw_full(my1image_appw_t* appw, int full)
 gboolean appw_on_done_all(gpointer data)
 {
 	my1image_appw_t* appw = (my1image_appw_t*) data;
-	if (appw->dodone.task)
-		appw->dodone.task(appw->dodone.data);
+	dotask_exec(&appw->dodone,0x0,0x0);
 	if (appw->gofree) image_appw_free(appw);
 	if (appw->goquit) gtk_main_quit();
 	else appw->doquit = 1;
@@ -100,12 +93,8 @@ gboolean appw_on_key_press(GtkWidget *widget, GdkEventKey *kevent,
 			image_appw_full(appw,appw->gofull);
 			return TRUE;
 		}
-		else if (appw->keychk.task)
-		{
-			appw->keychk.xtra = (void*)kevent;
-			appw->keychk.task((void*)&appw->keychk);
-			return TRUE; /* assume handled */
-		}
+		else if (dotask_exec((void*)&appw->keychk,(void*)appw,(void*)kevent))
+			return TRUE;
 	}
 	return FALSE;
 }
@@ -131,21 +120,13 @@ gboolean appw_on_mouse_click(GtkWidget *widget,
 		}
 		else if (event->button == MIDDLE_CLICK)
 		{
-			if (appw->clickM.task)
-			{
-				appw->clickM.xtra = (void*)event;
-				appw->clickM.task((void*)&appw->clickM);
+			if (dotask_exec((void*)&appw->clickM,(void*)appw,(void*)event))
 				done = TRUE;
-			}
 		}
 		else if (event->button == LEFT_CLICK)
 		{
-			if (appw->clickL.task)
-			{
-				appw->clickL.xtra = (void*)event;
-				appw->clickL.task((void*)&appw->clickL);
+			if (dotask_exec((void*)&appw->clickL,(void*)appw,(void*)event))
 				done = TRUE;
-			}
 		}
 	}
 	return done;
@@ -563,28 +544,29 @@ void image_appw_domenu_full(my1image_appw_t* appw)
 	image_appw_domenu_quit(appw);
 }
 /*----------------------------------------------------------------------------*/
-void image_appw_is_done(void* that_appw)
+int image_appw_is_done(void* data, void* that, void* xtra)
 {
-	my1image_appw_t* appw = (my1image_appw_t*) that_appw;
+	my1image_appw_t* appw = (my1image_appw_t*) that;
 	if (appw->doquit) gtk_main_quit();
 	else image_appw_task(appw,image_appw_is_done,ISDONE_TIMEOUT);
+	return 0;
 }
 /*----------------------------------------------------------------------------*/
 gboolean appw_on_timer_dotask(gpointer data)
 {
-	appw_task_t task;
+	ptask_t task;
 	my1image_appw_t *appw = (my1image_appw_t*) data;
 	appw->idtask = 0;
 	if (appw->dotask)
 	{
 		task = appw->dotask;
 		appw->dotask = 0x0; /* in case task wants to reset itself */
-		task((void*)appw);
+		task(appw->dodata,(void*)appw,0x0);
 	}
 	return 0; /* a one-shot */
 }
 /*----------------------------------------------------------------------------*/
-guint image_appw_task(my1image_appw_t* appw, appw_task_t task, int usec)
+guint image_appw_task(my1image_appw_t* appw, ptask_t task, int usec)
 {
 	if (appw->dotask) return 0; /* cannot reassign, unless a one-shot */
 	appw->dotask = task;

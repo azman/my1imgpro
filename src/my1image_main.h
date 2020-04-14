@@ -2,25 +2,17 @@
 #ifndef __MY1IMAGE_MAIN_H__
 #define __MY1IMAGE_MAIN_H__
 /*----------------------------------------------------------------------------*/
-/* that is usually the main data structure */
-typedef int (*my1itask_t)(void* data, void* that, void* xtra);
-typedef void* my1idata_t;
+#include "my1image_task.h"
 /*----------------------------------------------------------------------------*/
 typedef struct _my1iwork_t
 {
-	my1itask_t init, free, args;
-	my1itask_t prep, proc, show;
-	my1idata_t data;
+	my1dotask_t init, free, args;
+	my1dotask_t prep, proc, show;
+	pdata_t data;
 }
 my1iwork_t;
 /*----------------------------------------------------------------------------*/
-int iwork_make(my1iwork_t* work, my1idata_t data);
-int iwork_init(my1iwork_t* work, my1idata_t that, my1idata_t xtra);
-int iwork_free(my1iwork_t* work, my1idata_t that, my1idata_t xtra);
-int iwork_args(my1iwork_t* work, my1idata_t that, my1idata_t xtra);
-int iwork_prep(my1iwork_t* work, my1idata_t that, my1idata_t xtra);
-int iwork_proc(my1iwork_t* work, my1idata_t that, my1idata_t xtra);
-int iwork_show(my1iwork_t* work, my1idata_t that, my1idata_t xtra);
+void iwork_make(my1iwork_t* work, pdata_t data); /* link all data! */
 /*----------------------------------------------------------------------------*/
 #include "my1image_appw.h"
 #include "my1image_util.h"
@@ -43,10 +35,9 @@ typedef my1image_buffer_t my1ibuff_t;
 /*----------------------------------------------------------------------------*/
 typedef struct _my1imain_t
 {
-	my1image_t main, temp, *show, *orig;
+	my1image_t load, *show;
 	my1ishow_t iwin;
 	my1igrab_t grab; /* grabber function */
-	my1ipass_t pass; /* image pre-filter */
 	my1ibuff_t buff;
 	int flag;
 	char* pick;

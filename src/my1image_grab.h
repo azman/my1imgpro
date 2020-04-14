@@ -17,7 +17,7 @@ typedef struct _my1image_grab_t
 	char *pick;
 	my1image_t buff; /* internal buffer */
 	my1image_t *grab; /* pure pointer - will use image is not assigned */
-	appw_handler_t do_grab;
+	my1dotask_t do_grab;
 }
 my1image_grab_t;
 /*----------------------------------------------------------------------------*/
@@ -26,7 +26,7 @@ void igrab_free(my1image_grab_t* igrab);
 void igrab_grab(my1image_grab_t* igrab);
 void igrab_grab_default(my1image_grab_t* igrab);
 /*----------------------------------------------------------------------------*/
-void igrab_grab_image_file(void* itask);
+int igrab_grab_image_file(void* data, void* that, void* xtra);
 /*----------------------------------------------------------------------------*/
 #endif /** __MY1IMAGE_GRAB_H__ */
 /*----------------------------------------------------------------------------*/

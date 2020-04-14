@@ -12,18 +12,6 @@
 /*----------------------------------------------------------------------------*/
 #define REDRAW 0x0
 /*----------------------------------------------------------------------------*/
-typedef void (*appw_task_t)(void* data); /* data can be ANYTHING! */
-/*----------------------------------------------------------------------------*/
-typedef struct _appw_handler_t
-{
-	appw_task_t task;
-	void* data;
-	void* xtra; /* something extra :p */
-}
-appw_handler_t;
-/*----------------------------------------------------------------------------*/
-void appw_handler_make(appw_handler_t* handler, appw_task_t task, void* data);
-/*----------------------------------------------------------------------------*/
 typedef struct _my1image_appw_t
 {
 	GtkWidget *window, *domenu, *dostat;
@@ -34,13 +22,13 @@ typedef struct _my1image_appw_t
 	int gofull; /* full screen request/status flag  */
 	int docopy; /* flag to copy on make, use local buffers */
 	int nostat; /* flag to hide status bar */
-	appw_task_t dotask; /* task to do in gtk loop - based on timer idtask */
-	void *dodata; /* data for dotask */
+	ptask_t dotask; /* task to do in gtk loop - based on timer idtask */
+	pdata_t dodata; /* data for dotask */
 	my1image_t buff, main, *show, *orig; /* buffered image data */
 	my1image_view_t view; /* single image view */
-	appw_handler_t clickL, clickM; /* handler for click left and middle */
-	appw_handler_t dodone; /* will be run when window's delete event */
-	appw_handler_t keychk; /* handler for key press */
+	my1dotask_t clickL, clickM; /* handler for click left and middle */
+	my1dotask_t dodone; /* will be run when window's delete event */
+	my1dotask_t keychk; /* handler for key press */
 }
 my1image_appw_t;
 /*----------------------------------------------------------------------------*/
@@ -60,8 +48,8 @@ void image_appw_domenu(my1image_appw_t* appw);
 void image_appw_domenu_extra(my1image_appw_t* appw);
 void image_appw_domenu_quit(my1image_appw_t* appw);
 void image_appw_domenu_full(my1image_appw_t* appw);
-void image_appw_is_done(void* that_appw);
-guint image_appw_task(my1image_appw_t* appw, appw_task_t task, int usec);
+int image_appw_is_done(void* data, void* that, void* xtra);
+guint image_appw_task(my1image_appw_t* appw, ptask_t task, int usec);
 /* special function to show an image in a window - DO NOT NEED init! */
 void image_appw_show(my1image_appw_t* appw, my1image_t* that,
 	char* name, int menu);

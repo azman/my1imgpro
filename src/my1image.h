@@ -17,6 +17,7 @@
 #include "my1image_util.h"
 #include "my1image_stat.h"
 #include "my1image_work.h"
+#include "my1image_task.h"
 #include "my1image_view.h"
 #include "my1image_appw.h"
 #include "my1image_hist.h"

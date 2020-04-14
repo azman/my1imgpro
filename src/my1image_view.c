@@ -10,8 +10,7 @@ void image_view_init(my1image_view_t* view)
 	view->canvas = 0x0;
 	view->dosurf = 0x0;
 	view->dodraw = 0x0;
-	view->draw_more = 0x0;
-	view->draw_more_data = 0x0;
+	dotask_make(&view->domore,0x0,0x0);
 	view->image = 0x0;
 	view->aspect = 0;
 	image_init(&view->buff);
@@ -81,7 +80,7 @@ gboolean on_draw_callback(GtkWidget *widget, cairo_t *cr, gpointer data)
 	view->dodraw = cr; /* required by draw_more */
 	gdk_cairo_set_source_pixbuf(view->dodraw,dotemp,0,0);
 	cairo_paint(view->dodraw);
-	if (view->draw_more) view->draw_more((void*)view);
+	dotask_exec(&view->domore,(void*)view,0x0);
 	image_free(&mods);
 	/* enable user to resize canvas to a smaller size */
 	gtk_widget_set_size_request(view->canvas,1,1);

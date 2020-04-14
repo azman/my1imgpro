@@ -71,6 +71,7 @@
 #endif
 #endif
 #ifndef __MY1IMAGE_NO_VIEW__
+#include "my1image_task.c"
 #include "my1image_view.c"
 #else
 #ifndef __MY1IMAGE_NO_APPW__
