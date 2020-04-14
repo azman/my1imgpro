@@ -27,6 +27,7 @@ This software consists of several small modules:
 - my1image_appw : gtk-based gui app for single image view
 - my1image_hist : gtk-based gui window for histogram (requires appw)
 - my1image_data : wrapper for view/appw/hist with filters defined in work
+- my1image_main : template for simple image processing application
 * my1image_test : main test program for my1image & friends
 - my1video      - video structure based on my1image_t
 - my1video_main - sample video processing flow (using libav & my1image_appw)
@@ -81,3 +82,5 @@ Three sample applications: resizer, imgload and testhsv.
 - imgload: (my1image_loader.c) loads and optionally save an image file into
            supported format AND C source code (targetting embedded application)
 - testhsv: (my1image_testhsv.c) application to test HSV color representation
+
+The code in chkimage.c is a simple application code to test my1image bundle.

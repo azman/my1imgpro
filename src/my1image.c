@@ -17,6 +17,8 @@
 #define __MY1IMAGE_NO_VIEW__
 /** #define __MY1IMAGE_NO_APPW__ */
 /** #define __MY1IMAGE_NO_DATA__ */
+#elif defined(__MY1IMAGE_DO_MAIN__)
+#define __MY1IMAGE_NO_DATA__
 #endif
 /*----------------------------------------------------------------------------*/
 #include "my1image_base.c"
@@ -85,5 +87,8 @@
 #ifndef __MY1IMAGE_NO_DATA__
 #include "my1image_hist.c"
 #include "my1image_data.c"
+#endif
+#ifdef __MY1IMAGE_DO_MAIN__
+#include "my1image_main.c"
 #endif
 /*----------------------------------------------------------------------------*/

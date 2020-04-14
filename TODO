@@ -3,3 +3,5 @@
   = basic image structure with ALL operations
   = separate file option?
   = NO viewing stuffs
+- rewrite my1image_hist to only draw canvas
+  = reuse appw?

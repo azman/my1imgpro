@@ -42,15 +42,16 @@ ifeq ($(DO_DEBUG),YES)
 	DFLAGS += -g -DMY1DEBUG
 endif
 
-# for chkimage
-test: DFLAGS = -D__MY1IMAGE_NO_WORK__ -D__MY1VIDEO_NO_MAIN__
+# override flags for my1image bundle
+test: DFLAGS = -D__MY1IMAGE_DO_MAIN__
+
 $(CHKLOAD): DFLAGS = -D__MY1IMAGE_FILE_ONLY__
 
-.PHONY: main test all image video new debug clean tools
+.PHONY: main test all image video new debug clean tools new_image
 
 main: image
 
-test: chkimage.o $(IMGMAIN) $(VISMAIN)
+test: chkimage.o $(IMGMAIN)
 	$(LD) $(CFLAGS) -o $(TESTIMG) $+ $(LFLAGS) $(GFLAGS) $(OFLAGS)
 
 all: image video $(TOOLLST)
@@ -94,3 +95,6 @@ $(VISMAIN): src/$(VISNAME).c src/$(VISNAME).h
 
 clean:
 	-$(RM) $(TESTIMG) $(TESTVIS) $(TOOLLST) *.o
+
+new_image:
+	-$(RM) my1image.o

@@ -1,177 +1,98 @@
 /*----------------------------------------------------------------------------*/
 #include <stdio.h>
-#include <string.h>
+#include "my1image_main.h"
+#include "my1image_work.h"
 /*----------------------------------------------------------------------------*/
-#include "my1image.h"
-#include "my1video.h"
+#define WFLAG_SHOW_ORIGINAL 0x01
 /*----------------------------------------------------------------------------*/
-#define ERROR_FLAG 0x80
-#define IMAGE_NONE 0
-#define IMAGE_FILE 1
-#define VIDEO_FILE 2
-#define VIDEO_LIVE 3
-/*----------------------------------------------------------------------------*/
-typedef struct _work_t
+typedef struct _my1iwhat_t
 {
-	my1image_t buff, *show;
-	my1video_t ivid;
-	my1vgrab_t grab;
-	my1image_appw_t iwin;
-	int mode;
-	char* pick;
+	my1image_appw_t awin;
+	my1image_t buff;
+	int flag;
 }
-work_t;
+my1iwhat_t;
 /*----------------------------------------------------------------------------*/
-void work_init(work_t* work)
+int init_what(void* data, void* that, void* xtra)
 {
-	image_init(&work->buff);
-	work->show = 0x0;
-	video_init(&work->ivid);
-	capture_init(&work->grab,&work->ivid);
-	image_appw_init(&work->iwin);
-	work->mode = IMAGE_NONE;
-	work->pick = 0x0;
+	my1iwhat_t *what = (my1iwhat_t*)data;
+	image_appw_init(&what->awin);
+	image_init(&what->buff);
+	what->flag = 0;
+	return 0;
 }
 /*----------------------------------------------------------------------------*/
-void work_free(work_t* work)
+int free_what(void* data, void* that, void* xtra)
 {
-	image_appw_free(&work->iwin);
-	capture_free(&work->grab);
-	video_free(&work->ivid);
-	image_free(&work->buff);
+	my1iwhat_t *what = (my1iwhat_t*)data;
+	image_free(&what->buff);
+	image_appw_free(&what->awin);
+	return 0;
 }
 /*----------------------------------------------------------------------------*/
-void work_args(work_t* work, int argc, char* argv[])
+int args_what(void* data, void* that, void* xtra)
 {
-	int loop;
-	/* check parameter */
-	for (loop=1;loop<argc;loop++)
+	int loop, argc, *temp = (int*) that;
+	char** argv = (char**) xtra;
+	my1iwhat_t *what = (my1iwhat_t*)data;
+	argc = *temp;
+	/* check parameter? */
+	for (loop=2;loop<argc;loop++)
 	{
-		if (argv[loop][0]!='-')
-		{
-			work->mode = IMAGE_FILE;
-			work->pick = argv[loop];
-			break;
-		}
-		else if (!strncmp(argv[loop],"--live",6))
-		{
-			work->mode = VIDEO_LIVE;
-			work->pick = argv[++loop];
-			break;
-		}
-		else if (!strncmp(argv[loop],"--video",7))
-		{
-			work->mode = VIDEO_FILE;
-			work->pick = argv[++loop];
-			break;
-		}
+		if (!strncmp(argv[loop],"--original",10))
+			what->flag |= WFLAG_SHOW_ORIGINAL;
 		else
-		{
-			printf("Invalid argument! (%s)\n",argv[loop]);
-			work->mode |= ERROR_FLAG;
-		}
+			printf("-- Unknown param '%s'!\n",argv[loop]);
 	}
+	return 0;
 }
 /*----------------------------------------------------------------------------*/
-my1image_t* prepare_image_file(my1image_t* data, char* pick)
+int exec_what(void* data, void* that, void* xtra)
 {
-	int test;
-	if (pick)
-	{
-		if((test=image_load(data,pick))<0)
-			printf("-- Error loading file '%s'!(%x)\n",pick,(unsigned)test);
-	}
-	if (!data->size)
-	{
-		image_make(data,240,320);
-		image_fill(data,BLACK);
-	}
-	return data;
+	my1iwhat_t *what = (my1iwhat_t*)data;
+	my1imain_t *mdat = (my1imain_t*)that;
+	/* load filters */
+	mdat->list = image_work_create_all();
+	/* save original */
+	image_copy(&what->buff,mdat->show);
+	if (what->flag&WFLAG_SHOW_ORIGINAL)
+		mdat->orig = mdat->show;
+	mdat->show = &what->buff;
+	return 0;
 }
 /*----------------------------------------------------------------------------*/
-my1image_t* prepare_video_feed(my1video_grab_t* grab, char* pick, int mode)
+int show_what(void* data, void* that, void* xtra)
 {
-	if (mode==VIDEO_FILE) capture_file(grab,pick);
-	else capture_live(grab,pick);
-	return grab->video->frame;
-}
-/*----------------------------------------------------------------------------*/
-void work_prep(work_t* work)
-{
-	if (work->mode&ERROR_FLAG) return;
-	/* prepare source */
-	switch (work->mode)
+	my1iwhat_t *what = (my1iwhat_t*)data;
+	my1imain_t *mdat = (my1imain_t*)that;
+	if (mdat->orig)
 	{
-		case VIDEO_FILE: case VIDEO_LIVE:
-			work->show = prepare_video_feed(&work->grab,work->pick,work->mode);
-			break;
-		case IMAGE_FILE: default:
-			work->mode = IMAGE_FILE;
-			work->show = prepare_image_file(&work->buff,work->pick);
-			break;
+		/* show original */
+		image_show(mdat->orig,&what->awin,"Source Image");
+		/* modify name for main win */
+		image_appw_name(&mdat->iwin,"Processed Image");
 	}
-}
-/*----------------------------------------------------------------------------*/
-/** in microsec! */
-#define CAPTURE_DELAY 10
-/*----------------------------------------------------------------------------*/
-void prepare_video_next(void* that_appw)
-{
-	my1image_appw_t* appw = (my1image_appw_t*) that_appw;
-	my1video_t* video = (my1video_t*) appw->dodata;
-	my1vgrab_t* vgrab = (my1vgrab_t*)video->capture;
-	if (appw->doquit)
-	{
-		gtk_main_quit();
-		return;
-	}
-	if (vgrab->fcontext) capture_grab(vgrab);
-	if (video->flags&VIDEO_FLAG_NEW_FRAME)
-	{
-		video_filter_frame(video);
-		video_post_frame(video);
-		image_appw_draw(appw,video->frame);
-		video_post_input(video);
-	}
-	image_appw_task(appw,prepare_video_next,CAPTURE_DELAY);
-}
-/*----------------------------------------------------------------------------*/
-void work_show(work_t* work)
-{
-	image_appw_show(&work->iwin,work->show,0x0,0);
-	work->ivid.display = (void*) &work->iwin;
-	work->iwin.dodata = (void*) &work->ivid;
-	if (work->mode==IMAGE_FILE)
-	{
-		image_appw_name(&work->iwin,"MY1 Image");
-		image_appw_domenu_full(&work->iwin);
-		image_appw_task(&work->iwin,image_appw_is_done,ISDONE_TIMEOUT);
-	}
-	else
-	{
-		work->iwin.gofree = 0;
-		video_play(&work->ivid);
-		image_appw_name(&work->iwin,"MY1 Video");
-		image_appw_task(&work->iwin,prepare_video_next,CAPTURE_DELAY);
-	}
+	return 0;
 }
 /*----------------------------------------------------------------------------*/
 int main(int argc, char* argv[])
 {
-	work_t data;
-	/* init data */
-	work_init(&data);
-	work_args(&data,argc,argv);
-	work_prep(&data);
-	/* initialize gui */
-	gtk_init(&argc,&argv);
-	/* show data */
-	work_show(&data);
-	/* main loop */
-	gtk_main();
-	/* clean up */
-	work_free(&data);
-	/* done! */
+	my1iwhat_t what;
+	my1imain_t data;
+	my1iwork_t work;
+	iwork_make(&work,&what);
+	work.init = init_what;
+	work.free = free_what;
+	work.proc = exec_what;
+	work.show = show_what;
+	imain_init(&data,&work);
+	imain_args(&data,argc,argv);
+	imain_prep(&data);
+	imain_proc(&data);
+	if (!(data.flag&IFLAG_ERROR)) gtk_init(&argc,&argv);
+	imain_show(&data);
+	if (!(data.flag&IFLAG_ERROR)) gtk_main();
+	imain_free(&data);
 	return 0;
 }
 /*----------------------------------------------------------------------------*/

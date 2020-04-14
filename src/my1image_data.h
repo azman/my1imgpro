@@ -29,7 +29,6 @@ void image_data_free(my1image_data_t* data);
 void image_data_draw(my1image_data_t* data);
 void image_data_make(my1image_data_t* data, my1image_t* that);
 void image_data_work(my1image_data_t* data);
-void image_data_events(my1image_data_t* data);
 void image_data_domenu(my1image_data_t* data);
 void image_data_filter_more(my1image_data_t* data, filter_info_t* info);
 void image_data_filter_load(my1image_data_t* data, char* name);
