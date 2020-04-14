@@ -89,6 +89,7 @@
 #include "my1image_data.c"
 #endif
 #ifdef __MY1IMAGE_DO_MAIN__
+#include "my1image_grab.c"
 #include "my1image_main.c"
 #endif
 /*----------------------------------------------------------------------------*/

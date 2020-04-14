@@ -24,6 +24,7 @@ int iwork_show(my1iwork_t* work, my1idata_t that, my1idata_t xtra);
 /*----------------------------------------------------------------------------*/
 #include "my1image_appw.h"
 #include "my1image_util.h"
+#include "my1image_grab.h"
 /*----------------------------------------------------------------------------*/
 #define DEF_WIDTH 320
 #define DEF_HEIGHT 240
@@ -36,6 +37,7 @@ int iwork_show(my1iwork_t* work, my1idata_t that, my1idata_t xtra);
 #define IFLAG_ERROR_LIST2 (IFLAG_ERROR|0x08)
 /*----------------------------------------------------------------------------*/
 typedef my1image_appw_t my1ishow_t;
+typedef my1image_grab_t my1igrab_t;
 typedef my1image_filter_t my1ipass_t;
 typedef my1image_buffer_t my1ibuff_t;
 /*----------------------------------------------------------------------------*/
@@ -43,6 +45,7 @@ typedef struct _my1imain_t
 {
 	my1image_t main, temp, *show, *orig;
 	my1ishow_t iwin;
+	my1igrab_t grab; /* grabber function */
 	my1ipass_t pass; /* image pre-filter */
 	my1ibuff_t buff;
 	int flag;

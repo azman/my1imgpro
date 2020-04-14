@@ -66,6 +66,7 @@ void imain_init(my1imain_t* imain, my1iwork_t* iwork)
 	imain->show = 0x0;
 	imain->orig = 0x0; /* switch to show original image */
 	image_appw_init(&imain->iwin);
+	igrab_init(&imain->grab);
 	filter_init(&imain->pass,0x0,0x0); /* no function & no buffer */
 	imain->pass.output = &imain->main; /* writes to main storage */
 	buffer_init(&imain->buff);
@@ -87,9 +88,12 @@ void imain_free(my1imain_t* imain)
 	if (imain->list) filter_free_clones(imain->list);
 	buffer_free(&imain->buff);
 	filter_free(&imain->pass);
+	igrab_free(&imain->grab);
 	image_appw_free(&imain->iwin);
 	image_free(&imain->temp);
 	image_free(&imain->main);
+	if (imain->flag&IFLAG_ERROR)
+		printf("-- [ERROR] %08x\n",imain->flag);
 }
 /*----------------------------------------------------------------------------*/
 void imain_args(my1imain_t* imain, int argc, char* argv[])
@@ -98,20 +102,28 @@ void imain_args(my1imain_t* imain, int argc, char* argv[])
 	else  imain->pick = argv[1];
 	if (imain->work)
 		imain->flag |= iwork_args(imain->work,(void*)&argc,(void*)argv);
+	igrab_grab_default(&imain->grab);
 }
 /*----------------------------------------------------------------------------*/
 void imain_prep(my1imain_t* imain)
 {
 	if (imain->flag&IFLAG_ERROR) return;
+	imain->show = &imain->temp;
 	if (!strncmp(imain->pick,"--blank",7))
 	{
 		image_make(&imain->temp,DEF_HEIGHT,DEF_WIDTH);
 		image_fill(&imain->temp,BLACK);
 	}
-	else if (image_load(&imain->temp,imain->pick)<0)
+	else
 	{
-		imain->flag |= IFLAG_ERROR_LOAD;
-		return;
+		imain->grab.pick = imain->pick;
+		imain->grab.grab = &imain->temp;
+		igrab_grab(&imain->grab);
+		if (imain->grab.flag&IGRAB_FLAG_ERROR)
+		{
+			imain->flag |= IFLAG_ERROR_LOAD;
+			return;
+		}
 	}
 	/* check pre-filter */
 	if (imain->pass.filter)
