@@ -88,6 +88,7 @@ int main(int argc, char* argv[])
 	iwork_make(&work,&what);
 	work.init.task = init_what;
 	work.free.task = free_what;
+	work.args.task = args_what;
 	work.proc.task = exec_what;
 	work.show.task = show_what;
 	imain_init(&data,&work);

@@ -40,7 +40,6 @@ typedef struct _my1imain_t
 	my1igrab_t grab; /* grabber function */
 	my1ibuff_t buff;
 	int flag;
-	char* pick;
 	my1ipass_t *list, *curr, *pchk; /* image processing filters */
 	my1iwork_t *work;
 }
