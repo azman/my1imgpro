@@ -27,7 +27,6 @@ void imain_init(my1imain_t* imain, my1iwork_t* iwork)
 	imain->tdel = MY1IMAIN_LOOP_DELAY;
 	imain->list = 0x0;
 	imain->curr = 0x0;
-	imain->pchk = 0x0; /* pure pointer - filter switch */
 	imain->work = iwork;
 	if (imain->work)
 		dotask_exec(&imain->work->init,(void*)imain,0x0);
@@ -103,8 +102,11 @@ void imain_on_filter_clear(my1imain_t *imain, GtkMenuItem *menu_item)
 {
 	if (imain->curr)
 	{
+		imain->flag |= IFLAG_FILTER_CHK;
+		while (imain->flag&IFLAG_FILTER_RUN);
 		filter_free_clones(imain->curr);
 		imain->curr = 0x0;
+		imain->flag &= ~IFLAG_FILTER_CHK;
 	}
 }
 /*----------------------------------------------------------------------------*/
@@ -112,6 +114,11 @@ void imain_on_filter_unload(my1imain_t *imain, GtkMenuItem *menu_item)
 {
 	char* name = (char*)gtk_menu_item_get_label(menu_item);
 	imain_filter_unload(imain,name);
+}
+/*----------------------------------------------------------------------------*/
+void imain_on_filter_toggle(my1imain_t *imain, GtkMenuItem *menu_item)
+{
+	imain->flag ^= IFLAG_FILTER_EXE;
 }
 /*----------------------------------------------------------------------------*/
 void imain_on_filter_load(my1imain_t* imain)
@@ -167,13 +174,16 @@ void imain_domenu_current(my1imain_t *imain, GtkMenuItem *menu_item)
 	for (next_list=curr_list;next_list!=NULL;next_list=next_list->next)
 		gtk_widget_destroy(GTK_WIDGET(next_list->data));
 	g_list_free(curr_list);
-	/* create executor */
-	menu_exec = gtk_menu_item_new_with_label("Execute");
-	g_signal_connect_swapped(G_OBJECT(menu_exec),"activate",
-		G_CALLBACK(imain_on_filter_execute),(gpointer)imain);
-	gtk_menu_shell_append(GTK_MENU_SHELL(menu_main),menu_exec);
-	gtk_widget_set_sensitive(menu_exec,FALSE);
-	gtk_widget_show(menu_exec);
+	if (!(imain->flag&IFLAG_VIDEO_MODE))
+	{
+		/* create executor */
+		menu_exec = gtk_menu_item_new_with_label("Execute");
+		g_signal_connect_swapped(G_OBJECT(menu_exec),"activate",
+			G_CALLBACK(imain_on_filter_execute),(gpointer)imain);
+		gtk_menu_shell_append(GTK_MENU_SHELL(menu_main),menu_exec);
+		gtk_widget_set_sensitive(menu_exec,FALSE);
+		gtk_widget_show(menu_exec);
+	} else menu_exec = 0x0;
 	/* reset filter */
 	menu_clra = gtk_menu_item_new_with_label("Clear All");
 	g_signal_connect_swapped(G_OBJECT(menu_clra),"activate",
@@ -205,7 +215,8 @@ void imain_domenu_current(my1imain_t *imain, GtkMenuItem *menu_item)
 	}
 	if (flag)
 	{
-		gtk_widget_set_sensitive(menu_exec,TRUE);
+		if (menu_exec)
+			gtk_widget_set_sensitive(menu_exec,TRUE);
 		gtk_widget_set_sensitive(menu_clra,TRUE);
 	}
 }
@@ -216,10 +227,17 @@ void imain_on_filter_select(my1imain_t *imain, GtkMenuItem *menu_item)
 	imain_filter_doload(imain,name);
 }
 /*----------------------------------------------------------------------------*/
-void imain_domenu_filters(my1imain_t* imain, GtkWidget *menu_main)
+void imain_domenu_filters(my1imain_t* imain)
 {
 	my1ipass_t *temp;
-	GtkWidget *menu_item, *menu_subs, *menu_temp;
+	GtkWidget *menu_main, *menu_item, *menu_subs, *menu_temp;
+	if (imain->iwin.domenu) menu_main = imain->iwin.domenu;
+	else
+	{
+		menu_main = gtk_menu_new();
+		imain->iwin.domenu = menu_main;
+		gtk_widget_show(menu_main);
+	}
 	temp = imain->list; menu_subs = 0x0;
 	while (temp)
 	{
@@ -248,6 +266,16 @@ void imain_domenu_filters(my1imain_t* imain, GtkWidget *menu_main)
 			G_CALLBACK(imain_domenu_current),(gpointer)imain);
 		gtk_widget_show(menu_temp);
 	}
+	if (imain->flag&IFLAG_VIDEO_MODE)
+	{
+		menu_item = gtk_check_menu_item_new_with_label("Filtered");
+		gtk_menu_shell_append(GTK_MENU_SHELL(menu_main),menu_item);
+		gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(menu_item),
+			imain->flag&IFLAG_FILTER_EXE?TRUE:FALSE);
+		g_signal_connect_swapped(G_OBJECT(menu_item),"activate",
+			G_CALLBACK(imain_on_filter_toggle),(gpointer)imain);
+		gtk_widget_show(menu_item);
+	}
 }
 /*----------------------------------------------------------------------------*/
 void imain_show(my1imain_t* imain)
@@ -257,8 +285,9 @@ void imain_show(my1imain_t* imain)
 	{
 		image_show(imain->show,&imain->iwin,"MY1 Image");
 		/* menu! */
-		image_appw_domenu(&imain->iwin);
-		imain_domenu_filters(imain,imain->iwin.domenu);
+		if (!(imain->flag&IFLAG_VIDEO_MODE))
+			image_appw_domenu(&imain->iwin);
+		imain_domenu_filters(imain);
 		image_appw_domenu_quit(&imain->iwin);
 	}
 	if (imain->work)
@@ -305,8 +334,11 @@ void imain_filter_doload(my1imain_t* imain, char* name)
 	if (find) temp = filter_cloned(find);
 	if (temp)
 	{
+		imain->flag |= IFLAG_FILTER_CHK;
+		while (imain->flag&IFLAG_FILTER_RUN);
 		temp->buffer = &imain->buff;
 		imain->curr = filter_insert(imain->curr,temp);
+		imain->flag &= ~IFLAG_FILTER_CHK;
 	}
 }
 /*----------------------------------------------------------------------------*/
@@ -331,22 +363,21 @@ void imain_filter_unload(my1imain_t* imain, char* name)
 	}
 }
 /*----------------------------------------------------------------------------*/
-void imain_filter_enable(my1imain_t* imain, int enable)
-{
-	if (enable) imain->pchk = imain->curr;
-	else imain->pchk = 0x0;
-}
-/*----------------------------------------------------------------------------*/
 void imain_filter_doexec(my1imain_t* imain)
 {
 	my1image_t *temp;
-	if (imain->pchk)
+	if (imain->flag&IFLAG_FILTER_EXE)
 	{
-		temp = imain->iwin.show;
-		temp = image_filter(temp,imain->pchk);
-		if (temp!=imain->iwin.show)
-			image_copy(imain->iwin.show,temp);
-		image_appw_draw(&imain->iwin,REDRAW);
+		imain->flag |= IFLAG_FILTER_RUN;
+		while (imain->flag&IFLAG_FILTER_CHK);
+		if (imain->curr)
+		{
+			temp = imain->show;
+			temp = image_filter(temp,imain->curr);
+			if (temp!=imain->show)
+				image_copy(imain->show,temp);
+		}
+		imain->flag &= ~IFLAG_FILTER_RUN;
 	}
 }
 /*----------------------------------------------------------------------------*/
