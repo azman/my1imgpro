@@ -346,13 +346,19 @@ void imain_filter_unload(my1imain_t* imain, char* name)
 {
 	my1ipass_t *prev, *curr;
 	int size = strlen(name);
+	imain->flag |= IFLAG_FILTER_CHK;
+	while (imain->flag&IFLAG_FILTER_RUN);
 	prev = 0x0; curr = imain->curr;
 	while (curr)
 	{
 		if (!strncmp(curr->name,name,size+1))
 		{
 			if (prev) prev->next = curr->next;
-			else imain->curr = curr->next;
+			else
+			{
+				imain->curr = curr->next;
+				imain->curr->last = curr->last;
+			}
 			/* free this */
 			filter_free(curr);
 			free((void*)curr);
@@ -361,6 +367,7 @@ void imain_filter_unload(my1imain_t* imain, char* name)
 		prev = curr;
 		curr = curr->next;
 	}
+	imain->flag &= ~IFLAG_FILTER_CHK;
 }
 /*----------------------------------------------------------------------------*/
 void imain_filter_doexec(my1imain_t* imain)
