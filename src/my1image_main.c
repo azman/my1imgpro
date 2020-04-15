@@ -24,6 +24,7 @@ void imain_init(my1imain_t* imain, my1iwork_t* iwork)
 	igrab_init(&imain->grab);
 	buffer_init(&imain->buff);
 	imain->flag = IFLAG_OK;
+	imain->tdel = MY1IMAIN_LOOP_DELAY;
 	imain->list = 0x0;
 	imain->curr = 0x0;
 	imain->pchk = 0x0; /* pure pointer - filter switch */
@@ -262,6 +263,26 @@ void imain_show(my1imain_t* imain)
 	}
 	if (imain->work)
 		dotask_exec(&imain->work->show,(void*)imain,0x0);
+}
+/*----------------------------------------------------------------------------*/
+int imain_on_task_timer(void* data, void* that, void* xtra)
+{
+	my1imain_t* imain = (my1imain_t*) data;
+	my1ishow_t* ishow = (my1ishow_t*) that;
+	igrab_grab(&imain->grab);
+	imain->show = imain->grab.grab;
+	imain_proc(imain);
+	image_appw_make(ishow,imain->show);
+	image_appw_task(ishow,imain_on_task_timer,imain->tdel);
+	return 0;
+}
+/*----------------------------------------------------------------------------*/
+void imain_loop(my1imain_t* imain, int delta_ms)
+{
+	if (delta_ms>0) imain->tdel = delta_ms;
+	if (imain->iwin.dotask) return;
+	imain->iwin.dodata = (void*) imain;
+	image_appw_task(&imain->iwin,imain_on_task_timer,imain->tdel);
 }
 /*----------------------------------------------------------------------------*/
 void imain_filter_dolist(my1imain_t* imain, filter_info_t* info)

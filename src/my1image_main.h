@@ -4,6 +4,8 @@
 /*----------------------------------------------------------------------------*/
 #include "my1image_task.h"
 /*----------------------------------------------------------------------------*/
+#define MY1IMAIN_LOOP_DELAY 10
+/*----------------------------------------------------------------------------*/
 typedef struct _my1iwork_t
 {
 	my1dotask_t init, free, args;
@@ -39,7 +41,7 @@ typedef struct _my1imain_t
 	my1ishow_t iwin;
 	my1igrab_t grab; /* grabber function */
 	my1ibuff_t buff;
-	int flag;
+	int flag, tdel;
 	my1ipass_t *list, *curr, *pchk; /* image processing filters */
 	my1iwork_t *work;
 }
@@ -51,6 +53,7 @@ void imain_args(my1imain_t* imain, int argc, char* argv[]);
 void imain_prep(my1imain_t* imain);
 void imain_proc(my1imain_t* imain);
 void imain_show(my1imain_t* imain);
+void imain_loop(my1imain_t* imain, int delta_ms);
 void imain_filter_dolist(my1imain_t* data, filter_info_t* info);
 void imain_filter_doload(my1imain_t* data, char* name);
 void imain_filter_unload(my1imain_t* data, char* name);

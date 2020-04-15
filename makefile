@@ -46,6 +46,8 @@ endif
 # override flags for my1image bundle
 test: DFLAGS = -D__MY1IMAGE_DO_MAIN__
 
+testv: DFLAGS = -D__MY1IMAGE_DO_MAIN__
+
 $(CHKLOAD): DFLAGS = -D__MY1IMAGE_FILE_ONLY__
 
 .PHONY: main test all image video new debug clean tools
@@ -53,6 +55,9 @@ $(CHKLOAD): DFLAGS = -D__MY1IMAGE_FILE_ONLY__
 main: image
 
 test: chkimage.o $(IMGMAIN)
+	$(LD) $(CFLAGS) -o $(TESTIMG) $+ $(LFLAGS) $(GFLAGS) $(OFLAGS)
+
+testv: chkigrab.o my1libav_grab.o $(IMGMAIN)
 	$(LD) $(CFLAGS) -o $(TESTIMG) $+ $(LFLAGS) $(GFLAGS) $(OFLAGS)
 
 all: image video $(TOOLLST)
