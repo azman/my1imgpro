@@ -163,7 +163,7 @@ void capture_core(my1video_capture_t* vgrab, char *doname)
 	pCodec = 0x0;
 	pCodecParamFind =  0x0;
 	step = -1;
-	// loop though all the streams and print its main information
+	/** loop though all the streams and find video stream */
 	for (loop=0;loop<pFormatCtx->nb_streams;loop++)
 	{
 		pCodecParamTemp = pFormatCtx->streams[loop]->codecpar;
