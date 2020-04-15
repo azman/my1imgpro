@@ -9,6 +9,8 @@
  *  - can specify border pixels to skip
 **/
 /*----------------------------------------------------------------------------*/
+#include "my1image_base.h"
+/*----------------------------------------------------------------------------*/
 #define MY1IMAGE_SCAN_SKIP 1
 /*----------------------------------------------------------------------------*/
 typedef struct _my1image_scan_t
@@ -19,7 +21,7 @@ typedef struct _my1image_scan_t
 }
 my1image_scan_t;
 /*----------------------------------------------------------------------------*/
-void iscan_init(my1image_scan_t* scan, int* data, int rows, int cols, int skip);
+void iscan_init(my1image_scan_t* scan, my1image_t* data, int skip);
 void iscan_prep(my1image_scan_t* scan);
 int iscan_next(my1image_scan_t* scan);
 int iscan_skip(my1image_scan_t* scan);

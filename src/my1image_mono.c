@@ -37,7 +37,7 @@ void image_erode(my1image_t *img, my1image_t *res, int* elem)
 {
 	my1image_scan_t scan;
 	image_make(res,img->rows,img->cols);
-	iscan_init(&scan,img->data,img->rows,img->cols,MY1IMAGE_SCAN_SKIP);
+	iscan_init(&scan,img,MY1IMAGE_SCAN_SKIP);
 	iscan_prep(&scan);
 	while (iscan_next(&scan))
 	{
@@ -50,7 +50,7 @@ void image_dilate(my1image_t *img, my1image_t *res, int* elem)
 {
 	my1image_scan_t scan;
 	image_make(res,img->rows,img->cols);
-	iscan_init(&scan,img->data,img->rows,img->cols,MY1IMAGE_SCAN_SKIP);
+	iscan_init(&scan,img,MY1IMAGE_SCAN_SKIP);
 	iscan_prep(&scan);
 	while (iscan_next(&scan))
 	{

@@ -4,14 +4,14 @@
 /*----------------------------------------------------------------------------*/
 #include "my1image_scan.h"
 /*----------------------------------------------------------------------------*/
-void iscan_init(my1image_scan_t* scan, int* data, int rows, int cols, int skip)
+void iscan_init(my1image_scan_t* scan, my1image_t* data, int skip)
 {
-	scan->data = data;
-	scan->rows = rows;
-	scan->cols = cols;
+	scan->data = data->data;
+	scan->rows = data->rows;
+	scan->cols = data->cols;
 	scan->skip = skip;
-	scan->brow = rows - skip - 1;
-	scan->bcol = cols - skip - 1;
+	scan->brow = scan->rows - skip - 1;
+	scan->bcol = scan->cols - skip - 1;
 }
 /*----------------------------------------------------------------------------*/
 void iscan_prep(my1image_scan_t* scan)
