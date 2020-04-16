@@ -164,7 +164,7 @@ void imain_on_filter_load(my1imain_t* imain)
 /*----------------------------------------------------------------------------*/
 void imain_domenu_current(my1imain_t *imain, GtkMenuItem *menu_item)
 {
-	int flag = 0;
+	int flag;
 	my1ipass_t *temp;
 	GList *curr_list, *next_list;
 	GtkWidget *menu_main, *menu_temp, *menu_exec, *menu_clra;
@@ -202,10 +202,12 @@ void imain_domenu_current(my1imain_t *imain, GtkMenuItem *menu_item)
 	gtk_menu_shell_append(GTK_MENU_SHELL(menu_main),menu_temp);
 	gtk_widget_show(menu_temp);
 	/* create new items */
-	temp = imain->curr;
+	temp = imain->curr; flag = 0;
 	while (temp)
 	{
-		menu_temp = gtk_menu_item_new_with_label(temp->name);
+		gchar *buff = g_strdup_printf("%d-%s",flag,temp->name);
+		menu_temp = gtk_menu_item_new_with_label(buff);
+		g_free(buff);
 		g_signal_connect_swapped(G_OBJECT(menu_temp),"activate",
 			G_CALLBACK(imain_on_filter_unload),(gpointer)imain);
 		gtk_menu_shell_append(GTK_MENU_SHELL(menu_main),menu_temp);
@@ -344,28 +346,24 @@ void imain_filter_doload(my1imain_t* imain, char* name)
 /*----------------------------------------------------------------------------*/
 void imain_filter_unload(my1imain_t* imain, char* name)
 {
-	my1ipass_t *prev, *curr;
-	int size = strlen(name);
+	int size, loop = 0;
+	my1ipass_t* pass = imain->curr;
 	imain->flag |= IFLAG_FILTER_CHK;
 	while (imain->flag&IFLAG_FILTER_RUN);
-	prev = 0x0; curr = imain->curr;
-	while (curr)
+	while (name[0]!='-') { name++; } name++;
+	while (pass)
 	{
-		if (!strncmp(curr->name,name,size+1))
+		if (pass->name)
 		{
-			if (prev) prev->next = curr->next;
-			else
+			size = strlen(pass->name) + 1;
+			if (!strncmp(pass->name,name,size))
 			{
-				imain->curr = curr->next;
-				imain->curr->last = curr->last;
+				imain->curr = filter_remove(imain->curr,loop,1);
+				break;
 			}
-			/* free this */
-			filter_free(curr);
-			free((void*)curr);
-			break;
 		}
-		prev = curr;
-		curr = curr->next;
+		loop++;
+		pass = pass->next;
 	}
 	imain->flag &= ~IFLAG_FILTER_CHK;
 }

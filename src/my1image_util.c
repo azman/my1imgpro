@@ -55,6 +55,37 @@ my1ifilter_t* filter_insert(my1ifilter_t* pass, my1ifilter_t* next)
 	return pass;
 }
 /*----------------------------------------------------------------------------*/
+my1ifilter_t* filter_remove(my1ifilter_t* pass, int index, int cloned)
+{
+	int loop = 0;
+	my1ifilter_t *prev = 0x0, *curr = pass;
+	while (curr)
+	{
+		if (index==loop)
+		{
+			if (prev) prev->next = curr->next;
+			else
+			{
+				pass = curr->next;
+				if (pass)
+					pass->last = curr->last;
+			}
+			if (pass&&!pass->last)
+				pass->last = pass;
+			if (cloned)
+			{
+				filter_free(curr);
+				free((void*)curr);
+			}
+			break;
+		}
+		prev = curr;
+		curr = curr->next;
+		loop++;
+	}
+	return pass;
+}
+/*----------------------------------------------------------------------------*/
 my1ifilter_t* filter_search(my1ifilter_t* pass, char *name)
 {
 	int size;
