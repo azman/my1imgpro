@@ -284,14 +284,7 @@ void imain_show(my1imain_t* imain)
 {
 	if (imain->flag&IFLAG_ERROR) return;
 	if (imain->show)
-	{
 		image_show(imain->show,&imain->iwin,"MY1 Image");
-		/* menu! */
-		if (!(imain->flag&IFLAG_VIDEO_MODE))
-			image_appw_domenu(&imain->iwin);
-		imain_domenu_filters(imain);
-		image_appw_domenu_quit(&imain->iwin);
-	}
 	if (imain->work)
 		dotask_exec(&imain->work->show,(void*)imain,0x0);
 }

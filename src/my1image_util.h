@@ -38,6 +38,7 @@ void filter_init(my1ifilter_t* pass, pfilter_t filter, my1ibuffer_t *buff);
 void filter_free(my1ifilter_t* pass);
 void filter_free_clones(my1ifilter_t* pass);
 my1ifilter_t* filter_insert(my1ifilter_t* pass, my1ifilter_t* next);
+my1ifilter_t* filter_remove(my1ifilter_t* pass, int index, int cloned);
 my1ifilter_t* filter_search(my1ifilter_t* pass, char *name);
 my1ifilter_t* filter_cloned(my1ifilter_t* pass);
 /* apply filter on image */

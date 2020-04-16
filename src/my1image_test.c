@@ -1,4 +1,5 @@
 /*----------------------------------------------------------------------------*/
+#include "my1image_main.h"
 #include "my1image_data.h"
 #include "my1image_file.h"
 #include "my1image_file_png.h"
@@ -18,53 +19,30 @@
 /*----------------------------------------------------------------------------*/
 int main(int argc, char* argv[])
 {
-	int test;
-	char *pname;
-	my1image_t buff;
-	my1image_data_t data;
+	my1image_data_t what;
+	my1imain_t data;
+	my1iwork_t work;
 	/* print tool info */
 	printf("\n%s - %s (%s)\n",MY1APP_NAME,MY1APP_INFO,MY1APP_VERS);
 	printf("  => by azman@my1matrix.org\n\n");
 	/* add png support */
 	image_format_insert(&ipng);
-	/* initialize buff */
-	image_init(&buff);
-	/* check program argument */
-	if(argc>1)
-	{
-		pname = argv[1];
-		if((test=image_load(&buff,pname))<0)
-		{
-			printf("Error loading file '%s'!(%x)\n",pname,(unsigned)test);
-			return test;
-		}
-	}
-	else
-	{
-		/* create blank image at default size */
-		image_make(&buff,DEF_HEIGHT,DEF_WIDTH);
-		image_fill(&buff,BLACK);
-	}
-	/* initialize gui */
-	gtk_init(&argc,&argv);
-	/* initialize image_data */
-	image_data_init(&data);
-	/* create all filters in my1image_work */
-	image_data_work(&data);
-	/** check requested filters */
-	for (test=2;test<argc;test++)
-		image_data_filter_load(&data,argv[test]);
-	/* assign image */
-	image_data_make(&data,&buff);
-	/* allow histogram */
-	image_hist_make(&data.hist);
-	/* menu stuff */
-	image_data_domenu(&data);
-	/* main loop */
-	gtk_main();
-	/* cleanup image_test */
-	image_data_free(&data);
-	/* done! */
+	/* work it! */
+	iwork_make(&work,&what);
+	work.init.task = image_data_init;
+	work.free.task = image_data_free;
+	work.args.task = image_data_args;
+	work.prep.task = image_data_prep;
+	work.proc.task = image_data_exec;
+	work.show.task = image_data_show;
+	imain_init(&data,&work);
+	imain_args(&data,argc,argv);
+	imain_prep(&data);
+	imain_proc(&data);
+	if (!(data.flag&IFLAG_ERROR)) gtk_init(&argc,&argv);
+	imain_show(&data);
+	if (!(data.flag&IFLAG_ERROR)) gtk_main();
+	imain_free(&data);
 	putchar('\n');
 	return 0;
 }

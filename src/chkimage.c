@@ -69,14 +69,19 @@ int show_what(void* data, void* that, void* xtra)
 {
 	my1dotask_t *dotask = (my1dotask_t*)data;
 	my1iwhat_t *what = (my1iwhat_t*)dotask->data;
-	my1imain_t *mdat = (my1imain_t*)that;
+	my1imain_t *main = (my1imain_t*)that;
 	if (what->orig)
 	{
 		/* show original */
 		image_show(what->orig,&what->awin,"Source Image");
 		/* modify name for main win */
-		image_appw_name(&mdat->iwin,"Processed Image");
+		image_appw_name(&main->iwin,"Processed Image");
 	}
+	/* menu! */
+	if (!(main->flag&IFLAG_VIDEO_MODE))
+		image_appw_domenu(&main->iwin);
+	imain_domenu_filters(main);
+	image_appw_domenu_quit(&main->iwin);
 	return 0;
 }
 /*----------------------------------------------------------------------------*/
