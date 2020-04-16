@@ -190,8 +190,7 @@ int image_data_show(void* data, void* that, void* xtra)
 	my1imain_t *main = (my1imain_t*)that;
 	dotask_make(&main->iwin.clickL,data_on_clickL,(void*)what);
 	dotask_make(&main->iwin.clickM,data_on_clickM,(void*)what);
-	if (!(main->flag&IFLAG_VIDEO_MODE))
-		image_appw_domenu(&main->iwin);
+	image_appw_domenu(&main->iwin);
 	imain_domenu_filters(main);
 	image_data_domenu_extra(what,main->iwin.domenu);
 	image_appw_domenu_quit(&main->iwin);

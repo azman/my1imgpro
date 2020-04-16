@@ -55,7 +55,7 @@ $(CHKLOAD): DFLAGS = -D__MY1IMAGE_FILE_ONLY__
 
 main: image
 
-test: chkimage.o $(IMGMAIN)
+test: chkimage.o my1libav_grab.o $(IMGMAIN)
 	$(LD) $(CFLAGS) -o $(TESTIMG) $+ $(LFLAGS) $(GFLAGS) $(OFLAGS)
 
 testv: chkigrab.o my1libav_grab.o $(IMGMAIN)
