@@ -19,10 +19,10 @@ OBJSIMG += $(IMGMNEW) $(TESTIMG).o
 TESTVIS = my1video_test
 VISMAIN = my1video.o
 VISNAME = $(subst .o,,$(VISMAIN))
-VISAPPW = my1image_view.o my1image_appw.o
-VISBASE = my1video_base.o my1video_grab.o my1video_main.o
+VISAPPW = my1image_task.o my1image_view.o my1image_appw.o
+VISBASE = my1video_base.o my1video_main.o
 OBJSVIS = $(IMGBASE) $(IMGFILE) $(IMGUTIL) $(IMGWORK) $(VISAPPW) $(IMGMONO)
-OBJSVIS += $(VISBASE) $(TESTVIS).o
+OBJSVIS += $(IMGMNEW) my1libav_grab.o $(VISBASE) $(TESTVIS).o
 CHKSIZE = resizer
 CHKLOAD = imgload
 HSVTEST = testhsv
@@ -47,8 +47,6 @@ endif
 # override flags for my1image bundle
 test: DFLAGS = -D__MY1IMAGE_DO_MAIN__
 
-testv: DFLAGS = -D__MY1IMAGE_DO_MAIN__
-
 $(CHKLOAD): DFLAGS = -D__MY1IMAGE_FILE_ONLY__
 
 .PHONY: main test all image video new debug clean tools
@@ -56,9 +54,6 @@ $(CHKLOAD): DFLAGS = -D__MY1IMAGE_FILE_ONLY__
 main: image
 
 test: chkimage.o my1libav_grab.o $(IMGMAIN)
-	$(LD) $(CFLAGS) -o $(TESTIMG) $+ $(LFLAGS) $(GFLAGS) $(OFLAGS)
-
-testv: chkigrab.o my1libav_grab.o $(IMGMAIN)
 	$(LD) $(CFLAGS) -o $(TESTIMG) $+ $(LFLAGS) $(GFLAGS) $(OFLAGS)
 
 all: image video $(TOOLLST)

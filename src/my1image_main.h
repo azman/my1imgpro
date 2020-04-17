@@ -47,6 +47,7 @@ typedef struct _my1imain_t
 	my1igrab_t grab; /* grabber function */
 	my1ibuff_t buff;
 	int flag, mode, tdel;
+	void* dovf; /* menu_item for filter flag */
 	my1ipass_t *list, *curr; /* image processing filters */
 	my1iwork_t *work;
 }

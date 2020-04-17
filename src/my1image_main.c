@@ -25,6 +25,7 @@ void imain_init(my1imain_t* imain, my1iwork_t* iwork)
 	buffer_init(&imain->buff);
 	imain->flag = IFLAG_OK;
 	imain->tdel = MY1IMAIN_LOOP_DELAY;
+	imain->dovf = 0x0;
 	imain->list = 0x0;
 	imain->curr = 0x0;
 	imain->work = iwork;
@@ -116,9 +117,21 @@ void imain_on_filter_unload(my1imain_t *imain, GtkMenuItem *menu_item)
 	imain_filter_unload(imain,name);
 }
 /*----------------------------------------------------------------------------*/
+void imain_menu_filter_enable(my1imain_t *imain, int enable)
+{
+	gboolean able = FALSE;
+	GtkMenuItem *menu_item = (GtkMenuItem*)imain->dovf;
+	if (!menu_item) return;
+	if (enable) able = TRUE;
+	gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(menu_item),able);
+}
+/*----------------------------------------------------------------------------*/
 void imain_on_filter_toggle(my1imain_t *imain, GtkMenuItem *menu_item)
 {
-	imain->flag ^= IFLAG_FILTER_EXE;
+	if (gtk_check_menu_item_get_active(GTK_CHECK_MENU_ITEM(menu_item)))
+		imain->flag |= IFLAG_FILTER_EXE;
+	else
+		imain->flag &= ~IFLAG_FILTER_EXE;
 }
 /*----------------------------------------------------------------------------*/
 void imain_on_filter_load(my1imain_t* imain)
@@ -277,6 +290,7 @@ void imain_domenu_filters(my1imain_t* imain)
 		g_signal_connect_swapped(G_OBJECT(menu_item),"activate",
 			G_CALLBACK(imain_on_filter_toggle),(gpointer)imain);
 		gtk_widget_show(menu_item);
+		imain->dovf = (void*) menu_item;
 	}
 }
 /*----------------------------------------------------------------------------*/

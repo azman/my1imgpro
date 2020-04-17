@@ -42,6 +42,7 @@ void libav1_init(my1libav_grab_t* vgrab, my1image_t* image)
 	vgrab->count = -1;
 	vgrab->index = -1;
 	vgrab->vstream = -1;
+	vgrab->iloop = 1;
 }
 /*----------------------------------------------------------------------------*/
 void libav1_free(my1libav_grab_t* vgrab)
@@ -343,11 +344,15 @@ void libav1_grab(my1libav_grab_t* vgrab, my1image_t* image)
 		if (vgrab->count>0)
 		{
 			vgrab->index++;
-			if (vgrab->index==vgrab->count)
+			if (vgrab->iloop)
 			{
-				vgrab->index = 0;
-				libav1_reset(vgrab);
+				if (vgrab->index==vgrab->count)
+				{
+					vgrab->index = 0;
+					libav1_reset(vgrab);
+				}
 			}
+			/* else, upper level will handle this! */
 		}
 		libav1_from_frame(vgrab);
 		image_make(image,vgrab->height,vgrab->width);

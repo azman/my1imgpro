@@ -23,15 +23,17 @@ This software consists of several small modules:
 - my1image_util : filter support
 - my1image_stat : grayscale histogram
 - my1image_work : library of commonly used filters
+- my1image_task : generic task/event handler structure
 - my1image_view : gtk-based gui canvas
 - my1image_appw : gtk-based gui app for single image view
 - my1image_hist : gtk-based gui window for histogram (requires appw)
-- my1image_data : wrapper for view/appw/hist with filters defined in work
+- my1image_grab : generic image grabber module (easier to add new)
 - my1image_main : template for simple image processing application
-- my1image_grab : generic image grabber module (may replace video?)
+- my1image_data : sample 'work' data with histogram viewer
+- my1libav_grab : libav wrapper to work with my1image_grab
 * my1image_test : main test program for my1image & friends
 - my1video      - video structure based on my1image_t
-- my1video_main - sample video processing flow (using libav & my1image_appw)
+- my1video_main - sample video processing flow
 * my1video_test - main test program for my1video & friends
 
 Work-in-progress:

@@ -23,6 +23,7 @@ typedef struct _my1libav_grab_t
 	int count; /* video file frame count  */
 	int index; /* sync marker for video index */
 	int vstream; /* stream index */
+	int iloop; /* flag for auto-reset */
 }
 my1libav_grab_t;
 /*----------------------------------------------------------------------------*/
@@ -31,6 +32,9 @@ void libav1_free(my1libav_grab_t* vgrab);
 void libav1_file(my1libav_grab_t* vgrab, char *filename);
 void libav1_live(my1libav_grab_t* vgrab, char *camname);
 void libav1_grab(my1libav_grab_t* vgrab, my1image_t* image);
+/*----------------------------------------------------------------------------*/
+/* my1video_main needs this */
+void libav1_reset(my1libav_grab_t* vgrab);
 /*----------------------------------------------------------------------------*/
 #endif /** __MY1LIBAV_GRAB_H__ */
 /*----------------------------------------------------------------------------*/

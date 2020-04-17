@@ -1,5 +1,6 @@
 /*----------------------------------------------------------------------------*/
-#include "my1video.h"
+#include "my1video_main.h"
+#include "my1image_main.h"
 /*----------------------------------------------------------------------------*/
 #include <stdio.h>
 /*----------------------------------------------------------------------------*/
@@ -27,59 +28,29 @@ static char showkeys[] =
 /*----------------------------------------------------------------------------*/
 int main(int argc, char* argv[])
 {
-	int loop, type = VIDEO_SOURCE_NONE;
-	char *psource = 0x0;
-	my1vmain_t vmain;
+	my1vmain_t what;
+	my1imain_t data;
+	my1iwork_t work;
 	/* print tool info */
 	printf("\n%s - %s (%s)\n",MY1APP_NAME,MY1APP_INFO,MY1APP_VERS);
-	printf("  => by azman@my1matrix.org\n\n");
-	/* check parameter */
-	for (loop=1;loop<argc;loop++)
-	{
-		if (argv[loop][0]!='-')
-		{
-			psource = argv[loop];
-			type = VIDEO_SOURCE_FILE;
-			break;
-		}
-		else if (!strcmp(argv[loop],"--live"))
-		{
-			/* on linux this should be /dev/video0 or something... */
-			psource = argv[++loop];
-			type = VIDEO_SOURCE_LIVE;
-			break;
-		}
-		else printf("-- Unknown param '%s'!\n",argv[loop]);
-	}
-	/* check video source */
-	if (!psource)
-	{
-		printf("No video source requested!\n");
-		exit(-1);
-	}
-	/* initialize gui */
-	gtk_init(&argc,&argv);
-	/* initialize */
-	video_main_init(&vmain);
-	/* setup filters */
-	for (++loop;loop<argc;loop++)
-		video_main_pass_load(&vmain,argv[loop]);
-	/* setup capture */
-	video_main_capture(&vmain,psource,type);
-	/* setup display */
-	video_main_display(&vmain,MY1APP_INFO);
-	/* prepare menu & events */
-	video_main_prepare(&vmain);
-	/* tell them */
-	printf("Starting main capture loop.\n\n%s",showkeys);
-	/* setup display/capture cycle */
-	video_main_loop(&vmain,VGRAB_DELAY);
-	/* main loop */
-	gtk_main();
-	/* clean up */
-	video_main_free(&vmain);
-	/* we are done */
-	printf("\n");
+	printf("  => by azman@my1matrix.org\n\n%s\n",showkeys);
+	/* work it! */
+	iwork_make(&work,&what);
+	work.init.task = video_main_init;
+	work.free.task = video_main_free;
+	work.args.task = video_main_args;
+	work.prep.task = video_main_prep;
+	work.proc.task = video_main_exec;
+	work.show.task = video_main_show;
+	imain_init(&data,&work);
+	imain_args(&data,argc,argv);
+	imain_prep(&data);
+	imain_proc(&data);
+	if (!(data.flag&IFLAG_ERROR)) gtk_init(&argc,&argv);
+	imain_show(&data);
+	if (!(data.flag&IFLAG_ERROR)) gtk_main();
+	imain_free(&data);
+	putchar('\n');
 	return 0;
 }
 /*----------------------------------------------------------------------------*/
