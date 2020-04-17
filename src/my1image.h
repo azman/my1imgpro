@@ -20,6 +20,8 @@
 #include "my1image_task.h"
 #include "my1image_view.h"
 #include "my1image_appw.h"
+#include "my1image_grab.h"
+#include "my1image_main.h"
 #include "my1image_hist.h"
 #include "my1image_data.h"
 #include "my1image_scan.h"

@@ -81,6 +81,14 @@
 #ifndef __MY1IMAGE_NO_APPW__
 #include "my1image_appw.c"
 #else
+#ifndef __MY1IMAGE_NO_MAIN__
+#define __MY1IMAGE_NO_MAIN__
+#endif
+#endif
+#ifndef __MY1IMAGE_NO_MAIN__
+#include "my1image_grab.c"
+#include "my1image_main.c"
+#else
 #ifndef __MY1IMAGE_NO_DATA__
 #define __MY1IMAGE_NO_DATA__
 #endif
@@ -88,9 +96,5 @@
 #ifndef __MY1IMAGE_NO_DATA__
 #include "my1image_hist.c"
 #include "my1image_data.c"
-#endif
-#ifdef __MY1IMAGE_DO_MAIN__
-#include "my1image_grab.c"
-#include "my1image_main.c"
 #endif
 /*----------------------------------------------------------------------------*/
