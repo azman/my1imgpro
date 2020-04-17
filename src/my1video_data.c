@@ -175,9 +175,6 @@ int video_data_draw_index(void* data, void* that, void* xtra)
 	return 0;
 }
 /*----------------------------------------------------------------------------*/
-/* prototype */
-void imain_menu_filter_enable(my1imain_t *imain,int enable);
-/*----------------------------------------------------------------------------*/
 int vmain_on_keychk(void* data, void* that, void* xtra)
 {
 	my1dotask_t *dotask = (my1dotask_t*)data;

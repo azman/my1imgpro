@@ -60,6 +60,7 @@ void imain_prep(my1imain_t* imain);
 void imain_proc(my1imain_t* imain);
 void imain_show(my1imain_t* imain);
 void imain_loop(my1imain_t* imain, int delta_ms);
+void imain_menu_filter_enable(my1imain_t *imain, int enable);
 void imain_domenu_filters(my1imain_t* imain);
 void imain_filter_dolist(my1imain_t* data, filter_info_t* info);
 void imain_filter_doload(my1imain_t* data, char* name);
