@@ -63,15 +63,18 @@ my1ifilter_t* filter_remove(my1ifilter_t* pass, int index, int cloned)
 	{
 		if (index==loop)
 		{
-			if (prev) prev->next = curr->next;
+			if (prev)
+			{
+				prev->next = curr->next;
+				if (!prev->next)
+					pass->last = prev;
+			}
 			else
 			{
 				pass = curr->next;
 				if (pass)
 					pass->last = curr->last;
 			}
-			if (pass&&!pass->last)
-				pass->last = pass;
 			if (cloned)
 			{
 				filter_free(curr);

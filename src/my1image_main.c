@@ -336,6 +336,20 @@ void imain_filter_dolist(my1imain_t* imain, filter_info_t* info)
 	else imain->flag |= IFLAG_ERROR_LIST2;
 }
 /*----------------------------------------------------------------------------*/
+/**
+void print_filters(my1ipass_t* pass)
+{
+	printf("** Filters: ");
+	if (!pass) printf("None");
+	printf("\n");
+	while (pass)
+	{
+		printf("-- {%p:%s}=>(%p,%p)\n",pass,pass->name,pass->next,pass->last);
+		pass = pass->next;
+	}
+	fflush(stdout);
+}
+**/
 void imain_filter_doload(my1imain_t* imain, char* name)
 {
 	my1ipass_t *find, *temp = 0x0;
@@ -347,6 +361,7 @@ void imain_filter_doload(my1imain_t* imain, char* name)
 		while (imain->flag&IFLAG_FILTER_RUN);
 		temp->buffer = &imain->buff;
 		imain->curr = filter_insert(imain->curr,temp);
+		/**print_filters(imain->curr);*/
 		imain->flag &= ~IFLAG_FILTER_CHK;
 	}
 }
@@ -366,6 +381,7 @@ void imain_filter_unload(my1imain_t* imain, char* name)
 			if (!strncmp(pass->name,name,size))
 			{
 				imain->curr = filter_remove(imain->curr,loop,1);
+				/**print_filters(imain->curr);*/
 				break;
 			}
 		}
