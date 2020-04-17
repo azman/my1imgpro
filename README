@@ -33,7 +33,7 @@ This software consists of several small modules:
 - my1libav_grab : libav wrapper to work with my1image_grab
 * my1image_test : main test program for my1image & friends
 - my1video      - video structure based on my1image_t
-- my1video_main - sample video processing flow
+- my1video_data - sample 'work' data for video processing flow
 * my1video_test - main test program for my1video & friends
 
 Work-in-progress:

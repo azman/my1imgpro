@@ -4,5 +4,5 @@
 #endif
 #include "my1image.c"
 #include "my1video_base.c"
-#include "my1video_main.c"
+#include "my1video_data.c"
 /*----------------------------------------------------------------------------*/

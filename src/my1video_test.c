@@ -1,5 +1,5 @@
 /*----------------------------------------------------------------------------*/
-#include "my1video_main.h"
+#include "my1video_data.h"
 #include "my1image_main.h"
 /*----------------------------------------------------------------------------*/
 #include <stdio.h>
@@ -28,7 +28,7 @@ static char showkeys[] =
 /*----------------------------------------------------------------------------*/
 int main(int argc, char* argv[])
 {
-	my1vmain_t what;
+	my1vdata_t what;
 	my1imain_t data;
 	my1iwork_t work;
 	/* print tool info */
@@ -36,12 +36,12 @@ int main(int argc, char* argv[])
 	printf("  => by azman@my1matrix.org\n\n%s\n",showkeys);
 	/* work it! */
 	iwork_make(&work,&what);
-	work.init.task = video_main_init;
-	work.free.task = video_main_free;
-	work.args.task = video_main_args;
-	work.prep.task = video_main_prep;
-	work.proc.task = video_main_exec;
-	work.show.task = video_main_show;
+	work.init.task = video_data_init;
+	work.free.task = video_data_free;
+	work.args.task = video_data_args;
+	work.prep.task = video_data_prep;
+	work.proc.task = video_data_exec;
+	work.show.task = video_data_show;
 	imain_init(&data,&work);
 	imain_args(&data,argc,argv);
 	imain_prep(&data);
@@ -50,7 +50,6 @@ int main(int argc, char* argv[])
 	imain_show(&data);
 	if (!(data.flag&IFLAG_ERROR)) gtk_main();
 	imain_free(&data);
-	putchar('\n');
 	return 0;
 }
 /*----------------------------------------------------------------------------*/
