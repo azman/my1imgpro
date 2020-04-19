@@ -84,6 +84,9 @@
 #ifndef __MY1IMAGE_NO_MAIN__
 #define __MY1IMAGE_NO_MAIN__
 #endif
+#ifndef __MY1IMAGE_NO_DATA__
+#define __MY1IMAGE_NO_DATA__
+#endif
 #endif
 #ifndef __MY1IMAGE_NO_MAIN__
 #include "my1image_grab.c"

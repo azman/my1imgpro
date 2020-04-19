@@ -78,12 +78,12 @@ applications.
 Sample application(s)
 ---------------------
 
-Three sample applications: resizer, imgload and testhsv.
+Three sample applications: imgsize, imgload and hsvtest.
 
-- resizer: (my1image_resize.c) application to demonstrate image resizing
+- imgsize: (imgsize.c) application to demonstrate image resizing
            functions of my1imgpro
-- imgload: (my1image_loader.c) loads and optionally save an image file into
+- imgload: (imgload.c) loads and optionally save an image file into
            supported format AND C source code (targetting embedded application)
-- testhsv: (my1image_testhsv.c) application to test HSV color representation
+- hsvtest: (hsvtest.c) application to test HSV color representation
 
 The code in chkimage.c is a simple application code to test my1image bundle.

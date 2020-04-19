@@ -23,9 +23,9 @@ VISAPPW = my1image_task.o my1image_view.o my1image_appw.o
 VISBASE = my1video_base.o my1video_data.o
 OBJSVIS = $(IMGBASE) $(IMGFILE) $(IMGUTIL) $(IMGWORK) $(VISAPPW) $(IMGMONO)
 OBJSVIS += $(IMGMNEW) my1libav_grab.o $(VISBASE) $(TESTVIS).o
-CHKSIZE = resizer
+CHKSIZE = imgsize
 CHKLOAD = imgload
-HSVTEST = testhsv
+HSVTEST = hsvtest
 TOOLLST = $(CHKSIZE) $(CHKLOAD) $(HSVTEST)
 
 CFLAGS += -Wall
@@ -47,35 +47,39 @@ endif
 # override flags for my1image bundle
 test: DFLAGS = -D__MY1IMAGE_DO_MAIN__
 
-$(CHKLOAD): DFLAGS = -D__MY1IMAGE_FILE_ONLY__
+loader: DFLAGS = -D__MY1IMAGE_FILE_ONLY__
 
-.PHONY: main test all image video new debug clean tools
+resizer: DFLAGS = -D__MY1IMAGE_NO_HSV__ -D__MY1IMAGE_NO_VIEW__
+
+testhsv: DFLAGS = -D__MY1IMAGE_NO_UTIL__ -D__MY1IMAGE_NO_VIEW__
+
+.PHONY: main test all image video new debug clean tools loader resizer testhsv
 
 main: image
 
 test: chkimage.o my1libav_grab.o $(IMGMAIN)
 	$(LD) $(CFLAGS) -o $(TESTIMG) $+ $(LFLAGS) $(GFLAGS) $(OFLAGS)
 
-all: image video $(TOOLLST)
+all: image video
 
 image: $(TESTIMG)
 
 video: $(TESTVIS)
 
-tools: $(TOOLLST)
+tools: testhsv resizer loader
 
 new: clean main
 
 debug: new
 
-$(CHKSIZE): $(IMGBASE) $(IMGFILE) my1image_resize.o
-	$(LD) $(CFLAGS) -o $@ $+ $(LFLAGS) $(GFLAGS)
+resizer: $(IMGMAIN) $(CHKSIZE).o
+	$(LD) $(CFLAGS) -o $(CHKSIZE) $+ $(LFLAGS) $(GFLAGS)
 
-$(CHKLOAD): $(IMGMAIN) my1image_loader.o
-	$(LD) $(CFLAGS) -o $@ $+ $(LFLAGS) $(GFLAGS)
+loader: $(IMGMAIN) $(CHKLOAD).o
+	$(LD) $(CFLAGS) -o $(CHKLOAD) $+ $(LFLAGS) $(GFLAGS)
 
-$(HSVTEST): $(IMGBASE) my1image_testhsv.o
-	$(LD) $(CFLAGS) -o $@ $+ $(LFLAGS) $(GFLAGS)
+testhsv: $(IMGMAIN) $(HSVTEST).o
+	$(LD) $(CFLAGS) -o $(HSVTEST) $+ $(LFLAGS) $(GFLAGS)
 
 ${TESTIMG}: $(OBJSIMG)
 	$(LD) $(CFLAGS) -o $@ $+ $(LFLAGS) $(GFLAGS)
