@@ -4,10 +4,10 @@
 /*----------------------------------------------------------------------------*/
 typedef struct _my1image_t
 {
-	int cols,rows;
+	int *data; /* 1-d vector for 2-d image */
 	int size; /* memory is cheap - precalculate this! */
 	int mask; /* general flag - can store rgb-encoded int! */
-	int *data; /* 1-d vector for 2-d image */
+	int cols,rows;
 }
 my1image_t;
 /*----------------------------------------------------------------------------*/
