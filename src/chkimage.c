@@ -65,10 +65,10 @@ int args_what(void* data, void* that, void* xtra)
 	char** argv = (char**) xtra;
 	my1dotask_t *dotask = (my1dotask_t*)data;
 	my1iwhat_t *what = (my1iwhat_t*)dotask->data;
-	my1imain_t *main = (my1imain_t*)dotask->xtra;
-	my1igrab_t *grab = (my1igrab_t*)&main->grab;
+	my1imain_t *mdat = (my1imain_t*)dotask->xtra;
+	my1igrab_t *grab = (my1igrab_t*)&mdat->grab;
 	argc = *temp;
-	if (main->flag&IFLAG_ERROR) return 0;
+	if (mdat->flag&IFLAG_ERROR) return 0;
 	/* re-check parameter for video option */
 	loop = 1;
 	if (argc>2)
@@ -85,7 +85,7 @@ int args_what(void* data, void* that, void* xtra)
 		}
 		else if (strncmp(grab->pick,"--blank",8))
 		{
-			main->flag |= IFLAG_ERROR_ARGS;
+			mdat->flag |= IFLAG_ERROR_ARGS;
 		}
 	}
 	/* setup grabber */
@@ -93,8 +93,8 @@ int args_what(void* data, void* that, void* xtra)
 	{
 		grab->do_grab.task = igrab_grab_video;
 		grab->do_grab.data = (void*)what;
-		grab->grab = &main->load;
-		main->flag |= IFLAG_VIDEO_MODE;
+		grab->grab = &mdat->load;
+		mdat->flag |= IFLAG_VIDEO_MODE;
 	}
 	/* continue with the rest */
 	for (++loop;loop<argc;loop++)
@@ -109,8 +109,8 @@ int args_what(void* data, void* that, void* xtra)
 /*----------------------------------------------------------------------------*/
 int prep_what(void* data, void* that, void* xtra)
 {
-	my1imain_t *main = (my1imain_t*)that;
-	main->list = image_work_create_all();
+	my1imain_t *mdat = (my1imain_t*)that;
+	mdat->list = image_work_create_all();
 	return 0;
 }
 /*----------------------------------------------------------------------------*/
@@ -118,21 +118,21 @@ int exec_what(void* data, void* that, void* xtra)
 {
 	my1dotask_t *dotask = (my1dotask_t*)data;
 	my1iwhat_t *what = (my1iwhat_t*)dotask->data;
-	my1imain_t *main = (my1imain_t*)that;
+	my1imain_t *mdat = (my1imain_t*)that;
 	if (what->flag&WFLAG_SHOW_ORIGINAL)
-		what->orig = main->show;
-	image_copy(&what->buff,main->show);
-	main->show = &what->buff;
+		what->orig = mdat->show;
+	image_copy(&what->buff,mdat->show);
+	mdat->show = &what->buff;
 	return 0;
 }
 /*----------------------------------------------------------------------------*/
 int what_on_keychk(void* data, void* that, void* xtra)
 {
 	my1dotask_t *dotask = (my1dotask_t*)data;
-	my1imain_t *main = (my1imain_t*) dotask->xtra;
+	my1imain_t *mdat = (my1imain_t*) dotask->xtra;
 	GdkEventKey *event = (GdkEventKey*) xtra;
 	if (event->keyval == GDK_KEY_z)
-		imain_menu_filter_enable(main,!(main->flag&IFLAG_FILTER_EXE));
+		imain_menu_filter_enable(mdat,!(mdat->flag&IFLAG_FILTER_EXE));
 	return 0;
 }
 /*----------------------------------------------------------------------------*/
@@ -140,23 +140,23 @@ int show_what(void* data, void* that, void* xtra)
 {
 	my1dotask_t *dotask = (my1dotask_t*)data;
 	my1iwhat_t *what = (my1iwhat_t*)dotask->data;
-	my1imain_t *main = (my1imain_t*)that;
+	my1imain_t *mdat = (my1imain_t*)that;
 	if (what->orig)
 	{
 		/* show original */
 		image_show(what->orig,&what->awin,"Source Image");
 		/* modify name for main win */
-		image_appw_name(&main->iwin,"Processed Image");
+		image_appw_name(&mdat->iwin,"Processed Image");
 	}
-	if (!(main->flag&IFLAG_VIDEO_MODE))
-		image_appw_domenu(&main->iwin);
-	imain_domenu_filters(main);
-	image_appw_domenu_quit(&main->iwin);
+	if (!(mdat->flag&IFLAG_VIDEO_MODE))
+		image_appw_domenu(&mdat->iwin);
+	imain_domenu_filters(mdat);
+	image_appw_domenu_quit(&mdat->iwin);
 	if (what->flag&WFLAG_VIDEO_MODE)
 	{
-		dotask_make(&main->iwin.keychk,what_on_keychk,(void*)what);
-		main->iwin.keychk.xtra = (void*) main;
-		imain_loop(main,0);
+		dotask_make(&mdat->iwin.keychk,what_on_keychk,(void*)what);
+		mdat->iwin.keychk.xtra = (void*) mdat;
+		imain_loop(mdat,0);
 	}
 	return 0;
 }
