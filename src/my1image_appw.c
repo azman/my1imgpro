@@ -68,6 +68,19 @@ gboolean appw_on_done_all(gpointer data)
 	return TRUE;
 }
 /*----------------------------------------------------------------------------*/
+/** no longer needed if using gtk+ 3.22 */
+void appw_set_menu_position(GtkMenu *menu, gint *x, gint *y,
+	gboolean *push_in, gpointer user_data)
+{
+	GtkAllocation alloc;
+	GtkWidget *window = (GtkWidget*)user_data;
+	GdkWindow *gdkwin = gtk_widget_get_window(window);
+	gdk_window_get_origin(gdkwin, x, y);
+	gtk_widget_get_allocation(window,&alloc);
+	*x += alloc.x + (alloc.width>>1);
+	*y += alloc.y + (alloc.height>>1);
+}
+/*----------------------------------------------------------------------------*/
 gboolean appw_on_key_press(GtkWidget *widget, GdkEventKey *kevent,
 	gpointer data)
 {
@@ -83,8 +96,12 @@ gboolean appw_on_key_press(GtkWidget *widget, GdkEventKey *kevent,
 		}
 		else if(kevent->keyval == GDK_KEY_Return)
 		{
+			/** requires gtk+ 3.22
 			gtk_menu_popup_at_widget(GTK_MENU(appw->domenu),appw->window,
 				GDK_GRAVITY_CENTER,GDK_GRAVITY_NORTH_WEST,0x0);
+			*/
+			gtk_menu_popup(GTK_MENU(appw->domenu),0x0,0x0,
+				&appw_set_menu_position,(gpointer)appw->window,0x0,0x0);
 			return TRUE;
 		}
 		else if(kevent->keyval == GDK_KEY_f)
@@ -114,7 +131,11 @@ gboolean appw_on_mouse_click(GtkWidget *widget,
 		{
 			if (appw->domenu)
 			{
+				/** requires gtk+ 3.22
 				gtk_menu_popup_at_pointer(GTK_MENU(appw->domenu),0x0);
+				*/
+				gtk_menu_popup(GTK_MENU(appw->domenu),0x0,0x0,0x0,0x0,
+					event->button,event->time);
 				done = TRUE;
 			}
 		}

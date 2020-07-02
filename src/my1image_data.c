@@ -28,13 +28,13 @@ int image_data_init(void* data, void* that, void* xtra)
 {
 	my1dotask_t *dotask = (my1dotask_t*)data;
 	my1image_data_t *what = (my1image_data_t*)dotask->data;
-	my1imain_t *main = (my1imain_t*)that;
+	my1imain_t *mdat = (my1imain_t*)that;
 	what->dosize = 0;
 	what->maxh = DEFAULT_MAX_HEIGHT;
 	what->maxw = DEFAULT_MAX_WIDTH;
-	image_hist_init(&what->hist,&main->iwin);
+	image_hist_init(&what->hist,&mdat->iwin);
 	image_init(&what->buff);
-	dotask_make(&main->iwin.view.domore,
+	dotask_make(&mdat->iwin.view.domore,
 		image_data_histogram,(void*)&what->hist);
 	return 0;
 }
@@ -54,7 +54,7 @@ int image_data_args(void* data, void* that, void* xtra)
 	char** argv = (char**) xtra;
 	my1dotask_t *dotask = (my1dotask_t*)data;
 	my1image_data_t *what = (my1image_data_t*)dotask->data;
-	my1imain_t *main = (my1imain_t*)dotask->xtra;
+	my1imain_t *mdat = (my1imain_t*)dotask->xtra;
 	argc = *temp;
 	/* save this to load filter later! */
 	what->argc = argc;
@@ -62,8 +62,8 @@ int image_data_args(void* data, void* that, void* xtra)
 	if (argc<2)
 	{
 		/* override error and load blank! */
-		main->flag = IFLAG_OK;
-		main->grab.pick = (char*) BLANK_IMAGE;
+		mdat->flag = IFLAG_OK;
+		mdat->grab.pick = (char*) BLANK_IMAGE;
 		return 0;
 	}
 	/* check parameter? */
@@ -90,9 +90,9 @@ int image_data_prep(void* data, void* that, void* xtra)
 	char** argv;
 	my1dotask_t *dotask = (my1dotask_t*)data;
 	my1image_data_t *what = (my1image_data_t*)dotask->data;
-	my1imain_t *main = (my1imain_t*)that;
-	if (!main->list)
-		main->list = image_work_create_all();
+	my1imain_t *mdat = (my1imain_t*)that;
+	if (!mdat->list)
+		mdat->list = image_work_create_all();
 	argc = what->argc;
 	argv = what->argv;
 	/** ignore switches */
@@ -103,7 +103,7 @@ int image_data_prep(void* data, void* that, void* xtra)
 	}
 	/** check requested filters */
 	for (;loop<argc;loop++)
-		imain_filter_doload(main,argv[loop]);
+		imain_filter_doload(mdat,argv[loop]);
 	return 0;
 }
 /*----------------------------------------------------------------------------*/
@@ -112,17 +112,17 @@ int image_data_exec(void* data, void* that, void* xtra)
 	int rows, cols;
 	my1dotask_t *dotask = (my1dotask_t*)data;
 	my1image_data_t *what = (my1image_data_t*)dotask->data;
-	my1imain_t *main = (my1imain_t*)that;
+	my1imain_t *mdat = (my1imain_t*)that;
 	if (what->dosize)
 	{
-		rows = main->show->rows;
-		cols = main->show->cols;
+		rows = mdat->show->rows;
+		cols = mdat->show->cols;
 		if (rows>what->maxh) rows = what->maxh;
 		if (cols>what->maxw) cols = what->maxw;
-		image_size_this(main->show,&what->buff,rows,cols);
+		image_size_this(mdat->show,&what->buff,rows,cols);
 	}
-	else image_copy(&what->buff,main->show);
-	main->show = &what->buff;
+	else image_copy(&what->buff,mdat->show);
+	mdat->show = &what->buff;
 	return 0;
 }
 /*----------------------------------------------------------------------------*/
@@ -187,14 +187,14 @@ int image_data_show(void* data, void* that, void* xtra)
 {
 	my1dotask_t *dotask = (my1dotask_t*)data;
 	my1image_data_t *what = (my1image_data_t*)dotask->data;
-	my1imain_t *main = (my1imain_t*)that;
-	dotask_make(&main->iwin.clickL,data_on_clickL,(void*)what);
-	dotask_make(&main->iwin.clickM,data_on_clickM,(void*)what);
-	image_appw_domenu(&main->iwin);
-	imain_domenu_filters(main);
-	image_data_domenu_extra(what,main->iwin.domenu);
-	image_appw_domenu_quit(&main->iwin);
-	image_appw_stat_hide(&main->iwin,0);
+	my1imain_t *mdat = (my1imain_t*)that;
+	dotask_make(&mdat->iwin.clickL,data_on_clickL,(void*)what);
+	dotask_make(&mdat->iwin.clickM,data_on_clickM,(void*)what);
+	image_appw_domenu(&mdat->iwin);
+	imain_domenu_filters(mdat);
+	image_data_domenu_extra(what,mdat->iwin.domenu);
+	image_appw_domenu_quit(&mdat->iwin);
+	image_appw_stat_hide(&mdat->iwin,0);
 	image_hist_make(&what->hist);
 	return 0;
 }
