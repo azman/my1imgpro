@@ -85,10 +85,6 @@ int args_what(void* data, void* that, void* xtra)
 			grab->pick = argv[++loop];
 			what->flag |= WFLAG_VIDEO_LIVE;
 		}
-		else if (strncmp(grab->pick,"--blank",8))
-		{
-			mdat->flag |= IFLAG_ERROR_ARGS;
-		}
 	}
 	/* setup grabber */
 	if (what->flag&WFLAG_VIDEO_MODE)
