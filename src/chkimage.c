@@ -13,6 +13,7 @@ typedef struct _my1iwhat_t
 	my1libav_grab_t avgrab;
 	my1image_appw_t awin;
 	my1image_t buff, *orig;
+	char *list; /* filter list from args */
 	int flag;
 }
 my1iwhat_t;
@@ -26,6 +27,7 @@ int init_what(void* data, void* that, void* xtra)
 	image_appw_init(&what->awin);
 	image_init(&what->buff);
 	what->orig = 0x0;
+	what->list = 0x0;
 	what->flag = 0;
 	return 0;
 }
@@ -101,6 +103,8 @@ int args_what(void* data, void* that, void* xtra)
 	{
 		if (!strncmp(argv[loop],"--original",10))
 			what->flag |= WFLAG_SHOW_ORIGINAL;
+		else if (!strncmp(argv[loop],"--filter",9))
+			what->list = argv[++loop];
 		else
 			printf("-- Unknown param '%s'!\n",argv[loop]);
 	}
@@ -109,8 +113,33 @@ int args_what(void* data, void* that, void* xtra)
 /*----------------------------------------------------------------------------*/
 int prep_what(void* data, void* that, void* xtra)
 {
+	my1dotask_t *dotask = (my1dotask_t*)data;
+	my1iwhat_t *what = (my1iwhat_t*)dotask->data;
 	my1imain_t *mdat = (my1imain_t*)that;
 	mdat->list = image_work_create_all();
+	/** check requested filters */
+	if (what->list)
+	{
+		char* pchk = what->list;
+		int loop = 0, curr = 0, stop = 0;
+		while (!stop)
+		{
+			switch (pchk[loop])
+			{
+				case 0x0: stop = 1;
+				case ',':
+					pchk[loop] = 0x0;
+					printf("-- Loading filter '%s'... ",&pchk[curr]);
+					if (imain_filter_doload(mdat,&pchk[curr]))
+						printf("OK!\n");
+					else printf("not found?!\n");
+					if (!stop) pchk[loop] = ',';
+					curr = ++loop;
+					break;
+				default: loop++;
+			}
+		}
+	}
 	return 0;
 }
 /*----------------------------------------------------------------------------*/
