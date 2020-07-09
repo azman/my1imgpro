@@ -45,13 +45,15 @@ void imain_free(my1imain_t* imain)
 	igrab_free(&imain->grab);
 	image_appw_free(&imain->iwin);
 	image_free(&imain->load);
+	if ((imain->flag&IFLAG_ERROR_2END)==IFLAG_ERROR_2END)
+		imain->flag = IFLAG_OK;
 	if (imain->flag&IFLAG_ERROR)
 		printf("-- [FLAG] %08x\n",imain->flag);
 }
 /*----------------------------------------------------------------------------*/
 void imain_args(my1imain_t* imain, int argc, char* argv[])
 {
-	if (argc<2) imain->flag |= IFLAG_ERROR_ARGS;
+	if (argc<2) imain->flag |= IFLAG_ERROR_2END;
 	else
 	{
 		imain->grab.pick = argv[1];

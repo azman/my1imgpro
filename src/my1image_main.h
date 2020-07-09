@@ -25,10 +25,11 @@ void iwork_make(my1iwork_t* work, pdata_t data); /* link all data! */
 /*----------------------------------------------------------------------------*/
 #define IFLAG_OK 0
 #define IFLAG_ERROR (~(~0U>>1))
-#define IFLAG_ERROR_ARGS (IFLAG_ERROR|0x010)
-#define IFLAG_ERROR_LOAD (IFLAG_ERROR|0x020)
-#define IFLAG_ERROR_LIST1 (IFLAG_ERROR|0x040)
-#define IFLAG_ERROR_LIST2 (IFLAG_ERROR|0x080)
+#define IFLAG_ERROR_2END (IFLAG_ERROR|0x010)
+#define IFLAG_ERROR_ARGS (IFLAG_ERROR|0x020)
+#define IFLAG_ERROR_LOAD (IFLAG_ERROR|0x040)
+#define IFLAG_ERROR_LIST1 (IFLAG_ERROR|0x100)
+#define IFLAG_ERROR_LIST2 (IFLAG_ERROR|0x200)
 /*----------------------------------------------------------------------------*/
 #define IFLAG_VIDEO_MODE 0x01
 #define IFLAG_FILTER_RUN 0x02
