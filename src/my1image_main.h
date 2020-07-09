@@ -20,6 +20,9 @@ void iwork_make(my1iwork_t* work, pdata_t data); /* link all data! */
 #include "my1image_util.h"
 #include "my1image_grab.h"
 /*----------------------------------------------------------------------------*/
+#define BLANK_IMAGE_OPT "--blank"
+#define BLANK_IMAGE_OPT_SIZE 8
+/*----------------------------------------------------------------------------*/
 #define DEF_WIDTH 320
 #define DEF_HEIGHT 240
 /*----------------------------------------------------------------------------*/
@@ -63,9 +66,9 @@ void imain_show(my1imain_t* imain);
 void imain_loop(my1imain_t* imain, int delta_ms);
 void imain_menu_filter_enable(my1imain_t *imain, int enable);
 void imain_domenu_filters(my1imain_t* imain);
-void imain_filter_dolist(my1imain_t* data, filter_info_t* info);
-void imain_filter_doload(my1imain_t* data, char* name);
-void imain_filter_unload(my1imain_t* data, char* name);
+my1ipass_t* imain_filter_dolist(my1imain_t* data, filter_info_t* info);
+my1ipass_t* imain_filter_doload(my1imain_t* data, char* name);
+my1ipass_t* imain_filter_unload(my1imain_t* data, char* name);
 void imain_filter_enable(my1imain_t* data, int enable);
 void imain_filter_doexec(my1imain_t* data);
 /*----------------------------------------------------------------------------*/

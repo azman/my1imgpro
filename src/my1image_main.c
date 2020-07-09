@@ -70,7 +70,7 @@ void imain_args(my1imain_t* imain, int argc, char* argv[])
 void imain_prep(my1imain_t* imain)
 {
 	if (imain->flag&IFLAG_ERROR) return;
-	if (!strncmp(imain->grab.pick,"--blank",7))
+	if (!strncmp(imain->grab.pick,BLANK_IMAGE_OPT,BLANK_IMAGE_OPT_SIZE))
 	{
 		image_make(&imain->load,DEF_HEIGHT,DEF_WIDTH);
 		image_fill(&imain->load,BLACK);
@@ -327,17 +327,18 @@ void imain_loop(my1imain_t* imain, int delta_ms)
 	image_appw_task(&imain->iwin,imain_on_task_timer,imain->tdel);
 }
 /*----------------------------------------------------------------------------*/
-void imain_filter_dolist(my1imain_t* imain, filter_info_t* info)
+my1ipass_t* imain_filter_dolist(my1imain_t* imain, filter_info_t* info)
 {
 	my1ipass_t* temp = filter_search(imain->list,info->name);
 	if (temp)
 	{
 		imain->flag |= IFLAG_ERROR_LIST1;
-		return;
+		return 0x0;
 	}
 	temp = info_create_filter(info);
 	if (temp) imain->list = filter_insert(imain->list,temp);
 	else imain->flag |= IFLAG_ERROR_LIST2;
+	return temp;
 }
 /*----------------------------------------------------------------------------*/
 /**
@@ -354,7 +355,7 @@ void print_filters(my1ipass_t* pass)
 	fflush(stdout);
 }
 **/
-void imain_filter_doload(my1imain_t* imain, char* name)
+my1ipass_t* imain_filter_doload(my1imain_t* imain, char* name)
 {
 	my1ipass_t *find, *temp = 0x0;
 	find = filter_search(imain->list,name);
@@ -368,12 +369,13 @@ void imain_filter_doload(my1imain_t* imain, char* name)
 		/**print_filters(imain->curr);*/
 		imain->flag &= ~IFLAG_FILTER_CHK;
 	}
+	return temp;
 }
 /*----------------------------------------------------------------------------*/
-void imain_filter_unload(my1imain_t* imain, char* name)
+my1ipass_t* imain_filter_unload(my1imain_t* imain, char* name)
 {
 	int size, loop = 0;
-	my1ipass_t* pass = imain->curr;
+	my1ipass_t* pass = imain->curr, *temp = 0x0;
 	imain->flag |= IFLAG_FILTER_CHK;
 	while (imain->flag&IFLAG_FILTER_RUN);
 	while (name[0]!='-') { name++; } name++;
@@ -386,6 +388,7 @@ void imain_filter_unload(my1imain_t* imain, char* name)
 			{
 				imain->curr = filter_remove(imain->curr,loop,1);
 				/**print_filters(imain->curr);*/
+				temp = pass;
 				break;
 			}
 		}
@@ -393,6 +396,7 @@ void imain_filter_unload(my1imain_t* imain, char* name)
 		pass = pass->next;
 	}
 	imain->flag &= ~IFLAG_FILTER_CHK;
+	return temp;
 }
 /*----------------------------------------------------------------------------*/
 void imain_filter_doexec(my1imain_t* imain)
