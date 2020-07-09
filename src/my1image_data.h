@@ -10,9 +10,9 @@
 typedef struct _my1image_data_t
 {
 	int dosize, maxh, maxw;
-	int argc; char** argv; /** need a copy to load filter list */
 	my1image_hist_t hist;
 	my1image_t buff;
+	char *list; /* filter list from args */
 }
 my1image_data_t;
 /*----------------------------------------------------------------------------*/

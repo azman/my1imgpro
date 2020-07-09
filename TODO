@@ -1,7 +1,3 @@
-- improve 'auto-insert' png module
-- review MY1IMAGE_BASIC options
-  = basic image structure with ALL operations
-  = separate file option?
-  = NO viewing stuffs
+- improve 'auto-insert' png module?
 - rewrite my1image_hist to only draw canvas
   = reuse appw?

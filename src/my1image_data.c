@@ -14,7 +14,7 @@
 /*----------------------------------------------------------------------------*/
 #include <gdk/gdkkeysyms.h>
 /*----------------------------------------------------------------------------*/
-static const char BLANK_IMAGE[] = "--blank";
+static const char BLANK_IMAGE[] = BLANK_IMAGE_OPT;
 /*----------------------------------------------------------------------------*/
 int image_data_histogram(void* data, void* that, void* xtra)
 {
@@ -34,6 +34,7 @@ int image_data_init(void* data, void* that, void* xtra)
 	what->maxw = DEFAULT_MAX_WIDTH;
 	image_hist_init(&what->hist,&mdat->iwin);
 	image_init(&what->buff);
+	what->list = 0x0;
 	dotask_make(&mdat->iwin.view.domore,
 		image_data_histogram,(void*)&what->hist);
 	return 0;
@@ -56,17 +57,14 @@ int image_data_args(void* data, void* that, void* xtra)
 	my1image_data_t *what = (my1image_data_t*)dotask->data;
 	my1imain_t *mdat = (my1imain_t*)dotask->xtra;
 	argc = *temp;
-	/* save this to load filter later! */
-	what->argc = argc;
-	what->argv = argv;
 	if (argc<2)
 	{
-		/* override error and load blank! */
+		/* override 2end error and load blank! */
 		mdat->flag = IFLAG_OK;
 		mdat->grab.pick = (char*) BLANK_IMAGE;
 		return 0;
 	}
-	/* check parameter? */
+	/* check args */
 	for (loop=2;loop<argc;loop++)
 	{
 		if (!strncmp(argv[loop],"--xmax",6))
@@ -79,31 +77,48 @@ int image_data_args(void* data, void* that, void* xtra)
 			what->maxh = atoi(argv[++loop]);
 			what->dosize = 1;
 		}
-		else printf("-- Unknown param '%s'!\n",argv[loop]);
+		else if (!strncmp(argv[loop],"--filter",9))
+		{
+			what->list = argv[++loop];
+		}
+		else
+			printf("-- Unknown argument '%s'!\n",argv[loop]);
 	}
 	return 0;
 }
 /*----------------------------------------------------------------------------*/
 int image_data_prep(void* data, void* that, void* xtra)
 {
-	int loop, argc;
-	char** argv;
+	int loop, curr, stop;
+	char* pchk;
 	my1dotask_t *dotask = (my1dotask_t*)data;
 	my1image_data_t *what = (my1image_data_t*)dotask->data;
 	my1imain_t *mdat = (my1imain_t*)that;
 	if (!mdat->list)
 		mdat->list = image_work_create_all();
-	argc = what->argc;
-	argv = what->argv;
-	/** ignore switches */
-	for (loop=2;loop<argc;loop++)
-	{
-		if (argv[loop][0]!='-') break;
-		loop++; /* all switches have params? */
-	}
 	/** check requested filters */
-	for (;loop<argc;loop++)
-		imain_filter_doload(mdat,argv[loop]);
+	if (what->list)
+	{
+		pchk = what->list;
+		loop = 0; curr = 0, stop = 0;
+		while (!stop)
+		{
+			switch (pchk[loop])
+			{
+				case 0x0: stop = 1;
+				case ',':
+					pchk[loop] = 0x0;
+					printf("-- Loading filter '%s'... ",&pchk[curr]);
+					if (imain_filter_doload(mdat,&pchk[curr]))
+						printf("OK!\n");
+					else printf("not found?!\n");
+					if (!stop) pchk[loop] = ',';
+					curr = ++loop;
+					break;
+				default: loop++;
+			}
+		}
+	}
 	return 0;
 }
 /*----------------------------------------------------------------------------*/
