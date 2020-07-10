@@ -163,12 +163,18 @@ my1image_t* filter_resize(my1image_t* img, my1image_t* res,
 	return res;
 }
 /*----------------------------------------------------------------------------*/
-void filter_resize_init(my1ifilter_t* filter)
+void filter_resize_init(my1ifilter_t* filter, my1ifilter_t* pclone)
 {
-	my1image_area_t *size;
+	my1image_area_t *size, *temp;
 	filter->data = malloc(sizeof(my1image_area_t));
 	size = (my1image_area_t*) filter->data;
-	image_area_make(size,0,0,RESIZE_DEF_H,RESIZE_DEF_W);
+	if (!pclone)
+		image_area_make(size,0,0,RESIZE_DEF_H,RESIZE_DEF_W);
+	else
+	{
+		temp = (my1image_area_t*) pclone->data;
+		image_area_make(size,0,0,temp->hval,temp->wval);
+	}
 }
 /*----------------------------------------------------------------------------*/
 void filter_resize_free(my1ifilter_t* filter)
@@ -291,7 +297,7 @@ my1image_t* filter_sobel(my1image_t* img, my1image_t* res,
 	return res;
 }
 /*----------------------------------------------------------------------------*/
-void filter_sobel_init(my1ifilter_t* filter)
+void filter_sobel_init(my1ifilter_t* filter, my1ifilter_t* pclone)
 {
 	int loop;
 	my1image_t *buff;

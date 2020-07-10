@@ -10,7 +10,8 @@ struct _my1image_filter_t;
 /*----------------------------------------------------------------------------*/
 typedef my1image_t* (*pfilter_t)(my1image_t* curr, my1image_t* next,
 	struct _my1image_filter_t* filter);
-typedef void (*pfsetup_t)(struct _my1image_filter_t* filter);
+typedef void (*pfsetup_t)(struct _my1image_filter_t* filter,
+	struct _my1image_filter_t* pclone);
 typedef void (*pfclean_t)(struct _my1image_filter_t* filter);
 /*----------------------------------------------------------------------------*/
 #define FILTER_FLAG_NONE 0x00

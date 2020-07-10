@@ -119,7 +119,7 @@ my1ifilter_t* filter_cloned(my1ifilter_t* pass)
 		that->doinit = pass->doinit;
 		that->dofree = pass->dofree;
 		if (that->doinit)
-			that->doinit(that);
+			that->doinit(that,pass);
 	}
 	return that;
 }
@@ -177,7 +177,7 @@ my1ifilter_t* info_create_filter(filter_info_t* info)
 		that->doinit = info->fsetup;
 		that->dofree = info->fclean;
 		if (that->doinit)
-			that->doinit(that);
+			that->doinit(that,0x0);
 	}
 	return that;
 }
