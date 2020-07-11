@@ -43,7 +43,7 @@ Work-in-progress:
 
 For simplicity, building an image processing software based on this library
 can be done by just compiling in my1image.o (and including 'my1image.h').
-Refer to my1image.c or my1image.h on to learn control flags on which module
+Refer to my1image.c in order to find out the control flags on which module
 to exclude/include (e.g. -D__MY1IMAGE_NO_HSV__ to exclude HSV support).
 
 The my1image_view/my1image_appw module requires gtk, while the my1video_main
@@ -70,10 +70,10 @@ An easy way to allow myimgpro uses an image is to use IMageMagick's convert:
 - to get supported BMP, use 'convert image.file -compress none output.bmp'
 - to get supported PNM, use 'convert image.file -compress none output.pnm'
 
-A third format (PNG) is separated, but can easily be inserted into main code
-when needed (e.g. see my1image_test.c and my1image_loader.c). This is simply
-because the code is slightly cumbersome and may not be needed for simple
-applications.
+A third format (PNG) is also supported (load only) but not included into
+'library' by default because the code is slightly cumbersome and is not needed
+for most applications. It can easily be inserted when needed (e.g. see
+my1image_test.c and my1image_loader.c).
 
 Sample application(s)
 ---------------------
