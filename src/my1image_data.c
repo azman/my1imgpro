@@ -18,7 +18,7 @@ static const char BLANK_IMAGE[] = BLANK_IMAGE_OPT;
 /*----------------------------------------------------------------------------*/
 int image_data_histogram(void* data, void* that, void* xtra)
 {
-	my1dotask_t *task = (my1dotask_t*)data;
+	my1itask_t *task = (my1itask_t*)data;
 	my1image_hist_t* hist = (my1image_hist_t*) task->data;
 	image_hist_show(hist);
 	return 0;
@@ -26,8 +26,8 @@ int image_data_histogram(void* data, void* that, void* xtra)
 /*----------------------------------------------------------------------------*/
 int image_data_init(void* data, void* that, void* xtra)
 {
-	my1dotask_t *dotask = (my1dotask_t*)data;
-	my1image_data_t *what = (my1image_data_t*)dotask->data;
+	my1itask_t *task = (my1itask_t*)data;
+	my1image_data_t *what = (my1image_data_t*)task->data;
 	my1imain_t *mdat = (my1imain_t*)that;
 	what->dosize = 0;
 	what->maxh = DEFAULT_MAX_HEIGHT;
@@ -35,15 +35,15 @@ int image_data_init(void* data, void* that, void* xtra)
 	image_hist_init(&what->hist,&mdat->iwin);
 	image_init(&what->buff);
 	what->list = 0x0;
-	dotask_make(&mdat->iwin.view.domore,
+	itask_make(&mdat->iwin.view.domore,
 		image_data_histogram,(void*)&what->hist);
 	return 0;
 }
 /*----------------------------------------------------------------------------*/
 int image_data_free(void* data, void* that, void* xtra)
 {
-	my1dotask_t *dotask = (my1dotask_t*)data;
-	my1image_data_t *what = (my1image_data_t*)dotask->data;
+	my1itask_t *task = (my1itask_t*)data;
+	my1image_data_t *what = (my1image_data_t*)task->data;
 	image_free(&what->buff);
 	image_hist_free(&what->hist);
 	return 0;
@@ -53,9 +53,9 @@ int image_data_args(void* data, void* that, void* xtra)
 {
 	int loop, argc, *temp = (int*) that;
 	char** argv = (char**) xtra;
-	my1dotask_t *dotask = (my1dotask_t*)data;
-	my1image_data_t *what = (my1image_data_t*)dotask->data;
-	my1imain_t *mdat = (my1imain_t*)dotask->xtra;
+	my1itask_t *task = (my1itask_t*)data;
+	my1image_data_t *what = (my1image_data_t*)task->data;
+	my1imain_t *mdat = (my1imain_t*)task->temp;
 	argc = *temp;
 	if (argc<2)
 	{
@@ -91,8 +91,8 @@ int image_data_prep(void* data, void* that, void* xtra)
 {
 	int loop, curr, stop;
 	char* pchk;
-	my1dotask_t *dotask = (my1dotask_t*)data;
-	my1image_data_t *what = (my1image_data_t*)dotask->data;
+	my1itask_t *task = (my1itask_t*)data;
+	my1image_data_t *what = (my1image_data_t*)task->data;
 	my1imain_t *mdat = (my1imain_t*)that;
 	if (!mdat->list)
 		mdat->list = image_work_create_all();
@@ -125,8 +125,8 @@ int image_data_prep(void* data, void* that, void* xtra)
 int image_data_exec(void* data, void* that, void* xtra)
 {
 	int rows, cols;
-	my1dotask_t *dotask = (my1dotask_t*)data;
-	my1image_data_t *what = (my1image_data_t*)dotask->data;
+	my1itask_t *task = (my1itask_t*)data;
+	my1image_data_t *what = (my1image_data_t*)task->data;
 	my1imain_t *mdat = (my1imain_t*)that;
 	if (what->dosize)
 	{
@@ -200,11 +200,11 @@ int data_on_clickL(void* args, void* that, void* xtra)
 /*----------------------------------------------------------------------------*/
 int image_data_show(void* data, void* that, void* xtra)
 {
-	my1dotask_t *dotask = (my1dotask_t*)data;
-	my1image_data_t *what = (my1image_data_t*)dotask->data;
+	my1itask_t *task = (my1itask_t*)data;
+	my1image_data_t *what = (my1image_data_t*)task->data;
 	my1imain_t *mdat = (my1imain_t*)that;
-	dotask_make(&mdat->iwin.clickL,data_on_clickL,(void*)what);
-	dotask_make(&mdat->iwin.clickM,data_on_clickM,(void*)what);
+	itask_make(&mdat->iwin.clickL,data_on_clickL,(void*)what);
+	itask_make(&mdat->iwin.clickM,data_on_clickM,(void*)what);
 	image_appw_domenu(&mdat->iwin);
 	imain_domenu_filters(mdat);
 	image_data_domenu_extra(what,mdat->iwin.domenu);

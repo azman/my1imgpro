@@ -8,8 +8,8 @@
 /*----------------------------------------------------------------------------*/
 typedef struct _my1iwork_t
 {
-	my1dotask_t init, free, args;
-	my1dotask_t prep, proc, show;
+	my1itask_t init, free, args;
+	my1itask_t prep, proc, show;
 	pdata_t data;
 }
 my1iwork_t;

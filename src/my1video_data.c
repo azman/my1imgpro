@@ -12,8 +12,8 @@
 /*----------------------------------------------------------------------------*/
 int video_data_init(void* data, void* that, void* xtra)
 {
-	my1dotask_t *dotask = (my1dotask_t*)data;
-	my1vdata_t *what = (my1vdata_t*)dotask->data;
+	my1itask_t *task = (my1itask_t*)data;
+	my1vdata_t *what = (my1vdata_t*)task->data;
 	my1imain_t *main = (my1imain_t*)that;
 	libav1_init(&what->vgrab,&main->load);
 	what->vgrab.iloop = 0; /* no need to check index, do it here! */
@@ -25,8 +25,8 @@ int video_data_init(void* data, void* that, void* xtra)
 /*----------------------------------------------------------------------------*/
 int video_data_free(void* data, void* that, void* xtra)
 {
-	my1dotask_t *dotask = (my1dotask_t*)data;
-	my1vdata_t *what = (my1vdata_t*)dotask->data;
+	my1itask_t *task = (my1itask_t*)data;
+	my1vdata_t *what = (my1vdata_t*)task->data;
 	video_free(&what->video);
 	image_appw_free(&what->vappw);
 	libav1_free(&what->vgrab);
@@ -76,10 +76,10 @@ void video_data_grab(my1vdata_t* vmain, my1imain_t* imain)
 /*----------------------------------------------------------------------------*/
 int igrab_grab_video(void* data, void* that, void* xtra)
 {
-	my1dotask_t* ptemp = (my1dotask_t*) data;
+	my1itask_t* ptemp = (my1itask_t*) data;
 	my1image_grab_t* igrab = (my1image_grab_t*) that;
 	my1vdata_t *what = (my1vdata_t*)ptemp->data;
-	my1imain_t *main = (my1imain_t*)ptemp->xtra;
+	my1imain_t *main = (my1imain_t*)ptemp->temp;
 	my1libav_grab_t* vgrab = &what->vgrab;
 	if (!vgrab->flag)
 	{
@@ -109,9 +109,9 @@ int video_data_args(void* data, void* that, void* xtra)
 {
 	int loop, argc, *temp = (int*) that;
 	char** argv = (char**) xtra;
-	my1dotask_t *dotask = (my1dotask_t*)data;
-	my1vdata_t *what = (my1vdata_t*)dotask->data;
-	my1imain_t *main = (my1imain_t*)dotask->xtra;
+	my1itask_t *task = (my1itask_t*)data;
+	my1vdata_t *what = (my1vdata_t*)task->data;
+	my1imain_t *main = (my1imain_t*)task->temp;
 	my1igrab_t *grab = (my1igrab_t*)&main->grab;
 	argc = *temp;
 	if (main->flag&IFLAG_ERROR) return 0;
@@ -129,7 +129,7 @@ int video_data_args(void* data, void* that, void* xtra)
 	main->flag |= IFLAG_VIDEO_MODE; /* mark for video display menu */
 	grab->do_grab.task = igrab_grab_video;
 	grab->do_grab.data = (void*)what;
-	grab->do_grab.xtra = (void*)main;
+	grab->do_grab.temp = (void*)main;
 	grab->grab = &main->load;
 	/* save these */
 	what->loop = loop;
@@ -147,8 +147,8 @@ int video_data_prep(void* data, void* that, void* xtra)
 /*----------------------------------------------------------------------------*/
 int video_data_exec(void* data, void* that, void* xtra)
 {
-	my1dotask_t *dotask = (my1dotask_t*)data;
-	my1vdata_t *what = (my1vdata_t*)dotask->data;
+	my1itask_t *task = (my1itask_t*)data;
+	my1vdata_t *what = (my1vdata_t*)task->data;
 	my1imain_t *main = (my1imain_t*)that;
 	image_copy(&what->video.image,main->show);
 	what->video.frame = &what->video.image;
@@ -159,8 +159,8 @@ int video_data_exec(void* data, void* that, void* xtra)
 int video_data_draw_index(void* data, void* that, void* xtra)
 {
 	my1image_view_t* view = (my1image_view_t*) that;
-	my1dotask_t *dotask = (my1dotask_t*)data;
-	my1vdata_t* vmain = (my1vdata_t*) dotask->data;
+	my1itask_t *itask = (my1itask_t*)data;
+	my1vdata_t* vmain = (my1vdata_t*) itask->data;
 	my1video_t* video = &vmain->video;
 	my1vgrab_t* vgrab = &vmain->vgrab;
 	gchar *buff = 0x0;
@@ -177,10 +177,10 @@ int video_data_draw_index(void* data, void* that, void* xtra)
 /*----------------------------------------------------------------------------*/
 int vmain_on_keychk(void* data, void* that, void* xtra)
 {
-	my1dotask_t *dotask = (my1dotask_t*)data;
+	my1itask_t *itask = (my1itask_t*)data;
 	my1ishow_t *vappw = (my1ishow_t*) that;
-	my1vdata_t *vmain = (my1vdata_t*) dotask->data;
-	my1imain_t *imain = (my1imain_t*) dotask->xtra;
+	my1vdata_t *vmain = (my1vdata_t*) itask->data;
+	my1imain_t *imain = (my1imain_t*) itask->temp;
 	my1video_t *video = (my1video_t*) &vmain->video;
 	GdkEventKey *event = (GdkEventKey*) xtra;
 	guint keyval = event->keyval;
@@ -275,16 +275,16 @@ int vmain_on_keychk(void* data, void* that, void* xtra)
 /*----------------------------------------------------------------------------*/
 int video_data_show(void* data, void* that, void* xtra)
 {
-	my1dotask_t *dotask = (my1dotask_t*)data;
-	my1vdata_t *what = (my1vdata_t*)dotask->data;
+	my1itask_t *task = (my1itask_t*)data;
+	my1vdata_t *what = (my1vdata_t*)task->data;
 	my1imain_t *main = (my1imain_t*)that;
 	/* modify name for main win */
 	image_appw_name(&main->iwin,"MY1Video Viewer");
 	imain_domenu_filters(main);
 	image_appw_domenu_quit(&main->iwin);
-	dotask_make(&main->iwin.view.domore,video_data_draw_index,(void*)what);
-	dotask_make(&main->iwin.keychk,vmain_on_keychk,(void*)what);
-	main->iwin.keychk.xtra = (void*) main;
+	itask_make(&main->iwin.view.domore,video_data_draw_index,(void*)what);
+	itask_make(&main->iwin.keychk,vmain_on_keychk,(void*)what);
+	main->iwin.keychk.temp = (void*) main;
 	imain_loop(main,0); /* control tdel? */
 	return 0;
 }

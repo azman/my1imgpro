@@ -22,18 +22,16 @@ void image_appw_init(my1image_appw_t* appw)
 	appw->gofull = 0;
 	appw->docopy = 1; /* by default, copy on make */
 	appw->nostat = 0; /* by default, show status bar */
-	appw->show = 0x0;
-	appw->dotask = 0x0;
-	appw->dodata = 0x0;
 	appw->show = &appw->buff; /* show MUST always point to valid space */
 	appw->orig = &appw->main; /* orig points to original image */
+	itask_make(&appw->task,0x0,0x0);
 	image_init(&appw->main);
 	image_init(&appw->buff);
 	image_view_init(&appw->view);
-	dotask_make(&appw->clickL,0x0,0x0);
-	dotask_make(&appw->clickM,0x0,0x0);
-	dotask_make(&appw->dodone,0x0,0x0);
-	dotask_make(&appw->keychk,0x0,0x0);
+	itask_make(&appw->clickL,0x0,0x0);
+	itask_make(&appw->clickM,0x0,0x0);
+	itask_make(&appw->dodone,0x0,0x0);
+	itask_make(&appw->keychk,0x0,0x0);
 }
 /*----------------------------------------------------------------------------*/
 void image_appw_free(my1image_appw_t* appw)
@@ -61,7 +59,7 @@ void image_appw_full(my1image_appw_t* appw, int full)
 gboolean appw_on_done_all(gpointer data)
 {
 	my1image_appw_t* appw = (my1image_appw_t*) data;
-	dotask_exec(&appw->dodone,0x0,0x0);
+	itask_exec(&appw->dodone,0x0,0x0);
 	if (appw->gofree) image_appw_free(appw);
 	if (appw->goquit) gtk_main_quit();
 	else appw->doquit = 1;
@@ -93,7 +91,7 @@ gboolean appw_on_key_press(GtkWidget *widget, GdkEventKey *kevent,
 			image_appw_full(appw,appw->gofull);
 			return TRUE;
 		}
-		else if (dotask_exec((void*)&appw->keychk,(void*)appw,(void*)kevent))
+		else if (itask_exec((void*)&appw->keychk,(void*)appw,(void*)kevent))
 			return TRUE;
 	}
 	return FALSE;
@@ -120,12 +118,12 @@ gboolean appw_on_mouse_click(GtkWidget *widget,
 		}
 		else if (event->button == MIDDLE_CLICK)
 		{
-			if (dotask_exec((void*)&appw->clickM,(void*)appw,(void*)event))
+			if (itask_exec((void*)&appw->clickM,(void*)appw,(void*)event))
 				done = TRUE;
 		}
 		else if (event->button == LEFT_CLICK)
 		{
-			if (dotask_exec((void*)&appw->clickL,(void*)appw,(void*)event))
+			if (itask_exec((void*)&appw->clickL,(void*)appw,(void*)event))
 				done = TRUE;
 		}
 	}
@@ -552,25 +550,25 @@ int image_appw_is_done(void* data, void* that, void* xtra)
 	return 0;
 }
 /*----------------------------------------------------------------------------*/
-gboolean appw_on_timer_dotask(gpointer data)
+gboolean appw_on_timer_task(gpointer data)
 {
 	ptask_t task;
 	my1image_appw_t *appw = (my1image_appw_t*) data;
 	appw->idtask = 0;
-	if (appw->dotask)
+	if (appw->task.task)
 	{
-		task = appw->dotask;
-		appw->dotask = 0x0; /* in case task wants to reset itself */
-		task(appw->dodata,(void*)appw,0x0);
+		task = appw->task.task;
+		appw->task.task = 0x0; /* in case task wants to reset itself */
+		task(appw->task.data,(void*)appw,0x0);
 	}
 	return 0; /* a one-shot */
 }
 /*----------------------------------------------------------------------------*/
 guint image_appw_task(my1image_appw_t* appw, ptask_t task, int usec)
 {
-	if (appw->dotask) return 0; /* cannot reassign, unless a one-shot */
-	appw->dotask = task;
-	appw->idtask = g_timeout_add(usec,appw_on_timer_dotask,(gpointer)appw);
+	if (appw->task.task) return 0; /* cannot reassign, unless a one-shot */
+	appw->task.task = task;
+	appw->idtask = g_timeout_add(usec,appw_on_timer_task,(gpointer)appw);
 	return appw->idtask;
 }
 /*----------------------------------------------------------------------------*/

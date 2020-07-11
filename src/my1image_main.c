@@ -9,12 +9,12 @@
 /*----------------------------------------------------------------------------*/
 void iwork_make(my1iwork_t* work, pdata_t data)
 {
-	dotask_make(&work->init,0x0,data);
-	dotask_make(&work->free,0x0,data);
-	dotask_make(&work->args,0x0,data);
-	dotask_make(&work->prep,0x0,data);
-	dotask_make(&work->proc,0x0,data);
-	dotask_make(&work->show,0x0,data);
+	itask_make(&work->init,0x0,data);
+	itask_make(&work->free,0x0,data);
+	itask_make(&work->args,0x0,data);
+	itask_make(&work->prep,0x0,data);
+	itask_make(&work->proc,0x0,data);
+	itask_make(&work->show,0x0,data);
 	work->data = data;
 }
 /*----------------------------------------------------------------------------*/
@@ -32,13 +32,13 @@ void imain_init(my1imain_t* imain, my1iwork_t* iwork)
 	imain->curr = 0x0;
 	imain->work = iwork;
 	if (imain->work)
-		dotask_exec(&imain->work->init,(void*)imain,0x0);
+		itask_exec(&imain->work->init,(void*)imain,0x0);
 }
 /*----------------------------------------------------------------------------*/
 void imain_free(my1imain_t* imain)
 {
 	if (imain->work)
-		dotask_exec(&imain->work->free,(void*)imain,0x0);
+		itask_exec(&imain->work->free,(void*)imain,0x0);
 	if (imain->curr) filter_free_clones(imain->curr);
 	if (imain->list) filter_free_clones(imain->list);
 	buffer_free(&imain->buff);
@@ -61,8 +61,8 @@ void imain_args(my1imain_t* imain, int argc, char* argv[])
 	}
 	if (imain->work)
 	{
-		imain->work->args.xtra = (void*)imain;
-		dotask_exec(&imain->work->args,(void*)&argc,(void*)argv);
+		imain->work->args.temp = (void*)imain;
+		itask_exec(&imain->work->args,(void*)&argc,(void*)argv);
 	}
 	igrab_grab_default(&imain->grab);
 }
@@ -87,7 +87,7 @@ void imain_prep(my1imain_t* imain)
 		imain->show = imain->grab.grab;
 	}
 	if (imain->work)
-		dotask_exec(&imain->work->prep,(void*)imain,0x0);
+		itask_exec(&imain->work->prep,(void*)imain,0x0);
 }
 /*----------------------------------------------------------------------------*/
 void imain_proc(my1imain_t* imain)
@@ -95,7 +95,7 @@ void imain_proc(my1imain_t* imain)
 	if (imain->flag&IFLAG_ERROR) return;
 	imain_filter_doexec(imain);
 	if (imain->work)
-		dotask_exec(&imain->work->proc,(void*)imain,0x0);
+		itask_exec(&imain->work->proc,(void*)imain,0x0);
 }
 /*----------------------------------------------------------------------------*/
 void imain_on_filter_execute(my1imain_t *imain, GtkMenuItem *menu_item)
@@ -304,7 +304,7 @@ void imain_show(my1imain_t* imain)
 	if (imain->show)
 		image_show(imain->show,&imain->iwin,"MY1 Image");
 	if (imain->work)
-		dotask_exec(&imain->work->show,(void*)imain,0x0);
+		itask_exec(&imain->work->show,(void*)imain,0x0);
 }
 /*----------------------------------------------------------------------------*/
 int imain_on_task_timer(void* data, void* that, void* xtra)
@@ -322,8 +322,8 @@ int imain_on_task_timer(void* data, void* that, void* xtra)
 void imain_loop(my1imain_t* imain, int delta_ms)
 {
 	if (delta_ms>0) imain->tdel = delta_ms;
-	if (imain->iwin.dotask) return;
-	imain->iwin.dodata = (void*) imain;
+	if (imain->iwin.task.task) return;
+	imain->iwin.task.data = (void*) imain;
 	image_appw_task(&imain->iwin,imain_on_task_timer,imain->tdel);
 }
 /*----------------------------------------------------------------------------*/

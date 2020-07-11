@@ -20,8 +20,8 @@ my1iwhat_t;
 /*----------------------------------------------------------------------------*/
 int init_what(void* data, void* that, void* xtra)
 {
-	my1dotask_t *dotask = (my1dotask_t*)data;
-	my1iwhat_t *what = (my1iwhat_t*)dotask->data;
+	my1itask_t *task = (my1itask_t*)data;
+	my1iwhat_t *what = (my1iwhat_t*)task->data;
 	my1imain_t *mdat = (my1imain_t*)that;
 	libav1_init(&what->avgrab,&mdat->load);
 	image_appw_init(&what->awin);
@@ -34,8 +34,8 @@ int init_what(void* data, void* that, void* xtra)
 /*----------------------------------------------------------------------------*/
 int free_what(void* data, void* that, void* xtra)
 {
-	my1dotask_t *dotask = (my1dotask_t*)data;
-	my1iwhat_t *what = (my1iwhat_t*)dotask->data;
+	my1itask_t *task = (my1itask_t*)data;
+	my1iwhat_t *what = (my1iwhat_t*)task->data;
 	image_free(&what->buff);
 	image_appw_free(&what->awin);
 	libav1_free(&what->avgrab);
@@ -44,7 +44,7 @@ int free_what(void* data, void* that, void* xtra)
 /*----------------------------------------------------------------------------*/
 int igrab_grab_video(void* data, void* that, void* xtra)
 {
-	my1dotask_t* ptemp = (my1dotask_t*) data;
+	my1itask_t* ptemp = (my1itask_t*) data;
 	my1image_grab_t* igrab = (my1image_grab_t*) that;
 	my1iwhat_t *what = (my1iwhat_t*)ptemp->data;
 	my1libav_grab_t* vgrab = (my1libav_grab_t*)&what->avgrab;
@@ -65,9 +65,9 @@ int args_what(void* data, void* that, void* xtra)
 {
 	int loop, argc, *temp = (int*) that;
 	char** argv = (char**) xtra;
-	my1dotask_t *dotask = (my1dotask_t*)data;
-	my1iwhat_t *what = (my1iwhat_t*)dotask->data;
-	my1imain_t *mdat = (my1imain_t*)dotask->xtra;
+	my1itask_t *task = (my1itask_t*)data;
+	my1iwhat_t *what = (my1iwhat_t*)task->data;
+	my1imain_t *mdat = (my1imain_t*)task->temp;
 	my1igrab_t *grab = (my1igrab_t*)&mdat->grab;
 	argc = *temp;
 	if (mdat->flag&IFLAG_ERROR) return 0;
@@ -109,8 +109,8 @@ int args_what(void* data, void* that, void* xtra)
 /*----------------------------------------------------------------------------*/
 int prep_what(void* data, void* that, void* xtra)
 {
-	my1dotask_t *dotask = (my1dotask_t*)data;
-	my1iwhat_t *what = (my1iwhat_t*)dotask->data;
+	my1itask_t *task = (my1itask_t*)data;
+	my1iwhat_t *what = (my1iwhat_t*)task->data;
 	my1imain_t *mdat = (my1imain_t*)that;
 	mdat->list = image_work_create_all();
 	/** check requested filters */
@@ -141,8 +141,8 @@ int prep_what(void* data, void* that, void* xtra)
 /*----------------------------------------------------------------------------*/
 int exec_what(void* data, void* that, void* xtra)
 {
-	my1dotask_t *dotask = (my1dotask_t*)data;
-	my1iwhat_t *what = (my1iwhat_t*)dotask->data;
+	my1itask_t *task = (my1itask_t*)data;
+	my1iwhat_t *what = (my1iwhat_t*)task->data;
 	my1imain_t *mdat = (my1imain_t*)that;
 	if (what->flag&WFLAG_SHOW_ORIGINAL)
 		what->orig = mdat->show;
@@ -153,9 +153,9 @@ int exec_what(void* data, void* that, void* xtra)
 /*----------------------------------------------------------------------------*/
 int what_on_keychk(void* data, void* that, void* xtra)
 {
-	my1dotask_t *dotask = (my1dotask_t*)data;
-	my1imain_t *mdat = (my1imain_t*) dotask->xtra;
-	GdkEventKey *event = (GdkEventKey*) xtra;
+	my1itask_t *task = (my1itask_t*)data;
+	my1imain_t *mdat = (my1imain_t*)task->temp;
+	GdkEventKey *event = (GdkEventKey*)xtra;
 	if (event->keyval == GDK_KEY_z)
 		imain_menu_filter_enable(mdat,!(mdat->flag&IFLAG_FILTER_EXE));
 	return 0;
@@ -163,8 +163,8 @@ int what_on_keychk(void* data, void* that, void* xtra)
 /*----------------------------------------------------------------------------*/
 int show_what(void* data, void* that, void* xtra)
 {
-	my1dotask_t *dotask = (my1dotask_t*)data;
-	my1iwhat_t *what = (my1iwhat_t*)dotask->data;
+	my1itask_t *task = (my1itask_t*)data;
+	my1iwhat_t *what = (my1iwhat_t*)task->data;
 	my1imain_t *mdat = (my1imain_t*)that;
 	if (what->orig)
 	{
@@ -179,8 +179,8 @@ int show_what(void* data, void* that, void* xtra)
 	image_appw_domenu_quit(&mdat->iwin);
 	if (what->flag&WFLAG_VIDEO_MODE)
 	{
-		dotask_make(&mdat->iwin.keychk,what_on_keychk,(void*)what);
-		mdat->iwin.keychk.xtra = (void*) mdat;
+		itask_make(&mdat->iwin.keychk,what_on_keychk,(void*)what);
+		mdat->iwin.keychk.temp = (void*) mdat;
 		imain_loop(mdat,0);
 	}
 	return 0;

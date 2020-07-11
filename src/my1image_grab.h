@@ -16,8 +16,8 @@ typedef struct _my1image_grab_t
 	int flag;
 	char *pick;
 	my1image_t buff; /* internal buffer */
-	my1image_t *grab; /* pure pointer - will use image is not assigned */
-	my1dotask_t do_grab;
+	my1image_t *grab; /* pointer for grab process - can be external */
+	my1itask_t do_grab;
 }
 my1image_grab_t;
 /*----------------------------------------------------------------------------*/

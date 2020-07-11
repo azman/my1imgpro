@@ -22,13 +22,12 @@ typedef struct _my1image_appw_t
 	int gofull; /* full screen request/status flag  */
 	int docopy; /* flag to copy on make, use local buffers */
 	int nostat; /* flag to hide status bar */
-	ptask_t dotask; /* task to do in gtk loop - based on timer idtask */
-	pdata_t dodata; /* data for dotask */
+	my1itask_t task; /* task to do in gtk loop - based on timer idtask */
 	my1image_t buff, main, *show, *orig; /* buffered image data */
 	my1image_view_t view; /* single image view */
-	my1dotask_t clickL, clickM; /* handler for click left and middle */
-	my1dotask_t dodone; /* will be run when window's delete event */
-	my1dotask_t keychk; /* handler for key press */
+	my1itask_t clickL, clickM; /* handler for click left and middle */
+	my1itask_t dodone; /* will be run when window's delete event */
+	my1itask_t keychk; /* handler for key press */
 }
 my1image_appw_t;
 /*----------------------------------------------------------------------------*/

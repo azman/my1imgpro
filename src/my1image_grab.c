@@ -13,7 +13,7 @@ void igrab_init(my1image_grab_t* igrab)
 	igrab->pick = 0x0;
 	image_init(&igrab->buff);
 	igrab->grab = 0x0;
-	dotask_make(&igrab->do_grab,0x0,0x0);
+	itask_make(&igrab->do_grab,0x0,0x0);
 }
 /*----------------------------------------------------------------------------*/
 void igrab_free(my1image_grab_t* igrab)
@@ -23,7 +23,7 @@ void igrab_free(my1image_grab_t* igrab)
 /*----------------------------------------------------------------------------*/
 void igrab_grab(my1image_grab_t* igrab)
 {
-	if (!dotask_exec(&igrab->do_grab,(void*)igrab,0x0))
+	if (!itask_exec(&igrab->do_grab,(void*)igrab,0x0))
 		igrab->flag |= IGRAB_FLAG_TASK_ERROR;
 }
 /*----------------------------------------------------------------------------*/
