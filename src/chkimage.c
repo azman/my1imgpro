@@ -1,7 +1,7 @@
 /*----------------------------------------------------------------------------*/
 #include <stdio.h>
 #include "my1image_main.h"
-#include "my1image_work.h"
+#include "my1image_ifdb.h"
 #include "my1libav_grab.h"
 /*----------------------------------------------------------------------------*/
 #define WFLAG_SHOW_ORIGINAL 0x01

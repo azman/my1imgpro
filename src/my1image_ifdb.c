@@ -1,8 +1,8 @@
 /*----------------------------------------------------------------------------*/
-#ifndef __MY1IMAGE_WORKC__
-#define __MY1IMAGE_WORKC__
+#ifndef __MY1IMAGE_IFDBC__
+#define __MY1IMAGE_IFDBC__
 /*----------------------------------------------------------------------------*/
-#include "my1image_work.h"
+#include "my1image_ifdb.h"
 #include "my1image_crgb.h"
 #include "my1image_mask.h"
 #include "my1image_stat.h"
@@ -551,5 +551,5 @@ my1ifilter_t* image_work_create_all(void)
 	return that;
 }
 /*----------------------------------------------------------------------------*/
-#endif /** __MY1IMAGE_WORKC__ */
+#endif /** __MY1IMAGE_IFDBC__ */
 /*----------------------------------------------------------------------------*/

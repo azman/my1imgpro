@@ -22,7 +22,7 @@ This software consists of several small modules:
 - my1image_buff : double buffer (triple actually...) with region
 - my1image_util : filter support
 - my1image_stat : grayscale histogram
-- my1image_work : library of commonly used filters
+- my1image_ifdb : library of commonly used filters
 - my1image_task : generic task/event handler structure
 - my1image_view : gtk-based gui canvas
 - my1image_appw : gtk-based gui app for single image view

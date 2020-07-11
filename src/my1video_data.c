@@ -5,7 +5,7 @@
 #include "my1video_data.h"
 #include "my1image_main.h"
 #include "my1image_crgb.h"
-#include "my1image_work.h"
+#include "my1image_ifdb.h"
 /*----------------------------------------------------------------------------*/
 /** need this to save a frame from video to file! */
 #include "my1image_file.h"

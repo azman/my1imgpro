@@ -4,7 +4,7 @@
 #define __MY1IMAGE_NO_PROC__
 /** #define __MY1IMAGE_NO_HSV__ */
 /** #define __MY1IMAGE_NO_UTIL__ */
-/** #define __MY1IMAGE_NO_WORK__ */
+/** #define __MY1IMAGE_NO_IFDB__ */
 /** #define __MY1IMAGE_NO_DATA__ */
 #define __MY1IMAGE_NO_VIEW__
 /** #define __MY1IMAGE_NO_APPW__ */
@@ -12,7 +12,7 @@
 #elif defined(__MY1IMAGE_BASIC__)
 #define __MY1IMAGE_NO_HSV__
 #define __MY1IMAGE_NO_FILE__
-#define __MY1IMAGE_NO_WORK__
+#define __MY1IMAGE_NO_IFDB__
 /** #define __MY1IMAGE_NO_DATA__ */
 #define __MY1IMAGE_NO_VIEW__
 /** #define __MY1IMAGE_NO_APPW__ */
@@ -59,12 +59,12 @@
 #include "my1image_scan.c"
 #include "my1image_mono.c"
 #else
-#ifndef __MY1IMAGE_NO_WORK__
-#define __MY1IMAGE_NO_WORK__
+#ifndef __MY1IMAGE_NO_IFDB__
+#define __MY1IMAGE_NO_IFDB__
 #endif
 #endif
-#ifndef __MY1IMAGE_NO_WORK__
-#include "my1image_work.c"
+#ifndef __MY1IMAGE_NO_IFDB__
+#include "my1image_ifdb.c"
 #else
 #ifndef __MY1IMAGE_NO_DATA__
 #define __MY1IMAGE_NO_DATA__
