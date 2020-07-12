@@ -10,6 +10,7 @@ void buffer_init(my1image_buffer_t* ibuff)
 	ibuff->curr = &ibuff->main;
 	ibuff->next = &ibuff->buff;
 	/** ibuff->temp = 0x0; / * not necessary */
+	ibuff->iref = 0x0;
 	image_init(&ibuff->main);
 	image_init(&ibuff->buff);
 	image_init(&ibuff->xtra);

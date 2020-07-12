@@ -21,7 +21,7 @@ typedef void (*pfclean_t)(struct _my1image_filter_t* filter);
 typedef struct _my1image_filter_t
 {
 	char name[FILTER_NAMESIZE];
-	unsigned int flag; /* filter properties flag (1-hot) */
+	unsigned int temp, flag; /* pad temp, filter properties flag (1-hot) */
 	void *data; /* filter extra data */
 	my1image_buffer_t *buffer; /* external shared buffer */
 	my1image_t *output; /* output image to write to */
