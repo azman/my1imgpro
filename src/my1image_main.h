@@ -69,6 +69,7 @@ void imain_domenu_filters(my1imain_t* imain);
 my1ipass_t* imain_filter_dolist(my1imain_t* data, filter_info_t* info);
 my1ipass_t* imain_filter_doload(my1imain_t* data, char* name);
 my1ipass_t* imain_filter_unload(my1imain_t* data, char* name);
+my1ipass_t* imain_filter_unload_all(my1imain_t* imain);
 void imain_filter_enable(my1imain_t* data, int enable);
 void imain_filter_doexec(my1imain_t* data);
 /*----------------------------------------------------------------------------*/

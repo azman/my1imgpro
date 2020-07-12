@@ -105,14 +105,7 @@ void imain_on_filter_execute(my1imain_t *imain, GtkMenuItem *menu_item)
 /*----------------------------------------------------------------------------*/
 void imain_on_filter_clear(my1imain_t *imain, GtkMenuItem *menu_item)
 {
-	if (imain->curr)
-	{
-		imain->flag |= IFLAG_FILTER_CHK;
-		while (imain->flag&IFLAG_FILTER_RUN);
-		filter_free_clones(imain->curr);
-		imain->curr = 0x0;
-		imain->flag &= ~IFLAG_FILTER_CHK;
-	}
+	imain_filter_unload_all(imain);
 }
 /*----------------------------------------------------------------------------*/
 void imain_on_filter_unload(my1imain_t *imain, GtkMenuItem *menu_item)
@@ -372,10 +365,26 @@ my1ipass_t* imain_filter_doload(my1imain_t* imain, char* name)
 	return temp;
 }
 /*----------------------------------------------------------------------------*/
+my1ipass_t* imain_filter_unload_all(my1imain_t* imain)
+{
+	my1ipass_t* temp = imain->curr;
+	if (temp)
+	{
+		imain->flag |= IFLAG_FILTER_CHK;
+		while (imain->flag&IFLAG_FILTER_RUN);
+		filter_free_clones(imain->curr);
+		imain->curr = 0x0;
+		imain->flag &= ~IFLAG_FILTER_CHK;
+	}
+	return temp;
+}
+/*----------------------------------------------------------------------------*/
 my1ipass_t* imain_filter_unload(my1imain_t* imain, char* name)
 {
 	int size, loop = 0;
 	my1ipass_t* pass = imain->curr, *temp = 0x0;
+	/* if name is null, remove all! */
+	if (!name) return imain_filter_unload_all(imain);
 	imain->flag |= IFLAG_FILTER_CHK;
 	while (imain->flag&IFLAG_FILTER_RUN);
 	while (name[0]!='-') { name++; } name++;
