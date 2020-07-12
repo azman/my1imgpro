@@ -15,8 +15,9 @@
 /*----------------------------------------------------------------------------*/
 typedef struct _my1image_scan_t
 {
-	int cols, rows, loop, *data;
-	int icol, irow, *curr, *prev, *next;
+	int *data, *curr, *prev, *next;
+	int cols, rows;
+	int icol, irow, loop;
 	int bcol, brow, skip; /* border mark */
 }
 my1image_scan_t;
@@ -27,6 +28,7 @@ int iscan_next(my1image_scan_t* scan);
 int iscan_skip(my1image_scan_t* scan);
 int iscan_skip_loop(my1image_scan_t* scan, int loop);
 int iscan_skip_that(my1image_scan_t* scan, int trow, int tcol);
+int iscan_8connected(my1image_scan_t* scan); /* assumes skip > 0! */
 /*----------------------------------------------------------------------------*/
 #endif /** __MY1IMAGE_SCANH__ */
 /*----------------------------------------------------------------------------*/

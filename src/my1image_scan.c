@@ -71,5 +71,21 @@ int iscan_skip_that(my1image_scan_t* scan, int trow, int tcol)
 	else return 0;
 }
 /*----------------------------------------------------------------------------*/
+int iscan_8connected(my1image_scan_t* scan)
+{
+	int loop, size, curr, step;
+	curr = scan->icol;
+	if (!scan->curr[curr]) return 0;
+	step = curr-1;
+	for (loop=0,size=0;loop<3;loop++)
+	{
+		if (scan->prev[step]) size++;
+		if (scan->curr[step]) if (step!=curr) size++;
+		if (scan->next[step]) size++;
+		step++;
+	}
+	return size;
+}
+/*----------------------------------------------------------------------------*/
 #endif /** __MY1IMAGE_SCANC__ */
 /*----------------------------------------------------------------------------*/
