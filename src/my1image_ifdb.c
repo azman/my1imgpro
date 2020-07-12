@@ -154,13 +154,6 @@ my1image_t* filter_invert(my1image_t* img, my1image_t* res,
 	return res;
 }
 /*----------------------------------------------------------------------------*/
-typedef struct _my1if_resize_t
-{
-	my1image_t buff;
-	my1image_area_t area;
-}
-my1if_resize_t;
-/*----------------------------------------------------------------------------*/
 my1image_t* filter_resize(my1image_t* img, my1image_t* res,
 	my1ifilter_t* filter)
 {

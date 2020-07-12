@@ -29,6 +29,13 @@
 #define RESIZE_DEF_W 320
 #define RESIZE_DEF_H 240
 /*----------------------------------------------------------------------------*/
+typedef struct _my1if_resize_t
+{
+	my1image_t buff;
+	my1image_area_t area;
+}
+my1if_resize_t;
+/*----------------------------------------------------------------------------*/
 /* find predefined filter info */
 filter_info_t* image_work_find_info(char* name);
 /*----------------------------------------------------------------------------*/
