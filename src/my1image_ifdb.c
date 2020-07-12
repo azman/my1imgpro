@@ -154,32 +154,43 @@ my1image_t* filter_invert(my1image_t* img, my1image_t* res,
 	return res;
 }
 /*----------------------------------------------------------------------------*/
+typedef struct _my1if_resize_t
+{
+	my1image_t buff;
+	my1image_area_t area;
+}
+my1if_resize_t;
+/*----------------------------------------------------------------------------*/
 my1image_t* filter_resize(my1image_t* img, my1image_t* res,
 	my1ifilter_t* filter)
 {
-	my1image_area_t *size = (my1image_area_t*) filter->data;
-	if (size) return image_size_this(img,res,size->hval,size->wval);
+	my1if_resize_t *size = (my1if_resize_t*) filter->data;
+	if (size)
+		img = image_size_this(img,&size->buff,size->area.hval,size->area.wval);
 	image_copy(res,img);
 	return res;
 }
 /*----------------------------------------------------------------------------*/
 void filter_resize_init(my1ifilter_t* filter, my1ifilter_t* pclone)
 {
-	my1image_area_t *size, *temp;
-	filter->data = malloc(sizeof(my1image_area_t));
-	size = (my1image_area_t*) filter->data;
+	my1if_resize_t *size, *temp;
+	filter->data = malloc(sizeof(my1if_resize_t));
+	size = (my1if_resize_t*) filter->data;
+	image_init(&size->buff);
 	if (!pclone)
-		image_area_make(size,0,0,RESIZE_DEF_H,RESIZE_DEF_W);
+		image_area_make(&size->area,0,0,RESIZE_DEF_H,RESIZE_DEF_W);
 	else
 	{
-		temp = (my1image_area_t*) pclone->data;
-		image_area_make(size,0,0,temp->hval,temp->wval);
+		temp = (my1if_resize_t*) pclone->data;
+		image_area_make(&size->area,0,0,temp->area.hval,temp->area.wval);
 	}
 }
 /*----------------------------------------------------------------------------*/
 void filter_resize_free(my1ifilter_t* filter)
 {
-	if (filter->data) free((void*)filter->data);
+	my1if_resize_t *size = (my1if_resize_t*) filter->data;
+	image_free(&size->buff);
+	if (filter->data) free(filter->data);
 }
 /*----------------------------------------------------------------------------*/
 my1image_t* filter_laplace(my1image_t* img, my1image_t* res,
@@ -520,20 +531,28 @@ static const filter_info_t MY1_IFILTER_DB[] =
 /*----------------------------------------------------------------------------*/
 const int IFILTER_DB_SIZE = sizeof(MY1_IFILTER_DB)/sizeof(filter_info_t);
 /*----------------------------------------------------------------------------*/
-my1ifilter_t* image_work_create(char* name)
+filter_info_t* image_work_find_info(char* name)
 {
 	int loop;
-	filter_info_t* info;
-	my1ifilter_t* that = 0x0;
+	filter_info_t *info, *find = 0x0;
 	for(loop=0;loop<IFILTER_DB_SIZE;loop++)
 	{
 		info = (filter_info_t*)&MY1_IFILTER_DB[loop];
 		if(!strncmp(name,info->name,FILTER_NAMESIZE))
 		{
-			that = info_create_filter(info);
+			find = info;
 			break;
 		}
 	}
+	return find;
+}
+/*----------------------------------------------------------------------------*/
+my1ifilter_t* image_work_create(char* name)
+{
+	my1ifilter_t* that = 0x0;
+	filter_info_t* info = image_work_find_info(name);
+	if (info)
+		that = info_create_filter(info);
 	return that;
 }
 /*----------------------------------------------------------------------------*/

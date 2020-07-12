@@ -29,6 +29,9 @@
 #define RESIZE_DEF_W 320
 #define RESIZE_DEF_H 240
 /*----------------------------------------------------------------------------*/
+/* find predefined filter info */
+filter_info_t* image_work_find_info(char* name);
+/*----------------------------------------------------------------------------*/
 /* creates a malloc'ed my1image_filter_t instance */
 my1image_filter_t* image_work_create(char* name);
 my1image_filter_t* image_work_create_all(void);
