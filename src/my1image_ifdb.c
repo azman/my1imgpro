@@ -20,26 +20,53 @@
 /*----------------------------------------------------------------------------*/
 my1image_t* filter_binary(my1image_t* img, my1image_t* res, my1ifilter_t* pass)
 {
+	my1if_options_t *opts = (my1if_options_t*) pass->data;
 	image_copy(res,img);
-	image_binary(res,0,WHITE);
+	image_binary(res,opts->par1,WHITE);
 	res->mask = IMASK_GRAY;
 	return res;
+}
+/*----------------------------------------------------------------------------*/
+void filter_binary_init(my1ifilter_t* filter, my1ifilter_t* pclone)
+{
+	my1if_options_t *opts, *temp;
+	filter->data = malloc(sizeof(my1if_options_t));
+	opts = (my1if_options_t*) filter->data;
+	opts->flag = 0;
+	if (!pclone)
+	{
+		opts->par1 = BINARY_CUT;
+	}
+	else
+	{
+		temp = (my1if_options_t*) pclone->data;
+		opts->par1 = temp->par1;
+	}
+}
+/*----------------------------------------------------------------------------*/
+void filter_binary_free(my1ifilter_t* filter)
+{
+	if (filter->data) free(filter->data);
 }
 /*----------------------------------------------------------------------------*/
 my1image_t* filter_binary_mid(my1image_t* img, my1image_t* res,
 	my1ifilter_t* pass)
 {
-	int loop, size = img->size, pmax, temp;
+	int loop, pmax, temp, step, size = img->size;
 	image_make(res,img->rows,img->cols);
-	/* find max value */
-	for (loop=0,pmax=0;loop<size;loop++)
+	/* find average value */
+	for (loop=0,pmax=0,step=0;loop<size;loop++)
 	{
 		temp = img->data[loop];
-		pmax += temp;
+		if (temp)
+		{
+			pmax += temp;
+			step++;
+		}
 		res->data[loop] = temp;
 	}
-	pmax /= size;
-	image_binary(res,pmax>>1,WHITE);
+	if (step) pmax /= step;
+	image_binary(res,pmax,WHITE);
 	res->mask = IMASK_GRAY;
 	return res;
 }
@@ -497,7 +524,8 @@ my1image_t* filter_threshold(my1image_t* img, my1image_t* res,
 /*----------------------------------------------------------------------------*/
 static const filter_info_t MY1_IFILTER_DB[] =
 {
-	{ IFNAME_BINARY, FLAG_GRAY, filter_binary, 0x0, 0x0 },
+	{ IFNAME_BINARY, FLAG_GRAY, filter_binary,
+		filter_binary_init, filter_binary_free },
 	{ IFNAME_BINARY_MID, FLAG_GRAY, filter_binary_mid, 0x0, 0x0 },
 	{ IFNAME_MORPH_ERODE, FLAG_GRAY, filter_morph_erode, 0x0, 0x0 },
 	{ IFNAME_MORPH_DILATE, FLAG_GRAY, filter_morph_dilate, 0x0, 0x0 },

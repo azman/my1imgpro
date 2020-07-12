@@ -29,6 +29,16 @@
 #define RESIZE_DEF_W 320
 #define RESIZE_DEF_H 240
 /*----------------------------------------------------------------------------*/
+#define BINARY_CUT 100
+/*----------------------------------------------------------------------------*/
+typedef struct _my1if_options_t
+{
+	void* data;
+	int flag, temp;
+	int par1, par2;
+}
+my1if_options_t;
+/*----------------------------------------------------------------------------*/
 typedef struct _my1if_resize_t
 {
 	my1image_t buff;
