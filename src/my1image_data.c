@@ -89,36 +89,15 @@ int image_data_args(void* data, void* that, void* xtra)
 /*----------------------------------------------------------------------------*/
 int image_data_prep(void* data, void* that, void* xtra)
 {
-	int loop, curr, stop;
-	char* pchk;
 	my1itask_t *task = (my1itask_t*)data;
 	my1image_data_t *what = (my1image_data_t*)task->data;
 	my1imain_t *mdat = (my1imain_t*)that;
+	/** load all predefined filters */
 	if (!mdat->list)
 		mdat->list = image_work_create_all();
-	/** check requested filters */
+	/** check requested filters - do not auto exec? */
 	if (what->list)
-	{
-		pchk = what->list;
-		loop = 0; curr = 0, stop = 0;
-		while (!stop)
-		{
-			switch (pchk[loop])
-			{
-				case 0x0: stop = 1;
-				case ',':
-					pchk[loop] = 0x0;
-					printf("-- Loading filter '%s'... ",&pchk[curr]);
-					if (imain_filter_doload(mdat,&pchk[curr]))
-						printf("OK!\n");
-					else printf("not found?!\n");
-					if (!stop) pchk[loop] = ',';
-					curr = ++loop;
-					break;
-				default: loop++;
-			}
-		}
-	}
+		imain_filter_doload_list(mdat,what->list);
 	return 0;
 }
 /*----------------------------------------------------------------------------*/

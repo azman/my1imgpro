@@ -106,7 +106,7 @@ void imain_on_filter_execute(my1imain_t *imain, GtkMenuItem *menu_item)
 		imain->flag |= IFLAG_FILTER_RUN;
 		while (imain->flag&IFLAG_FILTER_CHK);
 		/** running filter on displayed image */
-		image_appw_pass_filter(&imain->iwin,imain->curr,0);
+		image_appw_pass_filter(&imain->iwin,imain->curr);
 		imain->flag &= ~IFLAG_FILTER_RUN;
 	}
 }
@@ -303,7 +303,19 @@ void imain_show(my1imain_t* imain)
 {
 	if (imain->flag&IFLAG_ERROR) return;
 	if (imain->show)
+	{
+		my1ipass_t* test = 0x0;
+		if (!(imain->flag&IFLAG_VIDEO_MODE))
+		{
+			int save = imain->flag & IFLAG_FILTER_EXE;
+			imain->flag |= IFLAG_FILTER_EXE;
+			test = imain_filter_doexec(imain);
+			if (!save) imain->flag &= ~IFLAG_FILTER_EXE;
+		}
 		image_show(imain->show,&imain->iwin,"MY1 Image");
+		/* replace original image on display - if filtered */
+		if (test) image_copy(imain->iwin.orig,&imain->load);
+	}
 	if (imain->work)
 		itask_exec(&imain->work->show,(void*)imain,0x0);
 }
@@ -356,6 +368,7 @@ void print_filters(my1ipass_t* pass)
 	fflush(stdout);
 }
 **/
+/*----------------------------------------------------------------------------*/
 my1ipass_t* imain_filter_doload(my1imain_t* imain, char* name)
 {
 	my1ipass_t *find, *temp = 0x0;
@@ -439,24 +452,18 @@ my1ipass_t* imain_filter_doload_list(my1imain_t* imain, char* csfn)
 	return done; /* a valid pointer if at least ONE is loaded */
 }
 /*----------------------------------------------------------------------------*/
-void imain_filter_doexec(my1imain_t* imain)
+my1ipass_t* imain_filter_doexec(my1imain_t* imain)
 {
-	my1image_t *temp;
-	if (imain->flag&IFLAG_FILTER_EXE)
+	my1ipass_t* done = 0x0;
+	if ((imain->flag&IFLAG_FILTER_EXE)&&imain->curr)
 	{
 		imain->flag |= IFLAG_FILTER_RUN;
 		while (imain->flag&IFLAG_FILTER_CHK);
-		if (imain->curr)
-		{
-			temp = image_filter(imain->show,imain->curr);
-			if (temp) imain->show = temp;
-			/**
-			if (temp!=imain->show)
-				image_copy(imain->show,temp);
-			**/
-		}
+		imain->show = image_filter(imain->show,imain->curr);
+		done = imain->curr;
 		imain->flag &= ~IFLAG_FILTER_RUN;
 	}
+	return done;
 }
 /*----------------------------------------------------------------------------*/
 void image_show(my1image_t* image, my1ishow_t* ishow, char* name)
