@@ -153,7 +153,7 @@ my1image_t* image_filter_single(my1image_t* data, my1ifilter_t* pass)
 	my1image_t buff;
 	/* assumes pass is always valid - output MUST BE defined */
 	my1image_t* done = pass->output;
-	if (!done) return done;
+	if (!done) return data;
 	image_init(&buff);
 	if (pass->flag&FILTER_FLAG_GRAY)
 	{
