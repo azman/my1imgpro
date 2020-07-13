@@ -100,7 +100,15 @@ void imain_proc(my1imain_t* imain)
 /*----------------------------------------------------------------------------*/
 void imain_on_filter_execute(my1imain_t *imain, GtkMenuItem *menu_item)
 {
-	imain_filter_doexec(imain);
+	/* this is exclusive for non-video mode! */
+	if (imain->curr)
+	{
+		imain->flag |= IFLAG_FILTER_RUN;
+		while (imain->flag&IFLAG_FILTER_CHK);
+		/** running filter on displayed image */
+		image_appw_pass_filter(&imain->iwin,imain->curr,0);
+		imain->flag &= ~IFLAG_FILTER_RUN;
+	}
 }
 /*----------------------------------------------------------------------------*/
 void imain_on_filter_clear(my1imain_t *imain, GtkMenuItem *menu_item)
@@ -408,6 +416,29 @@ my1ipass_t* imain_filter_unload(my1imain_t* imain, char* name)
 	return temp;
 }
 /*----------------------------------------------------------------------------*/
+my1ipass_t* imain_filter_doload_list(my1imain_t* imain, char* csfn)
+{
+	my1ipass_t *load, *done = 0x0;
+	int loop = 0, curr = 0, stop = 0;
+	/* load filters based on comma-separated-filter-name given */
+	while (!stop)
+	{
+		switch (csfn[loop])
+		{
+			case 0x0: stop = 1;
+			case ',':
+				csfn[loop] = 0x0;
+				if ((load=imain_filter_doload(imain,&csfn[curr])))
+					done = load;
+				if (!stop) csfn[loop] = ',';
+				curr = ++loop;
+				break;
+			default: loop++;
+		}
+	}
+	return done; /* a valid pointer if at least ONE is loaded */
+}
+/*----------------------------------------------------------------------------*/
 void imain_filter_doexec(my1imain_t* imain)
 {
 	my1image_t *temp;
@@ -417,10 +448,12 @@ void imain_filter_doexec(my1imain_t* imain)
 		while (imain->flag&IFLAG_FILTER_CHK);
 		if (imain->curr)
 		{
-			temp = imain->show;
-			temp = image_filter(temp,imain->curr);
+			temp = image_filter(imain->show,imain->curr);
+			if (temp) imain->show = temp;
+			/**
 			if (temp!=imain->show)
 				image_copy(imain->show,temp);
+			**/
 		}
 		imain->flag &= ~IFLAG_FILTER_RUN;
 	}
