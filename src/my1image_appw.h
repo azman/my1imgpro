@@ -3,6 +3,7 @@
 #define __MY1IMAGE_APPWH__
 /*----------------------------------------------------------------------------*/
 #include "my1image_view.h"
+#include "my1image_util.h"
 /*----------------------------------------------------------------------------*/
 #define MAIN_WINDOW_TITLE "MY1Image Viewer"
 /*----------------------------------------------------------------------------*/
@@ -52,6 +53,8 @@ guint image_appw_task(my1image_appw_t* appw, ptask_t task, int usec);
 /* special function to show an image in a window - DO NOT NEED init! */
 void image_appw_show(my1image_appw_t* appw, my1image_t* that,
 	char* name, int menu);
+/* run a filter on displayed image */
+void image_appw_pass_filter(my1image_appw_t*,my1ifilter_t*,int);
 /*----------------------------------------------------------------------------*/
 #endif /** __MY1IMAGE_APPWH__ */
 /*----------------------------------------------------------------------------*/

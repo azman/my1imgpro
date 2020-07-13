@@ -584,5 +584,18 @@ void image_appw_show(my1image_appw_t* appw, my1image_t* that,
 	if (menu) image_appw_domenu_full(appw);
 }
 /*----------------------------------------------------------------------------*/
+void image_appw_pass_filter(my1image_appw_t* appw, my1ifilter_t* pass,
+	int single)
+{
+	my1image_t temp, *curr = &temp;
+	image_init(&temp);
+	image_copy_color2rgb(&temp,&appw->view.buff);
+	if (single) curr = image_filter_single(curr,pass);
+	else curr = image_filter(curr,pass);
+	image_copy(appw->show,curr);
+	image_appw_draw(appw,appw->show);
+	image_free(&temp);
+}
+/*----------------------------------------------------------------------------*/
 #endif /** __MY1IMAGE_APPWC__ */
 /*----------------------------------------------------------------------------*/
