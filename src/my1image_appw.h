@@ -54,7 +54,7 @@ guint image_appw_task(my1image_appw_t* appw, ptask_t task, int usec);
 void image_appw_show(my1image_appw_t* appw, my1image_t* that,
 	char* name, int menu);
 /* run a filter on displayed image */
-void image_appw_pass_filter(my1image_appw_t*,my1ifilter_t*,int);
+void image_appw_pass_filter(my1image_appw_t*,my1ifilter_t*);
 /*----------------------------------------------------------------------------*/
 #endif /** __MY1IMAGE_APPWH__ */
 /*----------------------------------------------------------------------------*/
