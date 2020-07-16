@@ -14,8 +14,8 @@ int video_data_init(void* data, void* that, void* xtra)
 {
 	my1itask_t *task = (my1itask_t*)data;
 	my1vdata_t *what = (my1vdata_t*)task->data;
-	my1imain_t *main = (my1imain_t*)that;
-	libav1_init(&what->vgrab,&main->load);
+	my1imain_t *mdat = (my1imain_t*)that;
+	libav1_init(&what->vgrab,&mdat->load);
 	what->vgrab.iloop = 0; /* no need to check index, do it here! */
 	image_appw_init(&what->vappw);
 	video_init(&what->video);
@@ -79,7 +79,7 @@ int igrab_grab_video(void* data, void* that, void* xtra)
 	my1itask_t* ptemp = (my1itask_t*) data;
 	my1image_grab_t* igrab = (my1image_grab_t*) that;
 	my1vdata_t *what = (my1vdata_t*)ptemp->data;
-	my1imain_t *main = (my1imain_t*)ptemp->temp;
+	my1imain_t *mdat = (my1imain_t*)ptemp->temp;
 	my1libav_grab_t* vgrab = &what->vgrab;
 	if (!vgrab->flag)
 	{
@@ -101,7 +101,7 @@ int igrab_grab_video(void* data, void* that, void* xtra)
 			what->video.flags |= VIDEO_FLAG_DO_UPDATE;
 		}
 	}
-	video_data_grab(what,main);
+	video_data_grab(what,mdat);
 	return igrab->flag;
 }
 /*----------------------------------------------------------------------------*/
@@ -111,10 +111,10 @@ int video_data_args(void* data, void* that, void* xtra)
 	char** argv = (char**) xtra;
 	my1itask_t *task = (my1itask_t*)data;
 	my1vdata_t *what = (my1vdata_t*)task->data;
-	my1imain_t *main = (my1imain_t*)task->temp;
-	my1igrab_t *grab = (my1igrab_t*)&main->grab;
+	my1imain_t *mdat = (my1imain_t*)task->temp;
+	my1igrab_t *grab = (my1igrab_t*)&mdat->grab;
 	argc = *temp;
-	if (main->flag&IFLAG_ERROR) return 0;
+	if (mdat->flag&IFLAG_ERROR) return 0;
 	/* re-check parameter for video option */
 	loop = 1;
 	what->flag = VIDEO_SOURCE_FILE; /* assume pick is video */
@@ -126,11 +126,11 @@ int video_data_args(void* data, void* that, void* xtra)
 			what->flag = VIDEO_SOURCE_LIVE;
 		}
 	}
-	main->flag |= IFLAG_VIDEO_MODE; /* mark for video display menu */
+	mdat->flag |= IFLAG_VIDEO_MODE; /* mark for video display menu */
 	grab->do_grab.task = igrab_grab_video;
 	grab->do_grab.data = (void*)what;
-	grab->do_grab.temp = (void*)main;
-	grab->grab = &main->load;
+	grab->do_grab.temp = (void*)mdat;
+	grab->grab = &mdat->load;
 	/* save these */
 	what->loop = loop;
 	what->argc = argc;
@@ -140,8 +140,8 @@ int video_data_args(void* data, void* that, void* xtra)
 /*----------------------------------------------------------------------------*/
 int video_data_prep(void* data, void* that, void* xtra)
 {
-	my1imain_t *main = (my1imain_t*)that;
-	main->list = image_work_create_all();
+	my1imain_t *mdat = (my1imain_t*)that;
+	mdat->list = image_work_create_all();
 	return 0;
 }
 /*----------------------------------------------------------------------------*/
@@ -149,10 +149,10 @@ int video_data_exec(void* data, void* that, void* xtra)
 {
 	my1itask_t *task = (my1itask_t*)data;
 	my1vdata_t *what = (my1vdata_t*)task->data;
-	my1imain_t *main = (my1imain_t*)that;
-	image_copy(&what->video.image,main->show);
+	my1imain_t *mdat = (my1imain_t*)that;
+	image_copy(&what->video.image,mdat->show);
 	what->video.frame = &what->video.image;
-	main->show = &what->video.image;
+	mdat->show = &what->video.image;
 	return 0;
 }
 /*----------------------------------------------------------------------------*/
@@ -277,15 +277,15 @@ int video_data_show(void* data, void* that, void* xtra)
 {
 	my1itask_t *task = (my1itask_t*)data;
 	my1vdata_t *what = (my1vdata_t*)task->data;
-	my1imain_t *main = (my1imain_t*)that;
+	my1imain_t *mdat = (my1imain_t*)that;
 	/* modify name for main win */
-	image_appw_name(&main->iwin,"MY1Video Viewer");
-	imain_domenu_filters(main);
-	image_appw_domenu_quit(&main->iwin);
-	itask_make(&main->iwin.view.domore,video_data_draw_index,(void*)what);
-	itask_make(&main->iwin.keychk,vmain_on_keychk,(void*)what);
-	main->iwin.keychk.temp = (void*) main;
-	imain_loop(main,0); /* control tdel? */
+	image_appw_name(&mdat->iwin,"MY1Video Viewer");
+	imain_domenu_filters(mdat);
+	image_appw_domenu_quit(&mdat->iwin);
+	itask_make(&mdat->iwin.view.domore,video_data_draw_index,(void*)what);
+	itask_make(&mdat->iwin.keychk,vmain_on_keychk,(void*)what);
+	mdat->iwin.keychk.temp = (void*) mdat;
+	imain_loop(mdat,0); /* control tdel? */
 	return 0;
 }
 /*----------------------------------------------------------------------------*/
