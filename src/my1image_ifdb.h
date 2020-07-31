@@ -46,6 +46,33 @@ typedef struct _my1if_resize_t
 }
 my1if_resize_t;
 /*----------------------------------------------------------------------------*/
+/**
+cat src/my1image_ifdb.c | grep -A1 "my1image_t\* filter_" | grep -v "{" | \
+	grep -v '^--'
+** ONLY USE THESE IF YOU KNOW WHAT YOU ARE DOING! SOME REQUIRE FILTER OBJ!
+**/
+my1image_t* filter_binary(my1image_t*,my1image_t*,my1ifilter_t*);
+my1image_t* filter_binary_mid(my1image_t*,my1image_t*,my1ifilter_t*);
+my1image_t* filter_morph_erode(my1image_t*,my1image_t*,my1ifilter_t*);
+my1image_t* filter_morph_dilate(my1image_t*,my1image_t*,my1ifilter_t*);
+my1image_t* filter_gray(my1image_t*,my1image_t*,my1ifilter_t*);
+my1image_t* filter_color_blue(my1image_t*,my1image_t*,my1ifilter_t*);
+my1image_t* filter_color_green(my1image_t*,my1image_t*,my1ifilter_t*);
+my1image_t* filter_color_red(my1image_t*,my1image_t*,my1ifilter_t*);
+my1image_t* filter_gray2b(my1image_t*,my1image_t*,my1ifilter_t*);
+my1image_t* filter_gray2g(my1image_t*,my1image_t*,my1ifilter_t*);
+my1image_t* filter_gray2r(my1image_t*,my1image_t*,my1ifilter_t*);
+my1image_t* filter_invert(my1image_t*,my1image_t*,my1ifilter_t*);
+my1image_t* filter_resize(my1image_t*,my1image_t*,my1ifilter_t*);
+my1image_t* filter_laplace(my1image_t*,my1image_t*,my1ifilter_t*);
+my1image_t* filter_sobel_x(my1image_t*,my1image_t*,my1ifilter_t*);
+my1image_t* filter_sobel_y(my1image_t*,my1image_t*,my1ifilter_t*);
+my1image_t* filter_sobel(my1image_t*,my1image_t*,my1ifilter_t*);
+my1image_t* filter_gauss(my1image_t*,my1image_t*,my1ifilter_t*);
+my1image_t* filter_maxscale(my1image_t*,my1image_t*,my1ifilter_t*);
+my1image_t* filter_suppress(my1image_t*,my1image_t*,my1ifilter_t*);
+my1image_t* filter_threshold(my1image_t*,my1image_t*,my1ifilter_t*);
+/*----------------------------------------------------------------------------*/
 /* find predefined filter info */
 filter_info_t* image_work_find_info(char* name);
 /*----------------------------------------------------------------------------*/
