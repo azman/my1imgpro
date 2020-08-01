@@ -5,7 +5,6 @@
 #include "my1image_ifdb.h"
 #include "my1image_crgb.h"
 #include "my1image_mask.h"
-#include "my1image_stat.h"
 #include "my1image_scan.h"
 #include "my1image_mono.h"
 /*----------------------------------------------------------------------------*/
@@ -503,23 +502,33 @@ my1image_t* filter_suppress(my1image_t* img, my1image_t* res,
 	return res;
 }
 /*----------------------------------------------------------------------------*/
-my1image_t* filter_threshold(my1image_t* img, my1image_t* res,
-	my1ifilter_t* filter)
+my1image_t* filter_threshold(my1image_t* img,my1image_t* res,my1ifilter_t* chk)
 {
-	int loop, size = img->size, temp;
-	my1image_histogram_t hist;
-	image_get_histogram(img,&hist);
-	histogram_get_threshold(&hist);
+	my1if_threshold_t* data;
+	int loop, temp;
+	data = (my1if_threshold_t*) chk->data;
+	image_get_histogram(img,&data->hist);
+	histogram_get_threshold(&data->hist);
 	image_make(res,img->rows,img->cols);
-	for (loop=0;loop<size;loop++)
+	for (loop=0;loop<img->size;loop++)
 	{
 		temp = img->data[loop];
-		if (temp>hist.threshold) temp = WHITE;
+		if (temp>data->hist.threshold) temp = WHITE;
 		else temp = BLACK;
 		res->data[loop] = temp;
 	}
 	res->mask = IMASK_GRAY;
 	return res;
+}
+/*----------------------------------------------------------------------------*/
+void filter_threshold_init(my1ifilter_t* filter, my1ifilter_t* pclone)
+{
+	filter->data = malloc(sizeof(my1if_threshold_t));
+}
+/*----------------------------------------------------------------------------*/
+void filter_threshold_free(my1ifilter_t* filter)
+{
+	if (filter->data) free(filter->data);
 }
 /*----------------------------------------------------------------------------*/
 static const filter_info_t MY1_IFILTER_DB[] =
@@ -538,16 +547,17 @@ static const filter_info_t MY1_IFILTER_DB[] =
 	{ IFNAME_GRAYRED, 0, filter_gray2r, 0x0, 0x0 },
 	{ IFNAME_INVERT, 0, filter_invert, 0x0, 0x0 },
 	{ IFNAME_RESIZE, 0, filter_resize,
-			filter_resize_init, filter_resize_free },
+		filter_resize_init, filter_resize_free },
 	{ IFNAME_LAPLACE, FLAG_GRAY, filter_laplace, 0x0, 0x0 },
 	{ IFNAME_SOBELX, FLAG_GRAY, filter_sobel_x, 0x0, 0x0 },
 	{ IFNAME_SOBELY, FLAG_GRAY, filter_sobel_y, 0x0, 0x0 },
 	{ IFNAME_SOBEL, FLAG_GRAY, filter_sobel,
-			filter_sobel_init, filter_sobel_free },
+		filter_sobel_init, filter_sobel_free },
 	{ IFNAME_GAUSS, FLAG_GRAY, filter_gauss, 0x0, 0x0 },
 	{ IFNAME_MAXSCALE, FLAG_GRAY, filter_maxscale, 0x0, 0x0 },
 	{ IFNAME_SUPPRESS, FLAG_GRAY|FLAG_PROG, filter_suppress, 0x0, 0x0 },
-	{ IFNAME_THRESHOLD, FLAG_GRAY, filter_threshold, 0x0, 0x0 }
+	{ IFNAME_THRESHOLD, FLAG_GRAY, filter_threshold,
+		filter_threshold_init, filter_threshold_free }
 };
 /*----------------------------------------------------------------------------*/
 const int IFILTER_DB_SIZE = sizeof(MY1_IFILTER_DB)/sizeof(filter_info_t);

@@ -3,6 +3,7 @@
 #define __MY1IMAGE_IFDBH__
 /*----------------------------------------------------------------------------*/
 #include "my1image_util.h"
+#include "my1image_stat.h"
 /*----------------------------------------------------------------------------*/
 #define IFNAME_BINARY "binary"
 #define IFNAME_BINARY_MID "binary_mid"
@@ -31,6 +32,7 @@
 /*----------------------------------------------------------------------------*/
 #define BINARY_CUT 100
 /*----------------------------------------------------------------------------*/
+/* for filter_binary */
 typedef struct _my1if_options_t
 {
 	void* data;
@@ -45,6 +47,12 @@ typedef struct _my1if_resize_t
 	my1image_area_t area;
 }
 my1if_resize_t;
+/*----------------------------------------------------------------------------*/
+typedef struct _my1if_threshold_t
+{
+	my1image_histogram_t hist;
+}
+my1if_threshold_t;
 /*----------------------------------------------------------------------------*/
 /**
 cat src/my1image_ifdb.c | grep -A1 "my1image_t\* filter_" | grep -v "{" | \
