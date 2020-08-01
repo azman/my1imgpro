@@ -107,6 +107,7 @@ void image_get_area(my1image_t *img, my1image_t *sub, my1image_area_t *reg)
 		for (icol=0;icol<cols;icol++)
 			pSub[icol] = pImg[icol+xoff];
 	}
+	sub->mask = img->mask;
 }
 /*----------------------------------------------------------------------------*/
 void image_set_area(my1image_t *img, my1image_t *sub, my1image_area_t *reg)

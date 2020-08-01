@@ -54,20 +54,24 @@ void image_get_histogram(my1image_t *image, my1image_histogram_t *hist)
 /*----------------------------------------------------------------------------*/
 void image_smooth_histogram(my1image_t *image, my1image_histogram_t *hist)
 {
-	int loop, buff[GRAYLEVEL], size = image->size;
+	int loop, size = image->size;
 	float alpha = (float)WHITE/size;
 	for (loop=1;loop<GRAYLEVEL;loop++)
-		buff[loop] = (int)(hist->count[loop]*alpha);
+		hist->tbuff[loop] = (int)(hist->count[loop]*alpha);
 	for(loop=0;loop<size;loop++)
-		image->data[loop] = buff[image->data[loop]];
+		image->data[loop] = hist->tbuff[image->data[loop]];
 }
 /*----------------------------------------------------------------------------*/
 void histogram_get_threshold(my1image_histogram_t *hist)
 {
-	int loop, last, init = 0, ends = GRAYLEVEL-1, mids = (init+ends)>>1;
-	int stop = GRAYLEVEL>>1, chkl = 0, chkr = 0, temp;
-	/* prepare weights, limits (mids in right side) */
-	for(loop=init,last=ends;loop<stop;loop++,last--)
+	int loop, last, init, ends;
+	int mids, temp, chkl, chkr;
+	/* range limits, mids in right side */
+	init = 0; ends = GRAYLEVEL-1;
+	mids = ends>>1; temp = GRAYLEVEL>>1;
+	/* prepare weights */
+	chkl = chkr = 0;
+	for(loop=init,last=ends;loop<temp;loop++,last--)
 	{
 		chkl += hist->count[loop];
 		chkr += hist->count[last];
