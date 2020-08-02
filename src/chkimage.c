@@ -158,6 +158,8 @@ int what_on_keychk(void* data, void* that, void* xtra)
 	GdkEventKey *event = (GdkEventKey*)xtra;
 	if (event->keyval == GDK_KEY_z)
 		imain_menu_filter_enable(mdat,!(mdat->flag&IFLAG_FILTER_EXE));
+	else if (event->keyval == GDK_KEY_space)
+		mdat->flag ^= IFLAG_VIDEO_HOLD;
 	return 0;
 }
 /*----------------------------------------------------------------------------*/

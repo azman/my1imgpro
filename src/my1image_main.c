@@ -324,10 +324,13 @@ int imain_on_task_timer(void* data, void* that, void* xtra)
 {
 	my1imain_t* imain = (my1imain_t*) data;
 	my1ishow_t* ishow = (my1ishow_t*) that;
-	igrab_grab(&imain->grab);
-	imain->show = imain->grab.grab;
-	imain_proc(imain);
-	image_appw_make(ishow,imain->show);
+	if (!(imain->flag&IFLAG_VIDEO_HOLD))
+	{
+		igrab_grab(&imain->grab);
+		imain->show = imain->grab.grab;
+		imain_proc(imain);
+		image_appw_make(ishow,imain->show);
+	}
 	image_appw_task(ishow,imain_on_task_timer,imain->tdel);
 	return 0;
 }

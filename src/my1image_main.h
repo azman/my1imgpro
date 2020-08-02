@@ -28,16 +28,17 @@ void iwork_make(my1iwork_t* work, pdata_t data); /* link all data! */
 /*----------------------------------------------------------------------------*/
 #define IFLAG_OK 0
 #define IFLAG_ERROR (~(~0U>>1))
-#define IFLAG_ERROR_2END (IFLAG_ERROR|0x010)
-#define IFLAG_ERROR_ARGS (IFLAG_ERROR|0x020)
-#define IFLAG_ERROR_LOAD (IFLAG_ERROR|0x040)
-#define IFLAG_ERROR_LIST1 (IFLAG_ERROR|0x100)
-#define IFLAG_ERROR_LIST2 (IFLAG_ERROR|0x200)
+#define IFLAG_ERROR_2END (IFLAG_ERROR|0x0100)
+#define IFLAG_ERROR_ARGS (IFLAG_ERROR|0x0200)
+#define IFLAG_ERROR_LOAD (IFLAG_ERROR|0x0400)
+#define IFLAG_ERROR_LIST1 (IFLAG_ERROR|0x1000)
+#define IFLAG_ERROR_LIST2 (IFLAG_ERROR|0x2000)
 /*----------------------------------------------------------------------------*/
-#define IFLAG_VIDEO_MODE 0x01
-#define IFLAG_FILTER_RUN 0x02
-#define IFLAG_FILTER_CHK 0x04
-#define IFLAG_FILTER_EXE 0x08
+#define IFLAG_VIDEO_MODE 0x001
+#define IFLAG_VIDEO_HOLD 0x002
+#define IFLAG_FILTER_RUN 0x020
+#define IFLAG_FILTER_CHK 0x040
+#define IFLAG_FILTER_EXE 0x080
 /*----------------------------------------------------------------------------*/
 typedef my1image_appw_t my1ishow_t;
 typedef my1image_grab_t my1igrab_t;
@@ -50,7 +51,7 @@ typedef struct _my1imain_t
 	my1ishow_t iwin;
 	my1igrab_t grab; /* grabber function */
 	my1ibuff_t buff;
-	int flag, mode, tdel;
+	int flag, tdel;
 	void* dovf; /* menu_item for filter flag */
 	my1ipass_t *list, *curr; /* image processing filters */
 	my1iwork_t *work;
