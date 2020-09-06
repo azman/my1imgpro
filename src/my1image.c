@@ -19,6 +19,8 @@
 /** #define __MY1IMAGE_NO_DATA__ */
 #elif defined(__MY1IMAGE_DO_MAIN__)
 #define __MY1IMAGE_NO_DATA__
+#elif defined(__MY1IMAGE_DO_WORK__)
+#define __MY1IMAGE_NO_VIEW__
 #elif defined(__MY1IMAGE_IF_SELF__)
 #define __MY1IMAGE_NO_IFDB__
 /** #define __MY1IMAGE_NO_DATA__ */
