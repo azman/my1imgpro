@@ -50,7 +50,7 @@ my1image_t* image_filter_single(my1image_t* data, my1ifilter_t* pass);
 typedef struct _filter_info_t
 {
 	char name[FILTER_NAMESIZE];
-	unsigned int flag;
+	unsigned int temp, flag; /* temp pad! */
 	pfilter_t filter;
 	pfsetup_t fsetup;
 	pfclean_t fclean;
