@@ -28,7 +28,11 @@ int iscan_next(my1image_scan_t* scan);
 int iscan_skip(my1image_scan_t* scan);
 int iscan_skip_loop(my1image_scan_t* scan, int loop);
 int iscan_skip_that(my1image_scan_t* scan, int trow, int tcol);
-int iscan_8connected(my1image_scan_t* scan); /* assumes skip > 0! */
+int iscan_8connected_base(my1image_scan_t* scan); /* assumes skip > 0! */
+int iscan_8connected(my1image_scan_t* scan);
+/*----------------------------------------------------------------------------*/
+#define iscan_skip_test(scan,x,y) (y<scan->skip||y>scan->brow|| \
+	x<scan->skip||x>scan->bcol)?1:0
 /*----------------------------------------------------------------------------*/
 #endif /** __MY1IMAGE_SCANH__ */
 /*----------------------------------------------------------------------------*/

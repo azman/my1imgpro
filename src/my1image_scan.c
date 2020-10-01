@@ -49,33 +49,25 @@ int iscan_next(my1image_scan_t* scan)
 /*----------------------------------------------------------------------------*/
 int iscan_skip(my1image_scan_t* scan)
 {
-	if (scan->irow<scan->skip||scan->irow>scan->brow||
-			scan->icol<scan->skip||scan->icol>scan->bcol)
-		return 1;
-	else return 0;
+	return iscan_skip_test(scan,scan->icol,scan->irow);
 }
 /*----------------------------------------------------------------------------*/
 int iscan_skip_loop(my1image_scan_t* scan, int loop)
 {
 	int trow = loop / scan->cols;
 	int tcol = loop % scan->cols;
-	if (trow<scan->skip||trow>scan->brow||tcol<scan->skip||tcol>scan->bcol)
-		return 1;
-	else return 0;
+	return iscan_skip_test(scan,tcol,trow);
 }
 /*----------------------------------------------------------------------------*/
 int iscan_skip_that(my1image_scan_t* scan, int trow, int tcol)
 {
-	if (trow<scan->skip||trow>scan->brow||tcol<scan->skip||tcol>scan->bcol)
-		return 1;
-	else return 0;
+	return iscan_skip_test(scan,tcol,trow);
 }
 /*----------------------------------------------------------------------------*/
-int iscan_8connected(my1image_scan_t* scan)
+int iscan_8connected_base(my1image_scan_t* scan)
 {
 	int loop, size, curr, step;
 	curr = scan->icol;
-	if (!scan->curr[curr]) return 0;
 	step = curr-1;
 	for (loop=0,size=0;loop<3;loop++)
 	{
@@ -85,6 +77,12 @@ int iscan_8connected(my1image_scan_t* scan)
 		step++;
 	}
 	return size;
+}
+/*----------------------------------------------------------------------------*/
+int iscan_8connected(my1image_scan_t* scan)
+{
+	if (!scan->curr[scan->icol]) return 0;
+	return iscan_8connected_base(scan);
 }
 /*----------------------------------------------------------------------------*/
 #endif /** __MY1IMAGE_SCANC__ */
