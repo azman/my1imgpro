@@ -4,8 +4,8 @@
 /*----------------------------------------------------------------------------*/
 #include "my1image_util.h"
 /*----------------------------------------------------------------------------*/
-typedef my1image_filter_t my1vpass_t;
-typedef my1image_buffer_t my1vbuff_t;
+typedef my1ipass_t my1vpass_t;
+typedef my1ibuff_t my1vbuff_t;
 /*----------------------------------------------------------------------------*/
 #define VIDEO_FLAG_LOOP 0x01
 #define VIDEO_FLAG_STEP 0x02

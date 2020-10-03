@@ -584,7 +584,7 @@ void image_appw_show(my1image_appw_t* appw, my1image_t* that,
 	if (menu) image_appw_domenu_full(appw);
 }
 /*----------------------------------------------------------------------------*/
-void image_appw_pass_filter(my1image_appw_t* appw, my1ifilter_t* pass)
+void image_appw_pass_filter(my1image_appw_t* appw, my1ipass_t* pass)
 {
 	my1image_t temp, *curr = &temp;
 	image_init(&temp);

@@ -17,7 +17,7 @@
 #define FLAG_GRAY FILTER_FLAG_GRAY
 #define FLAG_PROG FILTER_FLAG_PROG
 /*----------------------------------------------------------------------------*/
-my1image_t* filter_binary(my1image_t* img, my1image_t* res, my1ifilter_t* pass)
+my1image_t* filter_binary(my1image_t* img, my1image_t* res, my1ipass_t* pass)
 {
 	my1if_options_t *opts = (my1if_options_t*) pass->data;
 	image_copy(res,img);
@@ -26,7 +26,7 @@ my1image_t* filter_binary(my1image_t* img, my1image_t* res, my1ifilter_t* pass)
 	return res;
 }
 /*----------------------------------------------------------------------------*/
-void filter_binary_init(my1ifilter_t* filter, my1ifilter_t* pclone)
+void filter_binary_init(my1ipass_t* filter, my1ipass_t* pclone)
 {
 	my1if_options_t *opts, *temp;
 	filter->data = malloc(sizeof(my1if_options_t));
@@ -43,13 +43,13 @@ void filter_binary_init(my1ifilter_t* filter, my1ifilter_t* pclone)
 	}
 }
 /*----------------------------------------------------------------------------*/
-void filter_binary_free(my1ifilter_t* filter)
+void filter_binary_free(my1ipass_t* filter)
 {
 	if (filter->data) free(filter->data);
 }
 /*----------------------------------------------------------------------------*/
 my1image_t* filter_binary_mid(my1image_t* img, my1image_t* res,
-	my1ifilter_t* pass)
+	my1ipass_t* pass)
 {
 	int loop, pmax, temp, step, size = img->size;
 	image_make(res,img->rows,img->cols);
@@ -71,7 +71,7 @@ my1image_t* filter_binary_mid(my1image_t* img, my1image_t* res,
 }
 /*----------------------------------------------------------------------------*/
 my1image_t* filter_morph_erode(my1image_t* img, my1image_t* res,
-	my1ifilter_t* pass)
+	my1ipass_t* pass)
 {
 	int elem[] = { 1,1,1, 1,1,1, 1,1,1 };
 	my1image_t temp;
@@ -84,7 +84,7 @@ my1image_t* filter_morph_erode(my1image_t* img, my1image_t* res,
 }
 /*----------------------------------------------------------------------------*/
 my1image_t* filter_morph_dilate(my1image_t* img, my1image_t* res,
-	my1ifilter_t* pass)
+	my1ipass_t* pass)
 {
 	int elem[] = { 1,1,1, 1,1,1, 1,1,1 };
 	my1image_t temp;
@@ -96,7 +96,7 @@ my1image_t* filter_morph_dilate(my1image_t* img, my1image_t* res,
 	return res;
 }
 /*----------------------------------------------------------------------------*/
-my1image_t* filter_gray(my1image_t* img, my1image_t* res, my1ifilter_t* filter)
+my1image_t* filter_gray(my1image_t* img, my1image_t* res, my1ipass_t* filter)
 {
 	int loop, size = img->size;
 	image_make(res,img->rows,img->cols);
@@ -107,7 +107,7 @@ my1image_t* filter_gray(my1image_t* img, my1image_t* res, my1ifilter_t* filter)
 }
 /*----------------------------------------------------------------------------*/
 my1image_t* filter_color_blue(my1image_t* img, my1image_t* res,
-	my1ifilter_t* filter)
+	my1ipass_t* filter)
 {
 	int loop, size = img->size;
 	image_make(res,img->rows,img->cols);
@@ -118,7 +118,7 @@ my1image_t* filter_color_blue(my1image_t* img, my1image_t* res,
 }
 /*----------------------------------------------------------------------------*/
 my1image_t* filter_color_green(my1image_t* img, my1image_t* res,
-	my1ifilter_t* filter)
+	my1ipass_t* filter)
 {
 	int loop, size = img->size;
 	image_make(res,img->rows,img->cols);
@@ -129,7 +129,7 @@ my1image_t* filter_color_green(my1image_t* img, my1image_t* res,
 }
 /*----------------------------------------------------------------------------*/
 my1image_t* filter_color_red(my1image_t* img, my1image_t* res,
-	my1ifilter_t* filter)
+	my1ipass_t* filter)
 {
 	int loop, size = img->size;
 	image_make(res,img->rows,img->cols);
@@ -140,7 +140,7 @@ my1image_t* filter_color_red(my1image_t* img, my1image_t* res,
 }
 /*----------------------------------------------------------------------------*/
 my1image_t* filter_gray2b(my1image_t* img, my1image_t* res,
-	my1ifilter_t* filter)
+	my1ipass_t* filter)
 {
 	int loop, size = img->size;
 	image_make(res,img->rows,img->cols);
@@ -151,7 +151,7 @@ my1image_t* filter_gray2b(my1image_t* img, my1image_t* res,
 }
 /*----------------------------------------------------------------------------*/
 my1image_t* filter_gray2g(my1image_t* img, my1image_t* res,
-	my1ifilter_t* filter)
+	my1ipass_t* filter)
 {
 	int loop, size = img->size;
 	image_make(res,img->rows,img->cols);
@@ -162,7 +162,7 @@ my1image_t* filter_gray2g(my1image_t* img, my1image_t* res,
 }
 /*----------------------------------------------------------------------------*/
 my1image_t* filter_gray2r(my1image_t* img, my1image_t* res,
-	my1ifilter_t* filter)
+	my1ipass_t* filter)
 {
 	int loop, size = img->size;
 	image_make(res,img->rows,img->cols);
@@ -173,7 +173,7 @@ my1image_t* filter_gray2r(my1image_t* img, my1image_t* res,
 }
 /*----------------------------------------------------------------------------*/
 my1image_t* filter_invert(my1image_t* img, my1image_t* res,
-	my1ifilter_t* filter)
+	my1ipass_t* filter)
 {
 	image_copy(res,img);
 	image_invert_this(res);
@@ -181,7 +181,7 @@ my1image_t* filter_invert(my1image_t* img, my1image_t* res,
 }
 /*----------------------------------------------------------------------------*/
 my1image_t* filter_resize(my1image_t* img, my1image_t* res,
-	my1ifilter_t* filter)
+	my1ipass_t* filter)
 {
 	my1if_resize_t *size = (my1if_resize_t*) filter->data;
 	if (size)
@@ -190,7 +190,7 @@ my1image_t* filter_resize(my1image_t* img, my1image_t* res,
 	return res;
 }
 /*----------------------------------------------------------------------------*/
-void filter_resize_init(my1ifilter_t* filter, my1ifilter_t* pclone)
+void filter_resize_init(my1ipass_t* filter, my1ipass_t* pclone)
 {
 	my1if_resize_t *size, *temp;
 	filter->data = malloc(sizeof(my1if_resize_t));
@@ -205,7 +205,7 @@ void filter_resize_init(my1ifilter_t* filter, my1ifilter_t* pclone)
 	}
 }
 /*----------------------------------------------------------------------------*/
-void filter_resize_free(my1ifilter_t* filter)
+void filter_resize_free(my1ipass_t* filter)
 {
 	my1if_resize_t *size = (my1if_resize_t*) filter->data;
 	image_free(&size->buff);
@@ -213,7 +213,7 @@ void filter_resize_free(my1ifilter_t* filter)
 }
 /*----------------------------------------------------------------------------*/
 my1image_t* filter_laplace(my1image_t* img, my1image_t* res,
-	my1ifilter_t* filter)
+	my1ipass_t* filter)
 {
 	int coeff[] = { 0,-1,0, -1,4,-1, 0,-1,0 };
 	image_mask_this(img,res,3,9,coeff);
@@ -223,7 +223,7 @@ my1image_t* filter_laplace(my1image_t* img, my1image_t* res,
 }
 /*----------------------------------------------------------------------------*/
 my1image_t* filter_sobel_x(my1image_t* img, my1image_t* res,
-	my1ifilter_t* filter)
+	my1ipass_t* filter)
 {
 	/* +ve gradient when dark(left) -> light(right) */
 	int coeff[] = { -1,0,1, -2,0,2, -1,0,1 };
@@ -234,7 +234,7 @@ my1image_t* filter_sobel_x(my1image_t* img, my1image_t* res,
 }
 /*----------------------------------------------------------------------------*/
 my1image_t* filter_sobel_y(my1image_t* img, my1image_t* res,
-	my1ifilter_t* filter)
+	my1ipass_t* filter)
 {
 	/* +ve gradient when dark(bottom) -> light(top) */
 	int coeff[] = { 1,2,1, 0,0,0, -1,-2,-1 };
@@ -245,7 +245,7 @@ my1image_t* filter_sobel_y(my1image_t* img, my1image_t* res,
 }
 /*----------------------------------------------------------------------------*/
 my1image_t* filter_sobel(my1image_t* img, my1image_t* res,
-	my1ifilter_t* filter)
+	my1ipass_t* filter)
 {
 	int irow, icol, x, y, z, p;
 	my1image_t *buff = (my1image_t*) filter->data;
@@ -327,7 +327,7 @@ my1image_t* filter_sobel(my1image_t* img, my1image_t* res,
 	return res;
 }
 /*----------------------------------------------------------------------------*/
-void filter_sobel_init(my1ifilter_t* filter, my1ifilter_t* pclone)
+void filter_sobel_init(my1ipass_t* filter, my1ipass_t* pclone)
 {
 	int loop;
 	my1image_t *buff;
@@ -338,7 +338,7 @@ void filter_sobel_init(my1ifilter_t* filter, my1ifilter_t* pclone)
 		image_init(&buff[loop]);
 }
 /*----------------------------------------------------------------------------*/
-void filter_sobel_free(my1ifilter_t* filter)
+void filter_sobel_free(my1ipass_t* filter)
 {
 	int loop;
 	my1image_t *buff;
@@ -352,7 +352,7 @@ void filter_sobel_free(my1ifilter_t* filter)
 }
 /*----------------------------------------------------------------------------*/
 my1image_t* filter_gauss(my1image_t* img, my1image_t* res,
-	my1ifilter_t* filter)
+	my1ipass_t* filter)
 {
 	int coeff[] = { 1,2,1, 2,4,2, 1,2,1};
 	image_mask_this(img,res,3,9,coeff);
@@ -362,7 +362,7 @@ my1image_t* filter_gauss(my1image_t* img, my1image_t* res,
 }
 /*----------------------------------------------------------------------------*/
 my1image_t* filter_maxscale(my1image_t* img, my1image_t* res,
-	my1ifilter_t* filter)
+	my1ipass_t* filter)
 {
 	int loop, size = img->size, pmax = img->data[0], temp;
 	image_make(res,img->rows,img->cols);
@@ -439,12 +439,12 @@ int image_check_suppress(my1image_t *img, my1image_t *chk, int pref, int pchk)
 }
 /*----------------------------------------------------------------------------*/
 my1image_t* filter_suppress(my1image_t* img, my1image_t* res,
-	my1ifilter_t* filter)
+	my1ipass_t* filter)
 {
 	/** maximal suppression (after sobel?) */
 	int loop, curr, buff;
 	my1image_t *chk;
-	my1ifilter_t *prev = filter->prev;
+	my1ipass_t *prev = filter->prev;
 	if (!prev||strncmp(prev->name,"sobel",6))
 	{
 		image_copy(res,img);
@@ -502,7 +502,7 @@ my1image_t* filter_suppress(my1image_t* img, my1image_t* res,
 	return res;
 }
 /*----------------------------------------------------------------------------*/
-my1image_t* filter_threshold(my1image_t* img,my1image_t* res,my1ifilter_t* chk)
+my1image_t* filter_threshold(my1image_t* img,my1image_t* res,my1ipass_t* chk)
 {
 	my1if_threshold_t* data;
 	int loop, temp;
@@ -521,12 +521,12 @@ my1image_t* filter_threshold(my1image_t* img,my1image_t* res,my1ifilter_t* chk)
 	return res;
 }
 /*----------------------------------------------------------------------------*/
-void filter_threshold_init(my1ifilter_t* filter, my1ifilter_t* pclone)
+void filter_threshold_init(my1ipass_t* filter, my1ipass_t* pclone)
 {
 	filter->data = malloc(sizeof(my1if_threshold_t));
 }
 /*----------------------------------------------------------------------------*/
-void filter_threshold_free(my1ifilter_t* filter)
+void filter_threshold_free(my1ipass_t* filter)
 {
 	if (filter->data) free(filter->data);
 }
@@ -578,20 +578,20 @@ filter_info_t* image_work_find_info(char* name)
 	return find;
 }
 /*----------------------------------------------------------------------------*/
-my1ifilter_t* image_work_create(char* name)
+my1ipass_t* image_work_create(char* name)
 {
-	my1ifilter_t* that = 0x0;
+	my1ipass_t* that = 0x0;
 	filter_info_t* info = image_work_find_info(name);
 	if (info)
 		that = info_create_filter(info);
 	return that;
 }
 /*----------------------------------------------------------------------------*/
-my1ifilter_t* image_work_create_all(void)
+my1ipass_t* image_work_create_all(void)
 {
 	int loop;
 	filter_info_t* info;
-	my1ifilter_t *temp, *that = 0x0;
+	my1ipass_t *temp, *that = 0x0;
 	for(loop=0;loop<IFILTER_DB_SIZE;loop++)
 	{
 		info = (filter_info_t*)&MY1_IFILTER_DB[loop];

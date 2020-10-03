@@ -8,7 +8,7 @@
 #include <stdlib.h> /* for malloc and free? */
 #include <string.h>
 /*----------------------------------------------------------------------------*/
-void filter_init(my1ifilter_t* pass, pfilter_t filter, my1ibuffer_t* buff)
+void filter_init(my1ipass_t* pass, pfilter_t filter, my1ibuff_t* buff)
 {
 	pass->name[0] = 0x0; /* anonymous */
 	pass->flag = FILTER_FLAG_NONE;
@@ -23,15 +23,15 @@ void filter_init(my1ifilter_t* pass, pfilter_t filter, my1ibuffer_t* buff)
 	pass->prev = 0x0; /* will be set by the previous filter in exec chain */
 }
 /*----------------------------------------------------------------------------*/
-void filter_free(my1ifilter_t* pass)
+void filter_free(my1ipass_t* pass)
 {
 	if (pass->dofree)
 		pass->dofree(pass);
 }
 /*----------------------------------------------------------------------------*/
-void filter_free_clones(my1ifilter_t* pass)
+void filter_free_clones(my1ipass_t* pass)
 {
-	my1ifilter_t* temp;
+	my1ipass_t* temp;
 	while (pass)
 	{
 		temp = pass;
@@ -41,7 +41,7 @@ void filter_free_clones(my1ifilter_t* pass)
 	}
 }
 /*----------------------------------------------------------------------------*/
-my1ifilter_t* filter_insert(my1ifilter_t* pass, my1ifilter_t* next)
+my1ipass_t* filter_insert(my1ipass_t* pass, my1ipass_t* next)
 {
 	next->next = 0x0;
 	next->last = 0x0;
@@ -55,10 +55,10 @@ my1ifilter_t* filter_insert(my1ifilter_t* pass, my1ifilter_t* next)
 	return pass;
 }
 /*----------------------------------------------------------------------------*/
-my1ifilter_t* filter_remove(my1ifilter_t* pass, int index, int cloned)
+my1ipass_t* filter_remove(my1ipass_t* pass, int index, int cloned)
 {
 	int loop = 0;
-	my1ifilter_t *prev = 0x0, *curr = pass;
+	my1ipass_t *prev = 0x0, *curr = pass;
 	while (curr)
 	{
 		if (index==loop)
@@ -89,10 +89,10 @@ my1ifilter_t* filter_remove(my1ifilter_t* pass, int index, int cloned)
 	return pass;
 }
 /*----------------------------------------------------------------------------*/
-my1ifilter_t* filter_search(my1ifilter_t* pass, char *name)
+my1ipass_t* filter_search(my1ipass_t* pass, char *name)
 {
 	int size;
-	my1ifilter_t* find = 0x0;
+	my1ipass_t* find = 0x0;
 	while (pass)
 	{
 		if (pass->name)
@@ -109,9 +109,9 @@ my1ifilter_t* filter_search(my1ifilter_t* pass, char *name)
 	return find;
 }
 /*----------------------------------------------------------------------------*/
-my1ifilter_t* filter_cloned(my1ifilter_t* pass)
+my1ipass_t* filter_cloned(my1ipass_t* pass)
 {
-	my1ifilter_t* that = (my1ifilter_t*)malloc(sizeof(my1ifilter_t));
+	my1ipass_t* that = (my1ipass_t*)malloc(sizeof(my1ipass_t));
 	if (that)
 	{
 		filter_init(that,pass->filter,pass->buffer);
@@ -124,11 +124,11 @@ my1ifilter_t* filter_cloned(my1ifilter_t* pass)
 	return that;
 }
 /*----------------------------------------------------------------------------*/
-my1image_t* image_filter(my1image_t* data, my1ifilter_t* pass)
+my1image_t* image_filter(my1image_t* data, my1ipass_t* pass)
 {
 	my1image_t* temp;
-	my1ibuffer_t* buff;
-	my1ifilter_t* prev = 0x0;
+	my1ibuff_t* buff;
+	my1ipass_t* prev = 0x0;
 	while (pass)
 	{
 		if (prev) pass->prev = prev;
@@ -148,7 +148,7 @@ my1image_t* image_filter(my1image_t* data, my1ifilter_t* pass)
 	return data;
 }
 /*----------------------------------------------------------------------------*/
-my1image_t* image_filter_single(my1image_t* data, my1ifilter_t* pass)
+my1image_t* image_filter_single(my1image_t* data, my1ipass_t* pass)
 {
 	my1image_t buff;
 	/* assumes pass is always valid - output MUST BE defined */
@@ -166,9 +166,9 @@ my1image_t* image_filter_single(my1image_t* data, my1ifilter_t* pass)
 	return done;
 }
 /*----------------------------------------------------------------------------*/
-my1ifilter_t* info_create_filter(filter_info_t* info)
+my1ipass_t* info_create_filter(filter_info_t* info)
 {
-	my1ifilter_t* that = (my1ifilter_t*)malloc(sizeof(my1ifilter_t));
+	my1ipass_t* that = (my1ipass_t*)malloc(sizeof(my1ipass_t));
 	if (that)
 	{
 		filter_init(that,info->filter,0x0);

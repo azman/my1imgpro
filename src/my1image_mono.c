@@ -5,7 +5,7 @@
 #include "my1image_mono.h"
 #include "my1image_scan.h"
 /*----------------------------------------------------------------------------*/
-int morph_fit(my1image_scan_t* scan,  int *elem)
+int morph_fit(my1iscan_t* scan,  int *elem)
 {
 	int loop, step;
 	int *ele1 = &elem[4];
@@ -19,7 +19,7 @@ int morph_fit(my1image_scan_t* scan,  int *elem)
 	return 1; /* fit */
 }
 /*----------------------------------------------------------------------------*/
-int morph_hit(my1image_scan_t* scan,  int *elem)
+int morph_hit(my1iscan_t* scan,  int *elem)
 {
 	int loop, step;
 	int *ele1 = &elem[4];
@@ -35,7 +35,7 @@ int morph_hit(my1image_scan_t* scan,  int *elem)
 /*----------------------------------------------------------------------------*/
 void image_erode(my1image_t *img, my1image_t *res, int* elem)
 {
-	my1image_scan_t scan;
+	my1iscan_t scan;
 	image_make(res,img->rows,img->cols);
 	iscan_init(&scan,img,MY1IMAGE_SCAN_SKIP);
 	iscan_prep(&scan);
@@ -48,7 +48,7 @@ void image_erode(my1image_t *img, my1image_t *res, int* elem)
 /*----------------------------------------------------------------------------*/
 void image_dilate(my1image_t *img, my1image_t *res, int* elem)
 {
-	my1image_scan_t scan;
+	my1iscan_t scan;
 	image_make(res,img->rows,img->cols);
 	iscan_init(&scan,img,MY1IMAGE_SCAN_SKIP);
 	iscan_prep(&scan);

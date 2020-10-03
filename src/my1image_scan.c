@@ -4,7 +4,7 @@
 /*----------------------------------------------------------------------------*/
 #include "my1image_scan.h"
 /*----------------------------------------------------------------------------*/
-void iscan_init(my1image_scan_t* scan, my1image_t* data, int skip)
+void iscan_init(my1iscan_t* scan, my1image_t* data, int skip)
 {
 	scan->data = data->data;
 	scan->rows = data->rows;
@@ -14,7 +14,7 @@ void iscan_init(my1image_scan_t* scan, my1image_t* data, int skip)
 	scan->bcol = scan->cols - skip - 1;
 }
 /*----------------------------------------------------------------------------*/
-void iscan_prep(my1image_scan_t* scan)
+void iscan_prep(my1iscan_t* scan)
 {
 	scan->curr = scan->data;
 	scan->next = scan->curr + scan->cols;
@@ -24,7 +24,7 @@ void iscan_prep(my1image_scan_t* scan)
 	scan->loop = -1;
 }
 /*----------------------------------------------------------------------------*/
-int iscan_next(my1image_scan_t* scan)
+int iscan_next(my1iscan_t* scan)
 {
 	int next = 1;
 	scan->loop++;
@@ -47,24 +47,24 @@ int iscan_next(my1image_scan_t* scan)
 	return next;
 }
 /*----------------------------------------------------------------------------*/
-int iscan_skip(my1image_scan_t* scan)
+int iscan_skip(my1iscan_t* scan)
 {
 	return iscan_skip_test(scan,scan->icol,scan->irow);
 }
 /*----------------------------------------------------------------------------*/
-int iscan_skip_loop(my1image_scan_t* scan, int loop)
+int iscan_skip_loop(my1iscan_t* scan, int loop)
 {
 	int trow = loop / scan->cols;
 	int tcol = loop % scan->cols;
 	return iscan_skip_test(scan,tcol,trow);
 }
 /*----------------------------------------------------------------------------*/
-int iscan_skip_that(my1image_scan_t* scan, int trow, int tcol)
+int iscan_skip_that(my1iscan_t* scan, int trow, int tcol)
 {
 	return iscan_skip_test(scan,tcol,trow);
 }
 /*----------------------------------------------------------------------------*/
-int iscan_8connected_base(my1image_scan_t* scan)
+int iscan_8connected_base(my1iscan_t* scan)
 {
 	int loop, size, curr, step;
 	curr = scan->icol;
@@ -79,7 +79,7 @@ int iscan_8connected_base(my1image_scan_t* scan)
 	return size;
 }
 /*----------------------------------------------------------------------------*/
-int iscan_8connected(my1image_scan_t* scan)
+int iscan_8connected(my1iscan_t* scan)
 {
 	if (!scan->curr[scan->icol]) return 0;
 	return iscan_8connected_base(scan);

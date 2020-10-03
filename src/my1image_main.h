@@ -42,8 +42,6 @@ void iwork_make(my1iwork_t* work, pdata_t data); /* link all data! */
 /*----------------------------------------------------------------------------*/
 typedef my1image_appw_t my1ishow_t;
 typedef my1image_grab_t my1igrab_t;
-typedef my1image_filter_t my1ipass_t;
-typedef my1image_buffer_t my1ibuff_t;
 /*----------------------------------------------------------------------------*/
 typedef struct _my1imain_t
 {

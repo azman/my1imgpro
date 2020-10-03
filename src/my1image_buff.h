@@ -13,14 +13,14 @@ typedef struct _my1image_buffer_t
 }
 my1image_buffer_t;
 /*----------------------------------------------------------------------------*/
-typedef my1image_buffer_t my1ibuffer_t;
+typedef my1image_buffer_t my1ibuff_t;
 /*----------------------------------------------------------------------------*/
 /* double buffered image for processing */
-void buffer_init(my1image_buffer_t* ibuff);
-void buffer_free(my1image_buffer_t* ibuff);
-void buffer_size(my1image_buffer_t* ibuff, int height, int width);
-void buffer_size_all(my1image_buffer_t* ibuff, int height, int width);
-void buffer_swap(my1image_buffer_t* ibuff);
+void buffer_init(my1ibuff_t* ibuff);
+void buffer_free(my1ibuff_t* ibuff);
+void buffer_size(my1ibuff_t* ibuff, int height, int width);
+void buffer_size_all(my1ibuff_t* ibuff, int height, int width);
+void buffer_swap(my1ibuff_t* ibuff);
 /*----------------------------------------------------------------------------*/
 #endif /** __MY1IMAGE_BUFFH__ */
 /*----------------------------------------------------------------------------*/
