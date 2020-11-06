@@ -6,10 +6,9 @@
 /*----------------------------------------------------------------------------*/
 typedef struct _my1image_buffer_t
 {
-	/* double buffer image - with region control AND 1 extra image cache */
-	my1image_area_t region;
+	my1image_area_t region, select; /* AOI and select/restore info */
 	my1image_t *curr, *next, *temp, *iref; /* extra 1 pointer for reference! */
-	my1image_t main, buff, xtra;
+	my1image_t main, buff, xtra; /* extra image cache */
 }
 my1image_buffer_t;
 /*----------------------------------------------------------------------------*/

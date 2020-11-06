@@ -7,6 +7,7 @@
 void buffer_init(my1ibuff_t* ibuff)
 {
 	image_area_make(&ibuff->region,0,0,0,0);
+	image_area_make(&ibuff->select,0,0,0,0);
 	ibuff->curr = &ibuff->main;
 	ibuff->next = &ibuff->buff;
 	/** ibuff->temp = 0x0; / * not necessary */
