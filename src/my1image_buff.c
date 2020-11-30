@@ -15,7 +15,8 @@ void buffer_init(my1ibuff_t* ibuff)
 	image_init(&ibuff->main);
 	image_init(&ibuff->buff);
 	image_init(&ibuff->xtra);
-	ibuff->flag = 0;
+	ibuff->chk1 = 0;
+	ibuff->chk2 = 0;
 }
 /*----------------------------------------------------------------------------*/
 void buffer_free(my1ibuff_t* ibuff)

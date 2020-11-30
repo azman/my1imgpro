@@ -9,7 +9,7 @@ typedef struct _my1image_buffer_t
 	my1image_area_t region, select; /* AOI and select/restore info */
 	my1image_t *curr, *next, *temp, *iref; /* extra 1 pointer for reference! */
 	my1image_t main, buff, xtra; /* extra image cache */
-	unsigned long long flag; /* 64-bit flag for general purpose */
+	unsigned int chk1, chk2; /* 2 x 32-bit general purpose flag */
 }
 my1image_buffer_t;
 /*----------------------------------------------------------------------------*/
