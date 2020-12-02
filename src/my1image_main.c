@@ -23,6 +23,8 @@ void imain_init(my1imain_t* imain, my1iwork_t* iwork)
 	image_init(&imain->load);
 	imain->show = 0x0;
 	image_appw_init(&imain->iwin);
+	image_show_prep(&imain->info,0x0,DEFAULT_WINDOW_LABEL);
+	imain->info.flag |= IMAGE_SHOW_FLAG_QUIT;
 	igrab_init(&imain->grab);
 	buffer_init(&imain->buff);
 	imain->flag = IFLAG_OK;
@@ -312,7 +314,8 @@ void imain_show(my1imain_t* imain)
 			test = imain_filter_doexec(imain);
 			if (!save) imain->flag &= ~IFLAG_FILTER_EXE;
 		}
-		image_show(imain->show,&imain->iwin,"MY1 Image");
+		imain->info.buff = imain->show;
+		image_appw_show(&imain->iwin,&imain->info);
 		/* replace original image on display - if filtered */
 		if (test) image_copy(imain->iwin.orig,&imain->load);
 	}
@@ -467,12 +470,6 @@ my1ipass_t* imain_filter_doexec(my1imain_t* imain)
 		imain->flag &= ~IFLAG_FILTER_RUN;
 	}
 	return done;
-}
-/*----------------------------------------------------------------------------*/
-void image_show(my1image_t* image, my1ishow_t* ishow, char* name)
-{
-	image_appw_show(ishow,image,name,0);
-	ishow->goquit = 1;
 }
 /*----------------------------------------------------------------------------*/
 #endif /** __MY1IMAGE_MAIN_C__ */

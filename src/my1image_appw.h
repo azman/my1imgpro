@@ -8,15 +8,20 @@
 #define MAIN_WINDOW_TITLE "MY1Image Viewer"
 /*----------------------------------------------------------------------------*/
 #define STATUS_TIMEOUT 5
+#define QTIMER_S 1000000
 /* this is in microsec! */
 #define ISDONE_TIMEOUT 1000
 /*----------------------------------------------------------------------------*/
 #define REDRAW 0x0
 /*----------------------------------------------------------------------------*/
+#define image_appw_flag_get(appw,pick) appw->flag&pick
+/*----------------------------------------------------------------------------*/
 typedef struct _my1image_appw_t
 {
 	GtkWidget *window, *domenu, *dostat;
 	guint idstat, idtime, idtask; /* gtk stuffs */
+	unsigned int flag; /* bitwise flag */
+	/** TODO: convert all flags to bitwise! */
 	int doquit; /* quit request flag */
 	int goquit; /* flag to call gtk_quit_main in on_done_all */
 	int gofree; /* flag to call image_appw_free in on_done_all */
@@ -38,6 +43,8 @@ void image_appw_full(my1image_appw_t* appw, int full);
 void image_appw_make(my1image_appw_t* appw, my1image_t* that);
 void image_appw_draw(my1image_appw_t* appw, my1image_t* that);
 void image_appw_name(my1image_appw_t* appw, const char* name);
+void image_appw_flag_set(my1image_appw_t* appw, unsigned int pick);
+void image_appw_flag_clr(my1image_appw_t* appw, unsigned int pick);
 void image_appw_stat_show(my1image_appw_t* appw, const char* mesg);
 void image_appw_stat_time(my1image_appw_t* appw, const char* mesg, int secs);
 guint image_appw_stat_push(my1image_appw_t* appw, const char* mesg);
@@ -50,11 +57,24 @@ void image_appw_domenu_quit(my1image_appw_t* appw);
 void image_appw_domenu_full(my1image_appw_t* appw);
 int image_appw_is_done(void* data, void* that, void* xtra);
 guint image_appw_task(my1image_appw_t* appw, ptask_t task, int usec);
-/* special function to show an image in a window - DO NOT NEED init! */
-void image_appw_show(my1image_appw_t* appw, my1image_t* that,
-	char* name, int menu);
+/*----------------------------------------------------------------------------*/
 /* run a filter on displayed image */
 void image_appw_pass_filter(my1image_appw_t*,my1ipass_t*);
+/*----------------------------------------------------------------------------*/
+#define IMAGE_SHOW_FLAG_MENU 0x000001
+#define IMAGE_SHOW_FLAG_QUIT 0x000002
+/*----------------------------------------------------------------------------*/
+typedef struct _my1image_show_t
+{
+	my1image_t* buff;
+	char* name;
+	unsigned int flag, tdel;
+}
+my1image_show_t;
+/*----------------------------------------------------------------------------*/
+void image_show_prep(my1image_show_t* show, my1image_t* that, char* name);
+/* special function to show an image in a window - DO NOT NEED init! */
+void image_appw_show(my1image_appw_t* appw, my1image_show_t* show);
 /*----------------------------------------------------------------------------*/
 #endif /** __MY1IMAGE_APPWH__ */
 /*----------------------------------------------------------------------------*/

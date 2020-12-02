@@ -26,6 +26,8 @@ void iwork_make(my1iwork_t* work, pdata_t data); /* link all data! */
 #define DEF_WIDTH 320
 #define DEF_HEIGHT 240
 /*----------------------------------------------------------------------------*/
+#define DEFAULT_WINDOW_LABEL "MY1 Image"
+/*----------------------------------------------------------------------------*/
 #define IFLAG_OK 0
 #define IFLAG_ERROR (~(~0U>>1))
 #define IFLAG_ERROR_2END (IFLAG_ERROR|0x0100)
@@ -41,12 +43,14 @@ void iwork_make(my1iwork_t* work, pdata_t data); /* link all data! */
 #define IFLAG_FILTER_EXE 0x080
 /*----------------------------------------------------------------------------*/
 typedef my1image_appw_t my1ishow_t;
+typedef my1image_show_t my1iinfo_t;
 typedef my1image_grab_t my1igrab_t;
 /*----------------------------------------------------------------------------*/
 typedef struct _my1imain_t
 {
 	my1image_t load, *show;
 	my1ishow_t iwin;
+	my1iinfo_t info;
 	my1igrab_t grab; /* grabber function */
 	my1ibuff_t buff;
 	int flag, tdel;
@@ -71,8 +75,6 @@ my1ipass_t* imain_filter_unload(my1imain_t*,char*);
 my1ipass_t* imain_filter_unload_all(my1imain_t*);
 my1ipass_t* imain_filter_doload_list(my1imain_t*,char*);
 my1ipass_t* imain_filter_doexec(my1imain_t* data);
-/*----------------------------------------------------------------------------*/
-void image_show(my1image_t* image, my1ishow_t* ishow, char* name);
 /*----------------------------------------------------------------------------*/
 #endif /** __MY1IMAGE_MAIN_H__ */
 /*----------------------------------------------------------------------------*/

@@ -16,6 +16,7 @@ void image_appw_init(my1image_appw_t* appw)
 	appw->idstat = 0;
 	appw->idtime = 0;
 	appw->idtask = 0;
+	appw->flag = 0;
 	appw->doquit = 0;
 	appw->goquit = 1; /* by default, quit on close */
 	appw->gofree = 0;
@@ -206,6 +207,16 @@ void image_appw_name(my1image_appw_t* appw,const char* name)
 	if (!appw->window) return;
 	/* set title */
 	gtk_window_set_title(GTK_WINDOW(appw->window),name);
+}
+/*----------------------------------------------------------------------------*/
+void image_appw_flag_set(my1image_appw_t* appw, unsigned int pick)
+{
+	appw->flag |= pick;
+}
+/*----------------------------------------------------------------------------*/
+void image_appw_flag_clr(my1image_appw_t* appw, unsigned int pick)
+{
+	appw->flag &= ~pick;
 }
 /*----------------------------------------------------------------------------*/
 void image_appw_stat_show(my1image_appw_t* appw, const char* mesg)
@@ -572,18 +583,6 @@ guint image_appw_task(my1image_appw_t* appw, ptask_t task, int usec)
 	return appw->idtask;
 }
 /*----------------------------------------------------------------------------*/
-void image_appw_show(my1image_appw_t* appw, my1image_t* that,
-	char* name, int menu)
-{
-	image_appw_init(appw);
-	appw->gofree = 1; /* auto free on close! */
-	appw->goquit = 0; /* do not quit - assume there is another win! */
-	appw->nostat = 1; /* hide status bar */
-	image_appw_make(appw,that);
-	if (name) image_appw_name(appw,name);
-	if (menu) image_appw_domenu_full(appw);
-}
-/*----------------------------------------------------------------------------*/
 void image_appw_pass_filter(my1image_appw_t* appw, my1ipass_t* pass)
 {
 	my1image_t temp, *curr = &temp;
@@ -593,6 +592,38 @@ void image_appw_pass_filter(my1image_appw_t* appw, my1ipass_t* pass)
 	image_copy(appw->show,curr);
 	image_appw_draw(appw,appw->show);
 	image_free(&temp);
+}
+/*----------------------------------------------------------------------------*/
+void image_show_prep(my1image_show_t* show, my1image_t* that, char* name)
+{
+	show->buff = that;
+	show->name = name;
+	show->flag = 0;
+	show->tdel = 0;
+}
+/*----------------------------------------------------------------------------*/
+int image_appw_timed_quit(void* data)
+{
+	appw_on_done_all((gpointer)data);
+	return 0;
+}
+/*----------------------------------------------------------------------------*/
+void image_appw_show(my1image_appw_t* appw, my1image_show_t* show)
+{
+	image_appw_init(appw);
+	appw->gofree = 1; /* auto free on close! */
+	if (show->flag&IMAGE_SHOW_FLAG_QUIT) appw->goquit = 1;
+	else appw->goquit = 0; /* do not quit - assume there is another win! */
+	appw->nostat = 1; /* hide status bar */
+	image_appw_make(appw,show->buff);
+	if (show->name) image_appw_name(appw,show->name);
+	if (show->flag&IMAGE_SHOW_FLAG_MENU)
+		image_appw_domenu_full(appw);
+	if (show->tdel>0)
+	{
+		appw->goquit = 1;
+		g_timeout_add_seconds(show->tdel,image_appw_timed_quit,(gpointer)appw);
+	}
 }
 /*----------------------------------------------------------------------------*/
 #endif /** __MY1IMAGE_APPWC__ */

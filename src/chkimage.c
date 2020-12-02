@@ -14,7 +14,7 @@ typedef struct _my1iwhat_t
 	my1image_appw_t awin;
 	my1image_t buff, *orig;
 	char *list; /* filter list from args */
-	int flag;
+	int flag, tdel;
 }
 my1iwhat_t;
 /*----------------------------------------------------------------------------*/
@@ -29,6 +29,7 @@ int init_what(void* data, void* that, void* xtra)
 	what->orig = 0x0;
 	what->list = 0x0;
 	what->flag = 0;
+	what->tdel = 0;
 	return 0;
 }
 /*----------------------------------------------------------------------------*/
@@ -101,6 +102,8 @@ int args_what(void* data, void* that, void* xtra)
 			what->flag |= WFLAG_SHOW_ORIGINAL;
 		else if (!strncmp(argv[loop],"--filter",9))
 			what->list = argv[++loop];
+		else if (!strncmp(argv[loop],"--timed",9))
+			what->tdel = atoi(argv[++loop]);
 		else
 			printf("-- Unknown param '%s'!\n",argv[loop]);
 	}
@@ -136,6 +139,12 @@ int prep_what(void* data, void* that, void* xtra)
 			}
 		}
 	}
+	/* prep timed display - only valid for picture mode */
+	if (!(what->flag&WFLAG_VIDEO_MODE))
+	{
+		if (what->tdel>0)
+			mdat->info.tdel = what->tdel;
+	}
 	return 0;
 }
 /*----------------------------------------------------------------------------*/
@@ -170,8 +179,9 @@ int show_what(void* data, void* that, void* xtra)
 	my1imain_t *mdat = (my1imain_t*)that;
 	if (what->orig)
 	{
+		my1image_show_t show = { what->orig, "Source Image", 0, 0};
 		/* show original */
-		image_show(what->orig,&what->awin,"Source Image");
+		image_appw_show(&what->awin,&show);
 		/* modify name for main win */
 		image_appw_name(&mdat->iwin,"Processed Image");
 	}
