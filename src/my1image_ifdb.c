@@ -106,6 +106,16 @@ my1image_t* filter_gray(my1image_t* img, my1image_t* res, my1ipass_t* filter)
 	return res;
 }
 /*----------------------------------------------------------------------------*/
+my1image_t* filter_graycolor(my1image_t* img,my1image_t* res,my1ipass_t* pass)
+{
+	int loop, size = img->size;
+	image_make(res,img->rows,img->cols);
+	for(loop=0;loop<size;loop++)
+		res->data[loop] = gray2color(img->data[loop]);
+	res->mask = IMASK_COLOR;
+	return res;
+}
+/*----------------------------------------------------------------------------*/
 my1image_t* filter_color_blue(my1image_t* img, my1image_t* res,
 	my1ipass_t* filter)
 {

@@ -10,6 +10,7 @@
 #define IFNAME_MORPH_ERODE "morph_erode"
 #define IFNAME_MORPH_DILATE "morph_dilate"
 #define IFNAME_GRAYSCALE "grayscale"
+#define IFNAME_GRAYCOLOR "graycolor"
 #define IFNAME_COLORBLUE "color_b2gray"
 #define IFNAME_COLORGREEN "color_g2gray"
 #define IFNAME_COLORRED "color_r2gray"
@@ -64,6 +65,7 @@ my1image_t* filter_binary_mid(my1image_t*,my1image_t*,my1ipass_t*);
 my1image_t* filter_morph_erode(my1image_t*,my1image_t*,my1ipass_t*);
 my1image_t* filter_morph_dilate(my1image_t*,my1image_t*,my1ipass_t*);
 my1image_t* filter_gray(my1image_t*,my1image_t*,my1ipass_t*);
+my1image_t* filter_graycolor(my1image_t*,my1image_t*,my1ipass_t*);
 my1image_t* filter_color_blue(my1image_t*,my1image_t*,my1ipass_t*);
 my1image_t* filter_color_green(my1image_t*,my1image_t*,my1ipass_t*);
 my1image_t* filter_color_red(my1image_t*,my1image_t*,my1ipass_t*);
